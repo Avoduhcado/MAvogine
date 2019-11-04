@@ -61,14 +61,18 @@ public class Theater {
 		GLFW.glfwShowWindow(id);
 
 		GL.createCapabilities();
+		
 		GL11.glClearColor(100f / 255f, 149f / 255f, 237f / 255f, 1f);
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
 		
 		GLFW.glfwSetWindowSizeCallback(id, (window, width, height) -> {
+			this.width = width;
+			this.height = height;
 			GL11.glViewport(0, 0, width, height);
 		});
 	}
 	
-	public void update() {
+	public void render() {
 		GLFW.glfwSwapBuffers(id);
 		GLFW.glfwPollEvents();
 	}

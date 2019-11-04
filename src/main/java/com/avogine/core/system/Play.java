@@ -64,9 +64,9 @@ public class Play implements Runnable {
 	}
 	
 	/**
-	 * Call once to kick off game loop.
-	 * <p>
-	 * Runs as long as {@link #theater} is not set to close as specified by {@link GLFW#glfwWindowShouldClose(long)}.
+	 * <p>Call once to kick off game loop.
+	 * 
+	 * <p>Runs as long as {@link #theater} is not set to close as specified by {@link GLFW#glfwWindowShouldClose(long)}.
 	 * In order, once per frame the {@link #frameTime} is calculated, input is processed, update code is run, the screen is rendered, and then also synced.
 	 */
 	private void loop() {
@@ -105,11 +105,11 @@ public class Play implements Runnable {
 			fps = 0;
 		}
 		stage.render();
-		theater.update();
+		theater.render();
 	}
 	
 	private void update(float interval) {
-		stage.update(interval);
+		stage.update(interval, theater);
 	}
 	
 	private void sync() {

@@ -20,7 +20,7 @@ public interface Stage {
 	 * This method is called once per frame during {@link Play#loop()}
 	 * @param interval The time passed since the previous update
 	 */
-	public void update(float interval);
+	public void update(float interval, Theater theater);
 	
 	/**
 	 * Initiate the rendering of the entire stage.
