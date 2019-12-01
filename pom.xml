@@ -20,6 +20,7 @@
 		<lwjgl.version>3.2.3</lwjgl.version>
 		<joml.version>1.9.17</joml.version>
 		<lwjgl.natives>natives-windows</lwjgl.natives>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<dependencyManagement>
