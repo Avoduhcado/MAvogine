@@ -29,7 +29,6 @@ import org.lwjgl.assimp.AIVector3D;
 import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.core.render.InstancedMesh;
 import com.avogine.core.render.Material;
 import com.avogine.core.render.Mesh;
 import com.avogine.core.render.Texture;
@@ -189,16 +188,16 @@ public class StaticMeshesLoader {
 
 		Mesh mesh = null;
 		if (numberOfInstances > 1) {
-			mesh = new InstancedMesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)),
-					ArrayUtils.toPrimitive(textures.toArray(Float[]::new)),
-					ArrayUtils.toPrimitive(normals.toArray(Float[]::new)),
-					indices.stream().mapToInt(Integer::intValue).toArray(), 
-					numberOfInstances);
+//			mesh = new InstancedMesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)),
+//					ArrayUtils.toPrimitive(textures.toArray(Float[]::new)),
+//					ArrayUtils.toPrimitive(normals.toArray(Float[]::new)),
+//					indices.stream().mapToInt(Integer::intValue).toArray(), 
+//					numberOfInstances);
 		} else {
-			mesh = new Mesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)),
-					ArrayUtils.toPrimitive(textures.toArray(Float[]::new)),
-					ArrayUtils.toPrimitive(normals.toArray(Float[]::new)),
-					indices.stream().mapToInt(Integer::intValue).toArray());
+			mesh = new Mesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)));
+			mesh.addAttribute(1, ArrayUtils.toPrimitive(textures.toArray(Float[]::new)), 2);
+			mesh.addAttribute(2, ArrayUtils.toPrimitive(normals.toArray(Float[]::new)), 3);
+			mesh.addIndexAttribute(indices.stream().mapToInt(Integer::intValue).toArray());
 		}
 		Material material;
 		int materialIdx = aiMesh.mMaterialIndex();
