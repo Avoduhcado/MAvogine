@@ -36,7 +36,10 @@ public class ResourceFileReader {
 	}
 	
 	/**
-	 * Read a resource file to a {@link ByteBuffer}.
+	 * <p>Read a resource file to a {@link ByteBuffer}.
+	 * 
+	 * <p>If a resource needs to be loaded from memory, likely due to jar access restrictions through certain libraries,
+	 * using this method will provide you with easy access to the data through a buffer.
 	 * @param filePath the file name starting from <tt>src/main/resources/</tt>
 	 * @return A direct <tt>ByteBuffer</tt> containing the contents of the file.
 	 */

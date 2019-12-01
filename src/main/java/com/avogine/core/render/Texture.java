@@ -4,13 +4,13 @@ import org.lwjgl.opengl.GL11;
 
 public class Texture {
 
-	private int id;
+	protected int id;
 
-	private int width;
-	private int height;
+	protected int width;
+	protected int height;
 	
-	private int rows;
-	private int columns;
+	protected int rows;
+	protected int columns;
 
 	public Texture(int id, int width, int height, int columns, int rows) {
 		this.id = id;
@@ -23,9 +23,17 @@ public class Texture {
 	public Texture(int id, int width, int height) {
 		this(id, width, height, 1, 1);
 	}
-
+	
+	public Texture(int id) {
+		this(id, 1, 1, 1, 1);
+	}
+	
 	public void bind() {
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, id);
+	}
+	
+	public void unbind() {
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 	}
 
 	public int getId() {
@@ -35,7 +43,7 @@ public class Texture {
 	public int getWidth() {
 		return width;
 	}
-
+	
 	public int getHeight() {
 		return height;
 	}
