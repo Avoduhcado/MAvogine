@@ -1,5 +1,8 @@
 package com.avogine.loader.texture;
 
+import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
@@ -72,6 +75,10 @@ public class TextureLoader {
 	 * @return A {@link Cubemap} for the images
 	 */
 	protected static Texture loadCubemap(String... filenames) {
+		if (filenames.length != 6) {
+			throw new IllegalArgumentException("Can't load a cubemap without 6 textures!");
+		}
+		
 		int textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL14.GL_TEXTURE_CUBE_MAP, textureID);
 
@@ -100,6 +107,39 @@ public class TextureLoader {
 		GL11.glTexParameteri(GL14.GL_TEXTURE_CUBE_MAP, GL12.GL_TEXTURE_WRAP_R, GL12.GL_CLAMP_TO_EDGE);
 
 		return new Cubemap(textureID);
+	}
+	
+	/**
+	 * <p>Load a cube map texture from a specified directory of textures.
+	 * 
+	 * <p>This method assumes the given directory is a valid directory and contains at least 6 files named:
+	 * <ul>
+	 * <li><tt>right.jpg
+	 * <li>left.jpg
+	 * <li>top.jpg
+	 * <li>bottom.jpg
+	 * <li>front.jpg
+	 * <li>back.jpg</tt>
+	 * </ul>
+	 * @param directoryName The directory name contained in {@link ResourceConstants#TEXTURE_PATH}
+	 * @return
+	 */
+	protected static Texture loadCubemap(String directoryName) {
+		// Fail fast if we were not given a valid directory
+		URL url = TextureLoader.class.getClassLoader().getResource(ResourceConstants.TEXTURE_PATH + directoryName);
+		File directory;
+		try {
+			directory = new File(url.toURI().getPath());
+			if (!directory.isDirectory()) {
+				return null;
+			}
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		String texturePathPrefix = directoryName + ResourceConstants.SEPARATOR;
+		return loadCubemap(texturePathPrefix + "right.jpg", texturePathPrefix + "left.jpg", texturePathPrefix + "top.jpg", texturePathPrefix + "bottom.jpg", texturePathPrefix + "front.jpg", texturePathPrefix + "back.jpg");
 	}
 	
 }

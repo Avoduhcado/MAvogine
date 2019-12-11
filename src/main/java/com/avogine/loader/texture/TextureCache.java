@@ -28,4 +28,8 @@ public class TextureCache {
 		return textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().reduce((a, b) -> a + " " + b).get(), v -> TextureLoader.loadCubemap(textureFiles));
 	}
 	
+	public Texture getCubemap(String directory) {
+		return textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory));
+	}
+	
 }
