@@ -1,6 +1,7 @@
 package com.avogine.core.resource.util;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,6 +47,10 @@ public class ResourceFileReader {
 	public static ByteBuffer readResourceToByteBuffer(String filePath) {
 		ByteBuffer buffer = null;
 		try (InputStream source = ResourceFileReader.class.getClassLoader().getResourceAsStream(filePath)) {
+			if (source == null) {
+				throw new FileNotFoundException("Could not locate resource: " + filePath);
+			}
+			
 			// Read all the bytes from the InputStream and create a new DIRECT ByteBuffer
 			byte[] inBytes = source.readAllBytes();
 			buffer = ByteBuffer.allocateDirect(inBytes.length);
