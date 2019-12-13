@@ -34,7 +34,7 @@ public class Play implements Runnable {
 	
 	public void start() {
 		// Macs handle Threads differently
-		// Also GLFW and AWT don't play nice so we need to go headless
+		// Also GLFW and AWT don't play nice under Mac so we need to go headless
 		String osName = System.getProperty("os.name");
 		if (osName.contains("Mac")) {
 			System.setProperty("java.awt.headless", "true");
@@ -61,6 +61,24 @@ public class Play implements Runnable {
 		theater.init();
 		stage.init(theater);
 		timer.init();
+		
+		// XXX This sort of works, but only when the window is resized, not while it's being moved/held
+//		GLFW.glfwSetWindowRefreshCallback(theater.getId(), (window) -> {
+//			System.out.println("Refreshing");
+//			
+//			update(0.045f);
+//			
+//			fps++;
+//			if (frameTime >= 1.0f) {
+//				theater.setFps(fps);
+//				frameTime = 0;
+//				fps = 0;
+//			}
+//			stage.render();
+//			
+//			GLFW.glfwSwapBuffers(window);
+//		});
+		
 	}
 	
 	/**
@@ -76,7 +94,8 @@ public class Play implements Runnable {
 
 		boolean running = true;
 		while (running && !GLFW.glfwWindowShouldClose(theater.getId())) {
-			elapsedTime = timer.getElapsedTime();
+			// XXX Minor hack to limit frame updates when the window is "held" and instead tie pauses to at least the target UPS
+			elapsedTime = Math.min(interval, timer.getElapsedTime());
 			accumulator += elapsedTime;
 			frameTime += elapsedTime;
 
@@ -94,6 +113,7 @@ public class Play implements Runnable {
 	}
 	
 	private void input(Theater theater) {
+		// TODO Change this to call Input.update() over a collection of Theaters
 		stage.input(theater);
 	}
 	
@@ -109,6 +129,7 @@ public class Play implements Runnable {
 	}
 	
 	private void update(float interval) {
+		// TODO Process EventQueue
 		stage.update(interval, theater);
 	}
 	

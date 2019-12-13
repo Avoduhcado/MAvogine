@@ -1,7 +1,10 @@
 package com.avogine.core.system;
 
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -18,10 +21,17 @@ public class Theater {
 	private int height;
 	private String title;
 	
-	public Theater(int width, int height, String title) {
+	private TheaterOptions options;
+	
+	private long monitor;
+	private List<Long> monitorList = new ArrayList<>();
+	
+	public Theater(int width, int height, String title, TheaterOptions options) {
 		this.width = width;
 		this.height = height;
 		this.title = title;
+		
+		this.options = options;
 	}
 	
 	public void init() {
@@ -33,30 +43,43 @@ public class Theater {
 		
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
+//		GLFW.glfwWindowHint(GLFW.GLFW_DECORATED, GLFW.GLFW_FALSE);
+//		GLFW.glfwWindowHint(GLFW.GLFW_FLOATING, GLFW.GLFW_TRUE);
+//		GLFW.glfwWindowHint(GLFW.GLFW_TRANSPARENT_FRAMEBUFFER, GLFW.GLFW_TRUE);
 		
 		id = GLFW.glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
 		if (id == MemoryUtil.NULL) {
 			throw new RuntimeException("Failed to create window!");
 		}
 		
-		GLFW.glfwSetKeyCallback(id, (window, key, scancode, action, mods) -> {
-			if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE) {
-				GLFW.glfwSetWindowShouldClose(window, true);
-			}
-		});
+		PointerBuffer monitorBuffer = GLFW.glfwGetMonitors();
+		while (monitorBuffer.hasRemaining()) {
+			long monitorID = monitorBuffer.get();
+			monitorList.add(monitorID);
+		}
+		monitor = monitorList.get(options.monitorIndex);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
 			IntBuffer pHeight = stack.mallocInt(1);
 			
+			IntBuffer pX = stack.mallocInt(1);
+			IntBuffer pY = stack.mallocInt(1);
+			
 			GLFW.glfwGetWindowSize(id, pWidth, pHeight);
 			
-			GLFWVidMode videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+			GLFW.glfwGetMonitorPos(monitor, pX, pY);
 			
-			GLFW.glfwSetWindowPos(id, (videoMode.width() - pWidth.get(0)) / 2, (videoMode.height() - pHeight.get(0)) / 2);
+			GLFWVidMode videoMode = GLFW.glfwGetVideoMode(monitor);
+			
+			GLFW.glfwSetWindowPos(id, pX.get() + (videoMode.width() - pWidth.get(0)) / 2, pY.get() + (videoMode.height() - pHeight.get(0)) / 2);
 		}
 		
 		GLFW.glfwMakeContextCurrent(id);
+		
+		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
+			GLFW.glfwSetWindowOpacity(id, 0.5f);
+		}
 		
 		GLFW.glfwShowWindow(id);
 
@@ -70,9 +93,22 @@ public class Theater {
 			this.height = height;
 			GL11.glViewport(0, 0, width, height);
 		});
+		
+		GLFW.glfwSetWindowPosCallback(id, (window, x, y) -> {
+			System.out.println("x " + x + " y " + y);
+		});
+		
+		Input.registerWindow(this);
 	}
 	
+	/**
+	 * Display the current frame to this window. If this window's context is not currently bound, bind it before attempting to draw the scene.
+	 * After the scene buffer has been swapped this will poll for events, it should be the last thing called each frame.
+	 */
 	public void render() {
+		if (GLFW.glfwGetCurrentContext() != id) {
+			GLFW.glfwMakeContextCurrent(id);
+		}
 		GLFW.glfwSwapBuffers(id);
 		GLFW.glfwPollEvents();
 	}
@@ -87,7 +123,8 @@ public class Theater {
 	}
 	
 	/**
-	 * @return Window {@link #width} divided by {@link #height}
+	 * Returns <tt>{@link #width} / {@link #height}</tt> as a <tt>float</tt>
+	 * @return <tt>width / height</tt> as a <tt>float</tt>
 	 */
 	public float getAspectRatio() {
 		return (float) width / (float) height;
@@ -99,6 +136,30 @@ public class Theater {
 	
 	public int getHeight() {
 		return height;
+	}
+	
+	/**
+	 * Assorted options to be set prior to window creation to control optional parameters.
+	 * @author Dominus
+	 *
+	 */
+	public static class TheaterOptions {
+		
+		/**
+		 * Initialize the window in full screen mode.
+		 */
+		public boolean fullScreen;
+		
+		/**
+		 * Sync the window's refresh rate with the monitor's to avoid screen tearing.
+		 */
+		public boolean vsync;
+		
+		/**
+		 * The default monitor that the window should be placed on.
+		 */
+		public int monitorIndex;
+		
 	}
 	
 }
