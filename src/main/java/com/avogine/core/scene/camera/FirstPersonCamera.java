@@ -101,6 +101,7 @@ public class FirstPersonCamera extends Camera implements KeyboardListener, Mouse
 
 	@Override
 	public void keyPressed(KeyboardEvent event) {
+		// TODO Replace the forward.cross computations with orientation?
 		if (event.getType() == GLFW.GLFW_PRESS) {
 			switch (event.getKey()) {
 			case GLFW.GLFW_KEY_W:

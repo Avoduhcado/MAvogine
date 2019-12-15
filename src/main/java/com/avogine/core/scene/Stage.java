@@ -1,5 +1,6 @@
 package com.avogine.core.scene;
 
+import com.avogine.core.entity.Renderable;
 import com.avogine.core.system.Play;
 import com.avogine.core.system.Theater;
 
@@ -26,6 +27,8 @@ public interface Stage {
 	 * Initiate the rendering of the entire stage.
 	 */
 	public void render();
+	
+	public Scene<? extends Renderable> getScene();
 
 	public void cleanup();
 
