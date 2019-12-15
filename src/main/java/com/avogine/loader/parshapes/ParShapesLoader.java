@@ -1,4 +1,4 @@
-package come.avogine.loader.parshapes;
+package com.avogine.loader.parshapes;
 
 import org.lwjgl.util.par.ParShapes;
 import org.lwjgl.util.par.ParShapesMesh;
