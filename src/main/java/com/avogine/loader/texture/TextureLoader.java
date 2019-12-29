@@ -51,7 +51,7 @@ public class TextureLoader {
 			if (imageData != null) {
 				width = widthBuffer.get();
 				height = heightBuffer.get();
-				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB, width, height, 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, imageData);
+				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, imageData);
 				STBImage.stbi_image_free(imageData);
 			} else {
 				System.err.println("Texture failed to load at path: " + filePath);
@@ -93,7 +93,7 @@ public class TextureLoader {
 				ByteBuffer fileData = ResourceFileReader.readResourceToByteBuffer(filePath);
 				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 0);
 				if (imageData != null) {
-					GL11.glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL11.GL_RGB, width.get(), height.get(), 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, imageData);
+					GL11.glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL11.GL_RGBA8, width.get(), height.get(), 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, imageData);
 					STBImage.stbi_image_free(imageData);
 				} else {
 					System.err.println("Cubemap texture failed to load at path: " + filePath);

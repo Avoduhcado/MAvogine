@@ -31,5 +31,9 @@ public class TextureCache {
 	public Texture getCubemap(String directory) {
 		return textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory));
 	}
+
+	public void cleanup() {
+		textureMap.values().forEach(Texture::cleanup);
+	}
 	
 }

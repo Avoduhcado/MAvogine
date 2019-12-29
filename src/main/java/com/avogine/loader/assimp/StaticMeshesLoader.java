@@ -195,7 +195,11 @@ public class StaticMeshesLoader {
 //					numberOfInstances);
 		} else {
 			mesh = new Mesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)));
-			mesh.addAttribute(1, ArrayUtils.toPrimitive(textures.toArray(Float[]::new)), 2);
+			if (textures.isEmpty()) {
+				mesh.addAttribute(1, Mesh.createEmptyFloatArray((vertices.size() / 3) * 2, 0), 2);
+			} else {
+				mesh.addAttribute(1, ArrayUtils.toPrimitive(textures.toArray(Float[]::new)), 2);
+			}
 			mesh.addAttribute(2, ArrayUtils.toPrimitive(normals.toArray(Float[]::new)), 3);
 			mesh.addIndexAttribute(indices.stream().mapToInt(Integer::intValue).toArray());
 		}
