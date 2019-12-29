@@ -1,5 +1,6 @@
 package com.avogine.core.system;
 
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,9 @@ public class Theater {
 	private int width;
 	private int height;
 	private String title;
+	
+	private int fps;
+	private Runnable fpsListener;
 	
 	private TheaterOptions options;
 	
@@ -87,11 +91,23 @@ public class Theater {
 		
 		GL11.glClearColor(100f / 255f, 149f / 255f, 237f / 255f, 1f);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
+
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		
 		GLFW.glfwSetWindowSizeCallback(id, (window, width, height) -> {
 			this.width = width;
 			this.height = height;
 			GL11.glViewport(0, 0, width, height);
+			
+			try (MemoryStack stack = MemoryStack.stackPush()) {
+				FloatBuffer xscale = stack.mallocFloat(1);
+				FloatBuffer yscale = stack.mallocFloat(1);
+				
+				GLFW.glfwGetWindowContentScale(id, xscale, yscale);
+				
+				System.out.println(xscale.get() + " " + yscale.get());
+			}
 		});
 		
 		GLFW.glfwSetWindowPosCallback(id, (window, x, y) -> {
@@ -99,6 +115,18 @@ public class Theater {
 		});
 		
 		Input.registerWindow(this);
+		
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			FloatBuffer scaleX = stack.mallocFloat(1);
+			FloatBuffer scaleY = stack.mallocFloat(1);
+			
+			GLFW.glfwGetMonitorContentScale(id, scaleX, scaleY);
+			
+			float contentScaleX = scaleX.get();
+			float contentScaleY = scaleY.get();
+			
+			System.out.println(contentScaleX + " " + contentScaleY);
+		}
 	}
 	
 	/**
@@ -113,9 +141,19 @@ public class Theater {
 		GLFW.glfwPollEvents();
 	}
 	
-	// XXX temporary convenience method
+	public int getFps() {
+		return fps;
+	}
+	
 	public void setFps(int fps) {
-		GLFW.glfwSetWindowTitle(id, title + " FPS: " + fps);
+		this.fps = fps;
+		if (fpsListener != null) {
+			fpsListener.run();
+		}
+	}
+	
+	public void setFpsListener(Runnable run) {
+		this.fpsListener = run;
 	}
 	
 	public long getId() {

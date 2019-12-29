@@ -18,10 +18,5 @@ public class Cubemap extends Texture {
 	public void bind() {
 		GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, id);
 	}
-	
-	@Override
-	public void unbind() {
-		GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, 0);
-	}
 
 }

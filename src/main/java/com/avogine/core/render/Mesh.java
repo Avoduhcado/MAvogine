@@ -57,7 +57,7 @@ public class Mesh {
 	
 	public void unbind() {
 		GL30.glBindVertexArray(0);
-		unbindMaterial();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 	}
 
 	/**
@@ -74,18 +74,6 @@ public class Mesh {
 		if (material.hasNormalMap()) {
 			GL13.glActiveTexture(GL13.GL_TEXTURE1);
 			material.getNormalMap().bind();
-		}
-	}
-	
-	private void unbindMaterial() {
-		if (material == null) {
-			return;
-		}
-		if (material.isTextured()) {
-			material.getTexture().unbind();
-		}
-		if (material.hasNormalMap()) {
-			material.getNormalMap().unbind();
 		}
 	}
 	

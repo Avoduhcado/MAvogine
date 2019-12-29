@@ -11,5 +11,7 @@ public class ResourceConstants {
 	public static final String SHADER_PATH = "shaders" + SEPARATOR;
 	/** {@value #TEXTURE_PATH} */
 	public static final String TEXTURE_PATH = "textures" + SEPARATOR;
+	/** {@value #FONT_PATH} */
+	public static final String FONT_PATH = "fonts" + SEPARATOR;
 
 }
