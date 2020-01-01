@@ -124,7 +124,7 @@ public class Play implements Runnable {
 			frameTime = 0;
 			fps = 0;
 		}
-		stage.render();
+		stage.render(theater);
 		theater.render();
 	}
 	

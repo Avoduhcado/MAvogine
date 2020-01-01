@@ -27,6 +27,8 @@ public class Theater {
 	
 	private TheaterOptions options;
 	
+	public static boolean debugMode;
+	
 	private long monitor;
 	private List<Long> monitorList = new ArrayList<>();
 	
@@ -139,6 +141,16 @@ public class Theater {
 		}
 		GLFW.glfwSwapBuffers(id);
 		GLFW.glfwPollEvents();
+	}
+	
+	public void restoreState() {
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glEnable(GL11.GL_STENCIL_TEST);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+//		if (options.cullFace) {
+//			glEnable(GL_CULL_FACE);
+//			glCullFace(GL_BACK);
+//		}
 	}
 	
 	public int getFps() {

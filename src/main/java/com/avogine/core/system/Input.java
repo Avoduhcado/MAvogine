@@ -38,6 +38,10 @@ public class Input {
 			if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE) {
 				GLFW.glfwSetWindowShouldClose(window, true);
 			}
+			
+			if (key == GLFW.GLFW_KEY_F3 && action == GLFW.GLFW_RELEASE) {
+				Theater.debugMode = !Theater.debugMode;
+			}
 		});
 		
 		GLFW.glfwSetMouseButtonCallback(theater.getId(), (window, button, action, mods) -> {

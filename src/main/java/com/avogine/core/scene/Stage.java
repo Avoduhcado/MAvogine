@@ -26,7 +26,7 @@ public interface Stage {
 	/**
 	 * Initiate the rendering of the entire stage.
 	 */
-	public void render();
+	public void render(Theater theater);
 	
 	public Scene<? extends Renderable> getScene();
 
