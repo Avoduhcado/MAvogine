@@ -90,7 +90,8 @@ public class FontSTB {
 			IntBuffer y0 = stack.mallocInt(1);
 			IntBuffer x1 = stack.mallocInt(1);
 			IntBuffer y1 = stack.mallocInt(1);
-			
+
+			// XXX This method can cause a crash if left running long enough? Does the info address get overwritten?
 			float scale = STBTruetype.stbtt_ScaleForPixelHeight(info, height);
 			STBTruetype.stbtt_GetFontBoundingBox(info, x0, y0, x1, y1);
 			
@@ -105,16 +106,16 @@ public class FontSTB {
 	public int getTextWidth(String text) {
 		int width = 0;
 		
-		try (MemoryStack stack = MemoryStack.stackPush()) {
+		//try (MemoryStack stack = MemoryStack.stackPush()) {
+			int[] advanceWidth = new int[1];
 			//IntBuffer leftBearing = stack.ints(0);
 			float scale = STBTruetype.stbtt_ScaleForPixelHeight(info, height);
 			
 			for (char c : text.toCharArray()) {
-				IntBuffer advanceWidth = stack.mallocInt(1);
 				STBTruetype.stbtt_GetCodepointHMetrics(info, c, advanceWidth, null);
-				width += scale * advanceWidth.get();
+				width += scale * advanceWidth[0];
 			}
-		}
+		//}
 		
 		return width;
 	}
