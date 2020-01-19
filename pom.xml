@@ -5,7 +5,7 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
-  	<module>AssetLoader</module>
-  	<module>AvogineCore</module>
+  	<module>util</module>
+  	<module>base</module>
   </modules>
 </project>
