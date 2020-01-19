@@ -9,7 +9,6 @@
 	</parent>
 	<artifactId>util</artifactId>
 	<build>
-		<sourceDirectory>src</sourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -77,8 +76,8 @@
 			<version>${joml.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.avogine.core</groupId>
-			<artifactId>core</artifactId>
+			<groupId>com.avogine</groupId>
+			<artifactId>base</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
