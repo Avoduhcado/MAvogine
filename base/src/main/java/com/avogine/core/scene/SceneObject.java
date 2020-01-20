@@ -1,6 +1,6 @@
 package com.avogine.core.scene;
 
-import com.avogine.core.system.Theater;
+import com.avogine.core.system.Window;
 
 /**
  * TODO Should the scene instead be in charge of knowing what objects exist within it? That would cutdown greatly on bloated constructors and passing around things, plus benefits of add/remove from the container itself not
@@ -10,18 +10,18 @@ import com.avogine.core.system.Theater;
  */
 public abstract class SceneObject {
 
-	// TODO Change this to a Scene instead of theater and source the theater from the scene? That path may be difficult since a scene lives inside a Stage inside a Theater
-	protected Theater container;
+	// TODO Change this to a Scene instead of window and source the window from the scene? That path may be difficult since a scene lives inside a Stage inside a Theater
+	protected Window container;
 	
-	protected SceneObject(Theater theater) {
-		this.container = theater;
+	protected SceneObject(Window window) {
+		this.container = window;
 	}
 	
-	public Theater getContainer() {
+	public Window getContainer() {
 		return container;
 	}
 	
-	public void setContainer(Theater container) {
+	public void setContainer(Window container) {
 		this.container = container;
 	}
 	
