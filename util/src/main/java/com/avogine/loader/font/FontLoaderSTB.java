@@ -32,7 +32,8 @@ public class FontLoaderSTB {
 	private static final int FONT_HEIGHT = 24;
 	
 	public static FontSTB loadFont(String fontname) {
-		ByteBuffer ttfBuffer = ResourceFileReader.readResourceToByteBuffer(ResourceConstants.FONT_PATH + fontname);
+		//ByteBuffer ttfBuffer = ResourceFileReader.readResourceToByteBuffer(ResourceConstants.FONT_PATH + fontname);
+		ByteBuffer ttfBuffer = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONT_PATH + fontname, 1024);
 		
 		STBTTFontinfo info = STBTTFontinfo.create();
 		if (!STBTruetype.stbtt_InitFont(info, ttfBuffer)) {
@@ -60,12 +61,13 @@ public class FontLoaderSTB {
 	}
 	
 	/**
+	 * TODO Move this to test code, it's kind of pointless here
 	 * Save out a PNG file of what would be rendered into a font file as a gray scale bitmap instead.
 	 * This will save the file in the root directory of the project as "fontname_{@value #FONT_HEIGHT}.png"
 	 * @param fontname The font to render
 	 */
 	public static void debugPrintFontBitmap(String fontname) {
-		ByteBuffer ttfBuffer = ResourceFileReader.readResourceToByteBuffer(ResourceConstants.FONT_PATH + fontname);
+		ByteBuffer ttfBuffer = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONT_PATH + fontname, 1024);
 		
 		STBTTFontinfo info = STBTTFontinfo.create();
 		if (!STBTruetype.stbtt_InitFont(info, ttfBuffer)) {
