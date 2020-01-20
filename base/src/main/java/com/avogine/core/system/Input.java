@@ -31,8 +31,8 @@ public class Input {
 		Arrays.fill(keys, false);
 	}
 	
-	public static void registerWindow(Theater theater) {
-		GLFW.glfwSetKeyCallback(theater.getId(), (window, key, scancode, action, mods) -> {
+	public static void registerWindow(Window register) {
+		GLFW.glfwSetKeyCallback(register.getId(), (window, key, scancode, action, mods) -> {
 			fireKeyboardEvent(window, new KeyboardEvent(action, key, window));
 			// XXX Hmm, this seems like a terrible way to handle this
 			if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE) {
@@ -40,29 +40,29 @@ public class Input {
 			}
 			
 			if (key == GLFW.GLFW_KEY_F3 && action == GLFW.GLFW_RELEASE) {
-				Theater.debugMode = !Theater.debugMode;
+				Window.debugMode = !Window.debugMode;
 			}
 		});
 		
-		GLFW.glfwSetMouseButtonCallback(theater.getId(), (window, button, action, mods) -> {
+		GLFW.glfwSetMouseButtonCallback(register.getId(), (window, button, action, mods) -> {
 			fireMouseClickEvent(window, new MouseClickEvent(window, button, action));
 		});
 		
-		GLFW.glfwSetCursorPosCallback(theater.getId(), (window, xPos, yPos) -> {
+		GLFW.glfwSetCursorPosCallback(register.getId(), (window, xPos, yPos) -> {
 			fireMouseMotionEvent(window, new MouseMotionEvent(window, xPos, yPos));
 		});
 		
-		GLFW.glfwSetScrollCallback(theater.getId(), (window, xOffset, yOffset) -> {
+		GLFW.glfwSetScrollCallback(register.getId(), (window, xOffset, yOffset) -> {
 			fireMouseScrollEvent(window, new MouseScrollEvent(window, xOffset, yOffset));
 		});
 	}
 	
-	public static void update(Theater theater) {
+	public static void update(Window window) {
 		// GLFW#GLFW_REPEAT has god awful lag, so we're gonna roll our own keyDown events
 		// Perhaps in the future we'll only update the array of specified key bindings rather than all accessible keys.
 		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
-			if (GLFW.glfwGetKey(theater.getId(), i) == GLFW.GLFW_PRESS) {
-				fireKeyboardEvent(theater.getId(), new KeyboardEvent(GLFW.GLFW_PRESS, i, theater.getId()));
+			if (GLFW.glfwGetKey(window.getId(), i) == GLFW.GLFW_PRESS) {
+				fireKeyboardEvent(window.getId(), new KeyboardEvent(GLFW.GLFW_PRESS, i, window.getId()));
 			}
 		}
 		
@@ -82,7 +82,7 @@ public class Input {
 	}
 	
 	public static <T extends InputListener> Stream<T> getListenersOfType(long id, Class<T> clazz) {
-		return listeners.get(id).stream()
+		return listeners.getOrDefault(id, Set.of()).stream()
 				.filter(clazz::isInstance)
 				.map(clazz::cast);
 	}

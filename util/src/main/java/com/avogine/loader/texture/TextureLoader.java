@@ -1,8 +1,5 @@
 package com.avogine.loader.texture;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
@@ -20,6 +17,7 @@ import com.avogine.core.resource.util.ResourceConstants;
 import com.avogine.core.resource.util.ResourceFileReader;
 
 /**
+ * TODO Add some default textures if anything fails to load
  * <p>Utility class for loading image files into usable OpenGL textures.
  * 
  * <p>This class has protected access methods and as such should be used through the {@link TextureCache} to avoid
@@ -46,7 +44,7 @@ public class TextureLoader {
 			IntBuffer nrChannels = stack.mallocInt(1);
 			
 			String filePath = ResourceConstants.TEXTURE_PATH + filename;
-			ByteBuffer fileData = ResourceFileReader.readResourceToByteBuffer(filePath);
+			ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
 			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
 			if (imageData != null) {
 				width = widthBuffer.get();
@@ -90,7 +88,7 @@ public class TextureLoader {
 				height = stack.mallocInt(1);
 				nrChannels = stack.mallocInt(1);
 				String filePath = ResourceConstants.TEXTURE_PATH + filenames[i];
-				ByteBuffer fileData = ResourceFileReader.readResourceToByteBuffer(filePath);
+				ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
 				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 0);
 				if (imageData != null) {
 					GL11.glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL11.GL_RGBA8, width.get(), height.get(), 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, imageData);
@@ -125,20 +123,7 @@ public class TextureLoader {
 	 * @return
 	 */
 	protected static Texture loadCubemap(String directoryName) {
-		// Fail fast if we were not given a valid directory
-		URL url = TextureLoader.class.getClassLoader().getResource(ResourceConstants.TEXTURE_PATH + directoryName);
-		File directory;
-		try {
-			directory = new File(url.toURI().getPath());
-			if (!directory.isDirectory()) {
-				return null;
-			}
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			return null;
-		}
-		
-		String texturePathPrefix = directoryName + ResourceConstants.SEPARATOR;
+		String texturePathPrefix = directoryName + "/";
 		return loadCubemap(texturePathPrefix + "right.jpg", texturePathPrefix + "left.jpg", texturePathPrefix + "top.jpg", texturePathPrefix + "bottom.jpg", texturePathPrefix + "front.jpg", texturePathPrefix + "back.jpg");
 	}
 	

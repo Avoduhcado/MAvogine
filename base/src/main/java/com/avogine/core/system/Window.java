@@ -1,6 +1,5 @@
 package com.avogine.core.system;
 
-import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-public class Theater {
+public class Window {
 
 	private long id;
 	
@@ -32,7 +31,7 @@ public class Theater {
 	private long monitor;
 	private List<Long> monitorList = new ArrayList<>();
 	
-	public Theater(int width, int height, String title, TheaterOptions options) {
+	public Window(int width, int height, String title, TheaterOptions options) {
 		this.width = width;
 		this.height = height;
 		this.title = title;
@@ -102,14 +101,14 @@ public class Theater {
 			this.height = height;
 			GL11.glViewport(0, 0, width, height);
 			
-			try (MemoryStack stack = MemoryStack.stackPush()) {
-				FloatBuffer xscale = stack.mallocFloat(1);
-				FloatBuffer yscale = stack.mallocFloat(1);
-				
-				GLFW.glfwGetWindowContentScale(id, xscale, yscale);
-				
-				System.out.println(xscale.get() + " " + yscale.get());
-			}
+//			try (MemoryStack stack = MemoryStack.stackPush()) {
+//				FloatBuffer xscale = stack.mallocFloat(1);
+//				FloatBuffer yscale = stack.mallocFloat(1);
+//				
+//				GLFW.glfwGetWindowContentScale(id, xscale, yscale);
+//				
+//				System.out.println(xscale.get() + " " + yscale.get());
+//			}
 		});
 		
 		GLFW.glfwSetWindowPosCallback(id, (window, x, y) -> {
@@ -118,17 +117,17 @@ public class Theater {
 		
 		Input.registerWindow(this);
 		
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			FloatBuffer scaleX = stack.mallocFloat(1);
-			FloatBuffer scaleY = stack.mallocFloat(1);
-			
-			GLFW.glfwGetMonitorContentScale(id, scaleX, scaleY);
-			
-			float contentScaleX = scaleX.get();
-			float contentScaleY = scaleY.get();
-			
-			System.out.println(contentScaleX + " " + contentScaleY);
-		}
+//		try (MemoryStack stack = MemoryStack.stackPush()) {
+//			FloatBuffer scaleX = stack.mallocFloat(1);
+//			FloatBuffer scaleY = stack.mallocFloat(1);
+//			
+//			GLFW.glfwGetMonitorContentScale(id, scaleX, scaleY);
+//			
+//			float contentScaleX = scaleX.get();
+//			float contentScaleY = scaleY.get();
+//			
+//			System.out.println(contentScaleX + " " + contentScaleY);
+//		}
 	}
 	
 	/**
@@ -141,6 +140,10 @@ public class Theater {
 		}
 		GLFW.glfwSwapBuffers(id);
 		GLFW.glfwPollEvents();
+	}
+	
+	public void update() {
+		
 	}
 	
 	public void restoreState() {

@@ -51,7 +51,8 @@ public class StaticMeshesLoader {
 				AIFile aiFile = AIFile.create();
 				final ByteBuffer data;
 				String fileNameUtf8 = MemoryUtil.memUTF8(fileName);
-				data = ResourceFileReader.readResourceToByteBuffer(fileNameUtf8);
+				//data = ResourceFileReader.readResourceToByteBuffer(fileNameUtf8);
+				data = ResourceFileReader.ioResourceToByteBuffer(fileNameUtf8, 8 * 1024);
 				//data = IOUtil.ioResourceToByteBuffer(fileNameUtf8, 8 * 1024);
 				AIFileReadProcI fileReadProc = new AIFileReadProc() {
 					public long invoke(long pFile, long pBuffer, long size, long count) {

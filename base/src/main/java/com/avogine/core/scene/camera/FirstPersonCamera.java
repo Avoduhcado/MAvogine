@@ -7,7 +7,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.core.system.Input;
-import com.avogine.core.system.Theater;
+import com.avogine.core.system.Window;
 import com.avogine.core.system.event.KeyboardEvent;
 import com.avogine.core.system.event.MouseClickEvent;
 import com.avogine.core.system.event.MouseMotionEvent;
@@ -19,17 +19,17 @@ import com.avogine.core.system.listener.MouseScrollListener;
 
 public class FirstPersonCamera extends Camera implements KeyboardListener, MouseMotionListener, MouseClickListener, MouseScrollListener {
 
-	public FirstPersonCamera(Theater theater, Vector3f position, float speed, float yaw, float fov) {
-		super(theater, position, speed, yaw, fov);
+	public FirstPersonCamera(Window window, Vector3f position, float speed, float yaw, float fov) {
+		super(window, position, speed, yaw, fov);
 		Input.add(getContainer().getId(), this);
 	}
 	
-	public FirstPersonCamera(Theater theater, Vector3f position) {
-		this(theater, position, 10f, -90f, 45f);
+	public FirstPersonCamera(Window window, Vector3f position) {
+		this(window, position, 10f, -90f, 45f);
 	}
 	
-	public FirstPersonCamera(Theater theater) {
-		this(theater, new Vector3f());
+	public FirstPersonCamera(Window window) {
+		this(window, new Vector3f());
 	}
 
 	@Override

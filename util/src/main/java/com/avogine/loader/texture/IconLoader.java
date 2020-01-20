@@ -1,10 +1,9 @@
 package com.avogine.loader.texture;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
+import java.util.Set;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWImage;
@@ -26,6 +25,12 @@ import com.avogine.core.resource.util.ResourceFileReader;
  */
 public class IconLoader {
 
+	/**
+	 * 
+	 * @param filename
+	 * @param stack
+	 * @return
+	 */
 	public static GLFWImage loadIcon(String filename, MemoryStack stack) {
 		GLFWImage icon = null;
 		
@@ -34,7 +39,7 @@ public class IconLoader {
 		IntBuffer nrChannels = stack.mallocInt(1);
 
 		String filePath = ResourceConstants.TEXTURE_PATH + filename;
-		ByteBuffer fileData = ResourceFileReader.readResourceToByteBuffer(filePath);
+		ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 1024);
 		ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 4);
 		if (imageData != null) {
 			icon = GLFWImage.mallocStack(stack);
@@ -46,27 +51,24 @@ public class IconLoader {
 		return icon;
 	}
 	
+	/**
+	 * 
+	 * @param window
+	 * @param directoryName
+	 */
 	public static void loadAndSetIcons(long window, String directoryName) {
-		// Fail fast if we were not given a valid directory
-		URL url = IconLoader.class.getClassLoader().getResource(ResourceConstants.TEXTURE_PATH + directoryName);
-		File directory;
-		try {
-			directory = new File(url.toURI().getPath());
-			if (!directory.isDirectory()) {
-				return;
-			}
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
+		Set<Path> files = ResourceFileReader.listResourcePaths(ResourceConstants.TEXTURE_PATH + directoryName);
+		if (files == null || files.isEmpty()) {
 			return;
 		}
 		
 		Buffer iconBuffer = null;
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
-			iconBuffer = GLFWImage.mallocStack(directory.list().length, stack);
+			iconBuffer = GLFWImage.mallocStack(files.size(), stack);
 			// TODO Add file filter for image files only
-			for (String filename : directory.list()) {
-				iconBuffer.put(loadIcon(directoryName + ResourceConstants.SEPARATOR + filename, stack));
+			for (Path filePath : files) {
+				iconBuffer.put(loadIcon(directoryName + "/" + filePath.getFileName(), stack));
 			}
 			
 			iconBuffer.flip();

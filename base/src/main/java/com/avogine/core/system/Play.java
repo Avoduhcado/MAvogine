@@ -15,9 +15,11 @@ public class Play implements Runnable {
 	/**
 	 * Target updates per second. Controls how often game logic is run in a single second.
 	 */
-	public static final int TARGET_UPS = 30;
+	public static final int TARGET_UPS = 60;
 	
-	private final Theater theater;
+	// TODO Multiple Theaters in a list
+	// TODO Better Theater/Window and Stage hierarchy
+	private final Window window;
 	private final Stage stage;
 	private final Thread gameLoopThread;
 	private final Timer timer;
@@ -25,9 +27,9 @@ public class Play implements Runnable {
 	private float frameTime;
 	private int fps;
 	
-	public Play(Theater theater, Stage stage) {
+	public Play(Window window, Stage stage) {
 		gameLoopThread = new Thread(this, "GAME_LOOP_THREAD");
-		this.theater = theater;
+		this.window = window;
 		this.stage = stage;
 		this.timer = new Timer();
 	}
@@ -58,23 +60,23 @@ public class Play implements Runnable {
 	}
 	
 	private void init() {
-		theater.init();
-		stage.init(theater);
+		window.init();
+		stage.init(window);
 		timer.init();
 		
 		// XXX This sort of works, but only when the window is resized, not while it's being moved/held
-//		GLFW.glfwSetWindowRefreshCallback(theater.getId(), (window) -> {
+//		GLFW.glfwSetWindowRefreshCallback(window.getId(), (window) -> {
 //			System.out.println("Refreshing");
 //			
 //			update(0.045f);
 //			
 //			fps++;
 //			if (frameTime >= 1.0f) {
-//				theater.setFps(fps);
+//				window.setFps(fps);
 //				frameTime = 0;
 //				fps = 0;
 //			}
-//			stage.render();
+//			stage.render(window);
 //			
 //			GLFW.glfwSwapBuffers(window);
 //		});
@@ -84,7 +86,7 @@ public class Play implements Runnable {
 	/**
 	 * <p>Call once to kick off game loop.
 	 * 
-	 * <p>Runs as long as {@link #theater} is not set to close as specified by {@link GLFW#glfwWindowShouldClose(long)}.
+	 * <p>Runs as long as {@link #window} is not set to close as specified by {@link GLFW#glfwWindowShouldClose(long)}.
 	 * In order, once per frame the {@link #frameTime} is calculated, input is processed, update code is run, the screen is rendered, and then also synced.
 	 */
 	private void loop() {
@@ -93,13 +95,13 @@ public class Play implements Runnable {
 		float interval = 1f / TARGET_UPS;
 
 		boolean running = true;
-		while (running && !GLFW.glfwWindowShouldClose(theater.getId())) {
+		while (running && !GLFW.glfwWindowShouldClose(window.getId())) {
 			// XXX Minor hack to limit frame updates when the window is "held" and instead tie pauses to at least the target UPS
 			elapsedTime = Math.min(interval, timer.getElapsedTime());
 			accumulator += elapsedTime;
 			frameTime += elapsedTime;
 
-			input(theater);
+			input(window);
 
 			while (accumulator >= interval) {
 				update(interval);
@@ -112,25 +114,26 @@ public class Play implements Runnable {
 		}
 	}
 	
-	private void input(Theater theater) {
+	private void input(Window window) {
 		// TODO Change this to call Input.update() over a collection of Theaters
-		stage.input(theater);
+		stage.input(window);
 	}
 	
 	private void render() {
 		fps++;
 		if (frameTime >= 1.0f) {
-			theater.setFps(fps);
+			window.setFps(fps);
 			frameTime = 0;
 			fps = 0;
 		}
-		stage.render(theater);
-		theater.render();
+		stage.render(window);
+		window.render();
 	}
 	
 	private void update(float interval) {
 		// TODO Process EventQueue
-		stage.update(interval, theater);
+		stage.update(interval, window);
+		window.update();
 	}
 	
 	private void sync() {
@@ -147,8 +150,8 @@ public class Play implements Runnable {
 	private void cleanup() {
 		stage.cleanup();
 		
-		Callbacks.glfwFreeCallbacks(theater.getId());
-		GLFW.glfwDestroyWindow(theater.getId());
+		Callbacks.glfwFreeCallbacks(window.getId());
+		GLFW.glfwDestroyWindow(window.getId());
 		
 		GLFW.glfwTerminate();
 		GLFW.glfwSetErrorCallback(null).free();

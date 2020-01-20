@@ -3,7 +3,7 @@ package com.avogine.core.scene.camera;
 import org.joml.Vector3f;
 
 import com.avogine.core.scene.SceneObject;
-import com.avogine.core.system.Theater;
+import com.avogine.core.system.Window;
 
 public abstract class Camera extends SceneObject {
 
@@ -21,8 +21,8 @@ public abstract class Camera extends SceneObject {
 	
 	protected float fov;
 	
-	public Camera(Theater theater, Vector3f position, float speed, float yaw, float fov) {
-		super(theater);
+	public Camera(Window window, Vector3f position, float speed, float yaw, float fov) {
+		super(window);
 		this.position = position;
 		this.velocity = new Vector3f();
 		this.speed = speed;
@@ -30,12 +30,12 @@ public abstract class Camera extends SceneObject {
 		this.fov = fov;
 	}
 	
-	public Camera(Theater theater, Vector3f position) {
-		this(theater, position, 10f, -90f, 45f);
+	public Camera(Window window, Vector3f position) {
+		this(window, position, 10f, -90f, 45f);
 	}
 	
-	public Camera(Theater theater) {
-		this(theater, new Vector3f());
+	public Camera(Window window) {
+		this(window, new Vector3f());
 	}
 	
 	public void update(float interval) {

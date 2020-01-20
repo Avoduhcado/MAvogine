@@ -1,11 +1,28 @@
 package com.avogine.core.resource.util;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  * Static utility for reading resource files.
@@ -21,7 +38,7 @@ public class ResourceFileReader {
 	 */
 	public static StringBuilder readTextFile(String filePath) {
 		StringBuilder fileContents = new StringBuilder();
-		try (InputStream in = ResourceFileReader.class.getClassLoader().getResourceAsStream(filePath);
+		try (InputStream in = ResourceFileReader.class.getResourceAsStream(filePath);
 				BufferedReader reader = new BufferedReader(new InputStreamReader(in));) {
 			String line;
 			while ((line = reader.readLine()) != null) {
@@ -37,34 +54,89 @@ public class ResourceFileReader {
 	}
 	
 	/**
-	 * <p>Read a resource file to a {@link ByteBuffer}.
 	 * 
-	 * <p>If a resource needs to be loaded from memory, likely due to jar access restrictions through certain libraries,
-	 * using this method will provide you with easy access to the data through a buffer.
-	 * @param filePath the file path starting from <tt>src/main/resources/</tt>
-	 * @return A direct <tt>ByteBuffer</tt> containing the contents of the file.
+	 * @param resourceDirectory
+	 * @return
 	 */
-	public static ByteBuffer readResourceToByteBuffer(String filePath) {
-		ByteBuffer buffer = null;
-		try (InputStream source = ResourceFileReader.class.getClassLoader().getResourceAsStream(filePath)) {
-			if (source == null) {
-				throw new FileNotFoundException("Could not locate resource: " + filePath);
+	public static Set<Path> listResourcePaths(String resourceDirectory) {
+		Set<Path> filePaths = new HashSet<>();
+		try {
+			URI uri = ResourceFileReader.class.getResource(resourceDirectory).toURI();
+			Path myPath = null;
+			if (uri.getScheme().equals("jar")) {
+				// XXX Unclear if this needs explicitly closed, putting it in a try-with-resources here causes a Closed exception
+				FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+				myPath = fileSystem.getPath(resourceDirectory);
+			} else {
+				myPath = Paths.get(uri);
 			}
-			
-			// Read all the bytes from the InputStream and create a new DIRECT ByteBuffer
-			byte[] inBytes = source.readAllBytes();
-			buffer = ByteBuffer.allocateDirect(inBytes.length);
-
-			// Store all the bytes in the buffer and prepare it for loading
-			buffer.put(inBytes);
-			buffer.flip();
+			try (Stream<Path> paths = Files.walk(myPath, 1)) {
+				filePaths = paths
+						.filter(Files::isRegularFile)
+						.collect(Collectors.toSet());
+			} catch (IOException e) {
+				throw new RuntimeException("Cannot walk resource path: " + resourceDirectory);
+			}
+		} catch (URISyntaxException e) {
+			throw new UnsupportedOperationException("Cannot read URI for resource: " + resourceDirectory);
 		} catch (IOException e) {
-			// TODO Logger
-			System.err.println("Could not read file! " + filePath);
-			e.printStackTrace();
-			System.exit(1);
+			throw new RuntimeException("Could not open FileSystem for resource: " + resourceDirectory);
 		}
+		return filePaths;
+	}
+	
+	/**
+	 * 
+	 * @param resource
+	 * @param bufferSize
+	 * @return
+	 */
+	public static ByteBuffer ioResourceToByteBuffer(String resource, int bufferSize) {
+		System.out.println("Reading " + resource);
+		ByteBuffer buffer = null;
+
+		Path path = Paths.get(resource);
+		if (Files.isReadable(path)) {
+			try (SeekableByteChannel fc = Files.newByteChannel(path)) {
+				buffer = MemoryUtil.memAlloc((int) fc.size() + 1);
+				while (fc.read(buffer) != -1) {
+					
+				}
+			} catch (IOException e) {
+				System.err.println("Could not read file! " + path);
+				e.printStackTrace();
+				System.exit(1);
+			}
+		} else {
+			try (InputStream in = ResourceFileReader.class.getResourceAsStream(resource);
+					ReadableByteChannel rbc = Channels.newChannel(in)) {
+				buffer = MemoryUtil.memAlloc(bufferSize);
+
+				while (true) {
+					int bytes = rbc.read(buffer);
+					if (bytes == -1) {
+						break;
+					}
+					if (buffer.remaining() == 0) {
+						buffer = resizeBuffer(buffer, buffer.capacity() * 2);
+					}
+				}
+			} catch (IOException e) {
+				System.err.println("Could not read file! " + path);
+				e.printStackTrace();
+				System.exit(1);
+			}
+		}
+
+		buffer.flip();
 		return buffer;
+	}
+	
+	private static ByteBuffer resizeBuffer(ByteBuffer buffer, int newCapacity) {
+		ByteBuffer newBuffer = BufferUtils.createByteBuffer(newCapacity);
+		buffer.flip();
+		newBuffer.put(buffer);
+		return newBuffer;
 	}
 
 }
