@@ -24,14 +24,14 @@ public class Window {
 	private int fps;
 	private Runnable fpsListener;
 	
-	private TheaterOptions options;
+	private WindowOptions options;
 	
 	public static boolean debugMode;
 	
 	private long monitor;
 	private List<Long> monitorList = new ArrayList<>();
 	
-	public Window(int width, int height, String title, TheaterOptions options) {
+	public Window(int width, int height, String title, WindowOptions options) {
 		this.width = width;
 		this.height = height;
 		this.title = title;
@@ -199,7 +199,7 @@ public class Window {
 	 * @author Dominus
 	 *
 	 */
-	public static class TheaterOptions {
+	public static class WindowOptions {
 		
 		/**
 		 * Initialize the window in full screen mode.
