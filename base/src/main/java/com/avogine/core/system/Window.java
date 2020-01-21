@@ -57,12 +57,15 @@ public class Window {
 			throw new RuntimeException("Failed to create window!");
 		}
 		
+		monitor = GLFW.glfwGetPrimaryMonitor();
 		PointerBuffer monitorBuffer = GLFW.glfwGetMonitors();
 		while (monitorBuffer.hasRemaining()) {
 			long monitorID = monitorBuffer.get();
 			monitorList.add(monitorID);
 		}
-		monitor = monitorList.get(options.monitorIndex);
+		if (options != null) {
+			monitor = monitorList.get(options.monitorIndex);
+		}
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
