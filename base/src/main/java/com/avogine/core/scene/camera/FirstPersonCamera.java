@@ -2,6 +2,7 @@ package com.avogine.core.scene.camera;
 
 import java.nio.DoubleBuffer;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
@@ -19,8 +20,11 @@ import com.avogine.core.system.listener.MouseScrollListener;
 
 public class FirstPersonCamera extends Camera implements KeyboardListener, MouseMotionListener, MouseClickListener, MouseScrollListener {
 
+	private Vector3f lookAt;
+	
 	public FirstPersonCamera(Window window, Vector3f position, float speed, float yaw, float fov) {
 		super(window, position, speed, yaw, fov);
+		lookAt = new Vector3f();
 		Input.add(getContainer().getId(), this);
 	}
 	
@@ -31,7 +35,14 @@ public class FirstPersonCamera extends Camera implements KeyboardListener, Mouse
 	public FirstPersonCamera(Window window) {
 		this(window, new Vector3f());
 	}
-
+	
+	@Override
+	public Matrix4f getView() {
+		view.identity();
+		view.lookAt(getPosition(), position.add(forward, lookAt), getUp());
+		return view;
+	}
+	
 	@Override
 	public void mouseScrolled(MouseScrollEvent event) {
 		if (getFov() >= 1.0f && getFov() <= 45.0f) {
@@ -92,11 +103,10 @@ public class FirstPersonCamera extends Camera implements KeyboardListener, Mouse
 			setPitch(-89.0f);
 		}
 
-		Vector3f front = new Vector3f();
-		front.x = (float) (Math.cos(Math.toRadians(getYaw())) * Math.cos(Math.toRadians(getPitch())));
-		front.y = (float) Math.sin(Math.toRadians(getPitch()));
-		front.z = (float) (Math.sin(Math.toRadians(getYaw())) * Math.cos(Math.toRadians(getPitch())));
-		getForward().set(front.normalize());
+		getForward().set((float) (Math.cos(Math.toRadians(getYaw())) * Math.cos(Math.toRadians(getPitch()))),
+				(float) Math.sin(Math.toRadians(getPitch())),
+				(float) (Math.sin(Math.toRadians(getYaw())) * Math.cos(Math.toRadians(getPitch())))).normalize();
+		System.out.println("FPS: " + forward.x + " " + forward.y + " " + forward.z);
 	}
 
 	@Override
@@ -108,13 +118,13 @@ public class FirstPersonCamera extends Camera implements KeyboardListener, Mouse
 				getVelocity().add(getForward());
 				break;
 			case GLFW.GLFW_KEY_A:
-				getVelocity().sub(getForward().cross(getUp(), new Vector3f()).normalize());
+				getVelocity().sub(getForward().cross(getUp(), right).normalize());
 				break;
 			case GLFW.GLFW_KEY_S:
 				getVelocity().sub(getForward());
 				break;
 			case GLFW.GLFW_KEY_D:
-				getVelocity().add(getForward().cross(getUp(), new Vector3f()).normalize());
+				getVelocity().add(getForward().cross(getUp(), right).normalize());
 				break;
 			case GLFW.GLFW_KEY_SPACE:
 				getVelocity().add(getUp());

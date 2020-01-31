@@ -1,5 +1,6 @@
 package com.avogine.core.scene.camera;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import com.avogine.core.scene.SceneObject;
@@ -13,6 +14,7 @@ public abstract class Camera extends SceneObject {
 	
 	protected Vector3f forward = new Vector3f(0, 0, -1);
 	protected Vector3f up = new Vector3f(0, 1, 0);
+	protected Vector3f right = new Vector3f(1, 0, 0);
 	
 	protected float yaw;
 	protected float pitch;
@@ -21,6 +23,8 @@ public abstract class Camera extends SceneObject {
 	
 	protected float fov;
 	
+	protected final Matrix4f view;
+	
 	public Camera(Window window, Vector3f position, float speed, float yaw, float fov) {
 		super(window);
 		this.position = position;
@@ -28,6 +32,7 @@ public abstract class Camera extends SceneObject {
 		this.speed = speed;
 		this.yaw = yaw;
 		this.fov = fov;
+		view = new Matrix4f();
 	}
 	
 	public Camera(Window window, Vector3f position) {
@@ -43,6 +48,8 @@ public abstract class Camera extends SceneObject {
 		position.add(velocity.mul(interval));
 		velocity.set(0);
 	}
+	
+	public abstract Matrix4f getView();
 	
 	public Vector3f getPosition() {
 		return position;
@@ -82,6 +89,14 @@ public abstract class Camera extends SceneObject {
 	
 	public void setUp(Vector3f up) {
 		this.up = up;
+	}
+	
+	public Vector3f getRight() {
+		return right;
+	}
+	
+	public void setRight(Vector3f right) {
+		this.right = right;
 	}
 	
 	public float getYaw() {
