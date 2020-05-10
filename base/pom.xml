@@ -22,7 +22,7 @@
 
 	<properties>
 		<lwjgl.version>3.2.3</lwjgl.version>
-		<joml.version>1.9.17</joml.version>
+		<joml.version>1.9.24</joml.version>
 		<lwjgl.natives>natives-windows</lwjgl.natives>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -75,6 +75,11 @@
 		<dependency>
 			<groupId>org.lwjgl</groupId>
 			<artifactId>lwjgl-glfw</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.avogine</groupId>
+			<artifactId>log</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>

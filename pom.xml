@@ -7,5 +7,6 @@
   <modules>
   	<module>util</module>
   	<module>base</module>
+  	<module>log</module>
   </modules>
 </project>
