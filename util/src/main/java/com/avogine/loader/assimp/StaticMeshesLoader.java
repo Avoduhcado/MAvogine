@@ -29,13 +29,13 @@ import org.lwjgl.assimp.AIVector3D;
 import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.core.render.Material;
-import com.avogine.core.render.Mesh;
-import com.avogine.core.render.Texture;
 import com.avogine.core.resource.util.ResourceConstants;
 import com.avogine.core.resource.util.ResourceFileReader;
 import com.avogine.loader.texture.TextureCache;
 import com.avogine.loader.util.ArrayUtils;
+import com.avogine.render.data.Material;
+import com.avogine.render.data.Mesh;
+import com.avogine.render.data.Texture;
 
 public class StaticMeshesLoader {
 

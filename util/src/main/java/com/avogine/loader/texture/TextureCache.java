@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.avogine.core.render.Texture;
+import com.avogine.render.data.Texture;
 
 public class TextureCache {
 

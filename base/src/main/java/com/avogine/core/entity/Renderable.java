@@ -1,6 +1,6 @@
 package com.avogine.core.entity;
 
-import com.avogine.core.render.Mesh;
+import com.avogine.render.data.Mesh;
 
 public interface Renderable {
 

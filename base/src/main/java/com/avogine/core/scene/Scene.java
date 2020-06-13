@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.avogine.core.entity.Renderable;
-import com.avogine.core.render.Mesh;
+import com.avogine.render.data.Mesh;
 
 public class Scene<T extends Renderable> {
 
@@ -60,7 +60,9 @@ public class Scene<T extends Renderable> {
 	
 	public void cleanup() {
 		entities.forEach(T::cleanup);
-		skybox.cleanup();
+		if (skybox != null) {
+			skybox.cleanup();
+		}
 	}
 	
 }

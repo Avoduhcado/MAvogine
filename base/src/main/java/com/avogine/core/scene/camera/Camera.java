@@ -4,9 +4,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import com.avogine.core.scene.SceneObject;
-import com.avogine.core.system.Window;
+import com.avogine.game.Window;
 
-public abstract class Camera extends SceneObject {
+public class Camera extends SceneObject {
 
 	protected Vector3f position;
 	protected Vector3f velocity;
@@ -22,6 +22,7 @@ public abstract class Camera extends SceneObject {
 	protected float lastY;
 	
 	protected float fov;
+	protected float offset;
 	
 	protected final Matrix4f view;
 	
@@ -32,6 +33,7 @@ public abstract class Camera extends SceneObject {
 		this.speed = speed;
 		this.yaw = yaw;
 		this.fov = fov;
+		this.offset = 25;
 		view = new Matrix4f();
 	}
 	
@@ -49,7 +51,9 @@ public abstract class Camera extends SceneObject {
 		velocity.set(0);
 	}
 	
-	public abstract Matrix4f getView();
+	public Matrix4f getView() {
+		return view;
+	}
 	
 	public Vector3f getPosition() {
 		return position;
@@ -137,6 +141,20 @@ public abstract class Camera extends SceneObject {
 	
 	public void setFov(float fov) {
 		this.fov = fov;
+	}
+	
+	/**
+	 * @return the offset
+	 */
+	public float getOffset() {
+		return offset;
+	}
+	
+	/**
+	 * @param offset the offset to set
+	 */
+	public void setOffset(float offset) {
+		this.offset = offset;
 	}
 	
 }

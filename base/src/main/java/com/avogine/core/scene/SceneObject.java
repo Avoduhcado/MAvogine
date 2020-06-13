@@ -1,6 +1,6 @@
 package com.avogine.core.scene;
 
-import com.avogine.core.system.Window;
+import com.avogine.game.Window;
 
 /**
  * TODO Should the scene instead be in charge of knowing what objects exist within it? That would cutdown greatly on bloated constructors and passing around things, plus benefits of add/remove from the container itself not

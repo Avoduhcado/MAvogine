@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -23,6 +24,8 @@ import java.util.stream.Stream;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Static utility for reading resource files.
@@ -30,6 +33,8 @@ import org.lwjgl.system.MemoryUtil;
  *
  */
 public class ResourceFileReader {
+	
+	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	/**
 	 * Read a resource file as plain text and return a {@link StringBuilder} of the file contents.
@@ -45,8 +50,7 @@ public class ResourceFileReader {
 				fileContents.append(line).append("\n");
 			}
 		} catch (IOException e) {
-			System.err.println("Could not read file! " + filePath);
-			e.printStackTrace();
+			logger.error("Could not read file! {}", filePath, e);
 			System.exit(1);
 		}
 
@@ -92,7 +96,7 @@ public class ResourceFileReader {
 	 * @return
 	 */
 	public static ByteBuffer ioResourceToByteBuffer(String resource, int bufferSize) {
-		System.out.println("Reading " + resource);
+		logger.info("Reading: {}", resource);
 		ByteBuffer buffer = null;
 
 		Path path = Paths.get(resource);
@@ -102,9 +106,9 @@ public class ResourceFileReader {
 				while (fc.read(buffer) != -1) {
 					
 				}
+				buffer.flip();
 			} catch (IOException e) {
-				System.err.println("Could not read file! " + path);
-				e.printStackTrace();
+				logger.error("Could not read file! {}", path, e);
 				System.exit(1);
 			}
 		} else {
@@ -121,14 +125,13 @@ public class ResourceFileReader {
 						buffer = resizeBuffer(buffer, buffer.capacity() * 2);
 					}
 				}
+				buffer.flip();
 			} catch (IOException e) {
-				System.err.println("Could not read file! " + path);
-				e.printStackTrace();
+				logger.error("Could not read file! {}", path, e);
 				System.exit(1);
 			}
 		}
 
-		buffer.flip();
 		return buffer;
 	}
 	

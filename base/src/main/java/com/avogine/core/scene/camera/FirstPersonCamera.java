@@ -1,25 +1,30 @@
 package com.avogine.core.scene.camera;
 
+import java.lang.invoke.MethodHandles;
 import java.nio.DoubleBuffer;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.avogine.core.system.Input;
-import com.avogine.core.system.Window;
-import com.avogine.core.system.event.KeyboardEvent;
-import com.avogine.core.system.event.MouseClickEvent;
-import com.avogine.core.system.event.MouseMotionEvent;
-import com.avogine.core.system.event.MouseScrollEvent;
-import com.avogine.core.system.listener.KeyboardListener;
-import com.avogine.core.system.listener.MouseClickListener;
-import com.avogine.core.system.listener.MouseMotionListener;
-import com.avogine.core.system.listener.MouseScrollListener;
+import com.avogine.game.Window;
+import com.avogine.io.Input;
+import com.avogine.io.event.KeyboardEvent;
+import com.avogine.io.event.MouseClickEvent;
+import com.avogine.io.event.MouseMotionEvent;
+import com.avogine.io.event.MouseScrollEvent;
+import com.avogine.io.listener.KeyboardListener;
+import com.avogine.io.listener.MouseClickListener;
+import com.avogine.io.listener.MouseMotionListener;
+import com.avogine.io.listener.MouseScrollListener;
 
 public class FirstPersonCamera extends Camera implements KeyboardListener, MouseMotionListener, MouseClickListener, MouseScrollListener {
 
+	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	
 	private Vector3f lookAt;
 	
 	public FirstPersonCamera(Window window, Vector3f position, float speed, float yaw, float fov) {
@@ -106,7 +111,7 @@ public class FirstPersonCamera extends Camera implements KeyboardListener, Mouse
 		getForward().set((float) (Math.cos(Math.toRadians(getYaw())) * Math.cos(Math.toRadians(getPitch()))),
 				(float) Math.sin(Math.toRadians(getPitch())),
 				(float) (Math.sin(Math.toRadians(getYaw())) * Math.cos(Math.toRadians(getPitch())))).normalize();
-		System.out.println("FPS: " + forward.x + " " + forward.y + " " + forward.z);
+		logger.debug("FPS: {} {} {}", forward.x, forward.y, forward.z);
 	}
 
 	@Override
