@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avogine.experimental.annotation.InDev;
-import com.avogine.game.Window;
+import com.avogine.io.Window;
 
 /**
  * @author Dominus

@@ -1,4 +1,4 @@
-package com.avogine.game;
+package com.avogine.io;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.IntBuffer;
@@ -33,11 +33,7 @@ public class Window {
 	private int height;
 	private String title;
 	
-	private Timer timer;
-	
 	private int fps;
-	private float frameTime;
-	private int currentFrames;
 	
 	private WindowOptions options;
 	
@@ -57,7 +53,6 @@ public class Window {
 		this.title = title;
 		
 		this.options = options;
-		timer = new Timer();
 	}
 	
 	/**
@@ -155,8 +150,6 @@ public class Window {
 			GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
 		}
 		
-		timer.init();
-		
 //		try (MemoryStack stack = MemoryStack.stackPush()) {
 //			FloatBuffer scaleX = stack.mallocFloat(1);
 //			FloatBuffer scaleY = stack.mallocFloat(1);
@@ -176,52 +169,13 @@ public class Window {
 	 * Callers should not need to handle setting the OpenGL context before rendering as this method will automatically check
 	 * and, if needed, set this window context to be current.
 	 */
-	public void render() {
-		currentFrames++;
-		if (frameTime >= 1.0f) {
-			fps = currentFrames;
-			frameTime = 0;
-			currentFrames = 0;
-			logger.debug("FPS: {}", fps);
-		}
-		
+	public void update() {
 		if (GLFW.glfwGetCurrentContext() != id) {
 			GLFW.glfwMakeContextCurrent(id);
 		}
+		
 		GLFW.glfwSwapBuffers(id);
 		GLFW.glfwPollEvents();
-	}
-	
-	/**
-	 * Sync rendering
-	 */
-	@InDev
-	public void sync() {
-		float loopSlot = 1f / Theater.TARGET_FPS;
-		double endTime = timer.getLastLoopTime() + loopSlot;
-		while (timer.getTime() < endTime) {
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException ie) {
-				logger.error("Error during syncing", ie);
-			}
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	public void update() {
-		// XXX Minor hack to limit frame updates when the window is "held" and instead tie pauses to at least the target UPS
-		float elapsedTime = Math.min(1.0f / Theater.TARGET_UPS, timer.getElapsedTime());
-//		accumulator += elapsedTime;
-		frameTime += elapsedTime;
-//		logger.info("{}", frameTime);
-//
-//		while (accumulator >= interval) {
-//			update(interval);
-//			accumulator -= interval;
-//		}
 	}
 	
 	public void restoreState() {

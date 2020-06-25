@@ -11,8 +11,7 @@ import java.util.stream.Stream;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.game.Theater;
-import com.avogine.game.Window;
+import com.avogine.io.event.Event;
 import com.avogine.io.event.KeyboardEvent;
 import com.avogine.io.event.MouseClickEvent;
 import com.avogine.io.event.MouseMotionEvent;
@@ -24,26 +23,34 @@ import com.avogine.io.listener.MouseMotionListener;
 import com.avogine.io.listener.MouseScrollListener;
 
 /**
- * TODO Merge this with {@link Theater}
- * @author Dominus
- *
+ * {@link Input} controls processing all user inputs on a per {@link Window} basis.
+ * <p>
+ * After a {@code Window} and GLFW context is properly created and initialized, an {@code Input} should
+ * be initialized for that {@code Window} in order to be able to handle any keyboard or mouse input, 
+ * converting them into proper {@link Event}s and firing them off to any registered {@link InputListener}s.
  */
 public class Input {
 
-	private static final Map<Long, Set<InputListener>> listeners;
-	private static boolean[] keys;
+	private final Map<Long, Set<InputListener>> listeners;
+	private final boolean[] keys;
 	
-	private static float lastMouseX;
-	private static float lastMouseY;
+	private float lastMouseX;
+	private float lastMouseY;
 	
-	static {
+	/**
+	 * Create a new {@link Input} and populate a {@code boolean} array to map all button presses.
+	 */
+	public Input() {
 		listeners = new HashMap<>();
 		
 		keys = new boolean[GLFW.GLFW_KEY_LAST];
 		Arrays.fill(keys, false);
 	}
 	
-	public static void registerWindow(Window register) {
+	/**
+	 * @param register
+	 */
+	public void init(Window register) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			DoubleBuffer xPos = stack.mallocDouble(1);
 			DoubleBuffer yPos = stack.mallocDouble(1);
@@ -78,7 +85,10 @@ public class Input {
 			fireMouseScrollEvent(window, new MouseScrollEvent(window, xOffset, yOffset)));
 	}
 	
-	public static void update(Window window) {
+	/**
+	 * @param window
+	 */
+	public void update(Window window) {
 		// GLFW_REPEAT has god awful lag, so we're gonna roll our own keyDown events
 		// Perhaps in the future we'll only update the array of specified key bindings rather than all accessible keys.
 		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
@@ -96,48 +106,74 @@ public class Input {
 		}
 	}
 	
-	public static InputListener add(long id, InputListener l) {
+	/**
+	 * @param id
+	 * @param l
+	 * @return
+	 */
+	public InputListener add(long id, InputListener l) {
 		listeners.computeIfAbsent(id, v -> new HashSet<>()).add(l);
 		return l;
 	}
 	
-	public static InputListener add(Window window, InputListener l) {
+	/**
+	 * @param window
+	 * @param l
+	 * @return
+	 */
+	public InputListener add(Window window, InputListener l) {
 		return add(window.getId(), l);
 	}
 	
-	public static InputListener removeListener(long id, InputListener listener) {
+	/**
+	 * @param id
+	 * @param listener
+	 * @return
+	 */
+	public InputListener removeListener(long id, InputListener listener) {
 		if (listeners.containsKey(id)) {
 			listeners.get(id).remove(listener);
 		}
 		return listener;
 	}
 
-	public static InputListener removeListener(Window window, InputListener l) {
+	/**
+	 * @param window
+	 * @param l
+	 * @return
+	 */
+	public InputListener removeListener(Window window, InputListener l) {
 		return removeListener(window.getId(), l);
 	}
 	
-	public static <T extends InputListener> Stream<T> getListenersOfType(long id, Class<T> clazz) {
+	/**
+	 * @param <T>
+	 * @param id
+	 * @param clazz
+	 * @return
+	 */
+	public <T extends InputListener> Stream<T> getListenersOfType(long id, Class<T> clazz) {
 		return listeners.getOrDefault(id, Set.of()).stream()
 				.filter(clazz::isInstance)
 				.map(clazz::cast);
 	}
 	
-	private static void fireKeyboardEvent(long id, KeyboardEvent event) {
+	private void fireKeyboardEvent(long id, KeyboardEvent event) {
 		getListenersOfType(id, KeyboardListener.class)
 			.forEach(kl -> kl.keyPressed(event));
 	}
 	
-	private static void fireMouseClickEvent(long id, MouseClickEvent event) {
+	private void fireMouseClickEvent(long id, MouseClickEvent event) {
 		getListenersOfType(id, MouseClickListener.class)
 			.forEach(mcl -> mcl.mouseClicked(event));
 	}
 	
-	private static void fireMouseMotionEvent(long id, MouseMotionEvent event) {
+	private void fireMouseMotionEvent(long id, MouseMotionEvent event) {
 		getListenersOfType(id, MouseMotionListener.class)
 			.forEach(mml -> mml.mouseMoved(event));
 	}
 	
-	private static void fireMouseScrollEvent(long id, MouseScrollEvent event) {
+	private void fireMouseScrollEvent(long id, MouseScrollEvent event) {
 		getListenersOfType(id, MouseScrollListener.class)
 			.forEach(msl -> msl.mouseScrolled(event));
 	}

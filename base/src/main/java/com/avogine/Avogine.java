@@ -1,23 +1,26 @@
 package com.avogine;
 
-import java.lang.invoke.MethodHandles;
-
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.avogine.game.Stage;
+import com.avogine.game.Game;
 import com.avogine.game.Timer;
-import com.avogine.game.Window;
+import com.avogine.io.Input;
+import com.avogine.io.Window;
+import com.avogine.logging.LogUtil;
 
 /**
+ * This is the primary entry point into running a game.
+ * <p>
+ * To kick off the game loop, create a new {@link Avogine} and supply it with a {@link Window} to render
+ * to and a {@link Game} to run.
  * @author Dominus
  *
  */
-public class Play implements Runnable {
+public class Avogine implements Runnable {
 
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogUtil.requestLogger(Avogine.class);
 
 	/**
 	 * Target frames per second. Controls how often the screen is rendered in a single second.
@@ -28,34 +31,39 @@ public class Play implements Runnable {
 	 * Target updates per second. Controls how often game logic is run in a single second.
 	 */
 	public static final int TARGET_UPS = 60;
+
+	private final Thread gameLoopThread;
 	
-	// TODO Multiple Theaters in a list
 	// TODO Better Theater/Window and Stage hierarchy
 	private final Window window;
-	private final Stage stage;
-	private final Thread gameLoopThread;
+	private final Game game;
+	
 	private final Timer timer;
+	// TODO Add an engine level Input class, similar to Timer, to handle all incoming Inputs through Window and route them to game logic in Game
+	private final Input input;
 	
 	private float frameTime;
 	private int fps;
 	
 	/**
 	 * @param window
-	 * @param stage
+	 * @param game 
 	 */
-	public Play(Window window, Stage stage) {
+	public Avogine(Window window, Game game) {
 		gameLoopThread = new Thread(this, "GAME_LOOP_THREAD");
 		this.window = window;
-		this.stage = stage;
-		this.timer = new Timer();
+		this.game = game;
+		timer = new Timer();
+		input = new Input();
 	}
 	
 	/**
-	 * 
+	 * Call this method to begin the game loop.
+	 * <p>
+	 * This has minor tweaks for running threads on Mac, namely setting the System property "java.awt.headless" to
+	 * true to avoid conflicts between GLFW and AWT.
 	 */
 	public void start() {
-		// Macs handle Threads differently
-		// Also GLFW and AWT don't play nice under Mac so we need to go headless
 		String osName = System.getProperty("os.name");
 		if (osName.contains("Mac")) {
 			System.setProperty("java.awt.headless", "true");
@@ -80,7 +88,9 @@ public class Play implements Runnable {
 	
 	private void init() {
 		window.init();
-		stage.init(window);
+		input.init(window);
+		// TODO I don't like this
+		game.init(window, input);
 		timer.init();
 		
 		// XXX This sort of works, but only when the window is resized, not while it's being moved/held
@@ -135,7 +145,8 @@ public class Play implements Runnable {
 	
 	private void input(Window window) {
 		// TODO Change this to call Input.update() over a collection of Theaters
-		stage.input(window);
+		input.update(window);
+//		stage.input(window);
 	}
 	
 	private void render() {
@@ -145,14 +156,13 @@ public class Play implements Runnable {
 			frameTime = 0;
 			fps = 0;
 		}
-		stage.render(window);
-		window.render();
+		game.render();
+		window.update();
 	}
 	
 	private void update(float interval) {
 		// TODO Process EventQueue
-		stage.update(interval, window);
-		window.update();
+		game.update(interval);
 	}
 	
 	private void sync() {
@@ -167,7 +177,7 @@ public class Play implements Runnable {
 	}
 	
 	private void cleanup() {
-		stage.cleanup();
+		game.cleanup();
 		
 		Callbacks.glfwFreeCallbacks(window.getId());
 		GLFW.glfwDestroyWindow(window.getId());

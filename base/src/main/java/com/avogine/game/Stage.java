@@ -2,6 +2,7 @@ package com.avogine.game;
 
 import com.avogine.core.entity.Renderable;
 import com.avogine.core.scene.Scene;
+import com.avogine.io.Window;
 
 /**
  * A {@code Stage} object controls most window specific game logic and rendering.

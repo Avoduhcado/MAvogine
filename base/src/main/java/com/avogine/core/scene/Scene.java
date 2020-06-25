@@ -10,6 +10,10 @@ import java.util.Set;
 import com.avogine.core.entity.Renderable;
 import com.avogine.render.data.Mesh;
 
+/**
+ *
+ * @param <T>
+ */
 public class Scene<T extends Renderable> {
 
 	private List<T> entities = new ArrayList<>();
@@ -17,10 +21,16 @@ public class Scene<T extends Renderable> {
 	
 	private Mesh skybox;
 	
+	/**
+	 * @return
+	 */
 	public List<T> getEntities() {
 		return entities;
 	}
 	
+	/**
+	 * @param entity
+	 */
 	public void addEntity(T entity) {
 		entities.add(entity);
 		addToMeshMap(entity);

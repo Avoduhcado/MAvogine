@@ -28,17 +28,21 @@ import org.lwjgl.assimp.AIString;
 import org.lwjgl.assimp.AIVector3D;
 import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryUtil;
+import org.slf4j.Logger;
 
 import com.avogine.core.resource.util.ResourceConstants;
 import com.avogine.core.resource.util.ResourceFileReader;
 import com.avogine.loader.texture.TextureCache;
 import com.avogine.loader.util.ArrayUtils;
+import com.avogine.logging.LogUtil;
 import com.avogine.render.data.Material;
 import com.avogine.render.data.Mesh;
 import com.avogine.render.data.Texture;
 
 public class StaticMeshesLoader {
 
+	private static final Logger logger = LogUtil.requestLogger(StaticMeshesLoader.class);
+	
 	/**
 	 * A custom {@link AIFileIO} implementation to support loading from jar files.
 	 */
@@ -101,7 +105,7 @@ public class StaticMeshesLoader {
 	}
 
 	public static Mesh[] load(String resourcePath, String texturesDir, int flags, int numberOfInstances) {
-		System.out.println("Now loading: " + resourcePath);
+		logger.debug("Now loading: {}", resourcePath);
 		AIScene aiScene = Assimp.aiImportFileEx(ResourceConstants.MODEL_PATH + resourcePath, flags, fileIo);
 		if (aiScene == null) {
 			throw new RuntimeException("Error loading model: " + resourcePath);

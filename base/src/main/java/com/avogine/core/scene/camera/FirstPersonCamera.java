@@ -10,8 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avogine.game.Window;
-import com.avogine.io.Input;
+import com.avogine.io.Window;
 import com.avogine.io.event.KeyboardEvent;
 import com.avogine.io.event.MouseClickEvent;
 import com.avogine.io.event.MouseMotionEvent;
@@ -30,7 +29,7 @@ public class FirstPersonCamera extends Camera implements KeyboardListener, Mouse
 	public FirstPersonCamera(Window window, Vector3f position, float speed, float yaw, float fov) {
 		super(window, position, speed, yaw, fov);
 		lookAt = new Vector3f();
-		Input.add(getContainer().getId(), this);
+//		Input.add(getContainer().getId(), this);
 	}
 	
 	public FirstPersonCamera(Window window, Vector3f position) {
