@@ -110,7 +110,7 @@ public class Input {
 	
 	/**
 	 * @param l
-	 * @return
+	 * @return the attached {@link InputListener}
 	 */
 	public InputListener add(InputListener l) {
 		listeners.add(l);
@@ -119,7 +119,7 @@ public class Input {
 	
 	/**
 	 * @param listener
-	 * @return
+	 * @return the removed {@link InputListener}
 	 */
 	public InputListener removeListener(InputListener listener) {
 		listeners.remove(listener);
@@ -129,7 +129,7 @@ public class Input {
 	/**
 	 * @param <T>
 	 * @param clazz
-	 * @return
+	 * @return a {@code Stream} of {@link InputListener}s that are all the same type as {@code clazz}
 	 */
 	public <T extends InputListener> Stream<T> getListenersOfType(Class<T> clazz) {
 		return listeners.stream()

@@ -17,11 +17,18 @@ import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.avogine.Avogine;
 import com.avogine.experimental.annotation.InDev;
 
 /**
- * @author Dominus
- *
+ * {@link Window} provides the primary entry point into OpenGL and GLFW.
+ * <p>
+ * A new instance of {@code Window} needs to be initialized before any GL or GLFW calls can be made. This
+ * should be handled from {@link Avogine} as one of the required parameters to start is a {@code Window}.
+ * {@code Window}s can also optionally be registered with an {@link Input} for custom input handling as
+ * any system events like key presses or mouse motions are captured from the window context.
+ * <p>
+ * TODO WindowOptions
  */
 public class Window {
 
