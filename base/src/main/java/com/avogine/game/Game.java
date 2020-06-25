@@ -3,7 +3,6 @@
  */
 package com.avogine.game;
 
-import com.avogine.io.Input;
 import com.avogine.io.Window;
 
 /**
@@ -14,7 +13,7 @@ public interface Game {
 	/**
 	 * Initialize all relevant game logic to start the game loop.
 	 */
-	public void init(Window window, Input input);
+	public void init(Window window);
 	
 	/**
 	 * Update any relevant entities or systems at a fixed time step determined by {@code interval}.

@@ -41,6 +41,8 @@ public class Window {
 	
 	private List<Long> monitorList = new ArrayList<>();
 	
+	private Input input;
+	
 	/**
 	 * @param width
 	 * @param height
@@ -164,6 +166,14 @@ public class Window {
 	}
 	
 	/**
+	 * @param input
+	 */
+	public void registerInput(Input input) {
+		this.input = input;
+		input.init(this);
+	}
+	
+	/**
 	 * Swap the window's buffers to display the latest rendered frame and then process all pending events.
 	 * <p>
 	 * Callers should not need to handle setting the OpenGL context before rendering as this method will automatically check
@@ -206,6 +216,13 @@ public class Window {
 	public void close() {
 		Callbacks.glfwFreeCallbacks(id);
 		GLFW.glfwDestroyWindow(id);
+	}
+	
+	/**
+	 * @return the input
+	 */
+	public Input getInput() {
+		return input;
 	}
 	
 	public int getFps() {

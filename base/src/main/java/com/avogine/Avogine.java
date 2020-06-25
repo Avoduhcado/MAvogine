@@ -39,7 +39,6 @@ public class Avogine implements Runnable {
 	private final Game game;
 	
 	private final Timer timer;
-	// TODO Add an engine level Input class, similar to Timer, to handle all incoming Inputs through Window and route them to game logic in Game
 	private final Input input;
 	
 	private float frameTime;
@@ -54,6 +53,7 @@ public class Avogine implements Runnable {
 		this.window = window;
 		this.game = game;
 		timer = new Timer();
+		// TODO Add an additional constructor for custom Input implementations as well, maybe even Timer? But idc right now.
 		input = new Input();
 	}
 	
@@ -88,9 +88,8 @@ public class Avogine implements Runnable {
 	
 	private void init() {
 		window.init();
-		input.init(window);
-		// TODO I don't like this
-		game.init(window, input);
+		window.registerInput(input);
+		game.init(window);
 		timer.init();
 		
 		// XXX This sort of works, but only when the window is resized, not while it's being moved/held
@@ -145,7 +144,7 @@ public class Avogine implements Runnable {
 	
 	private void input(Window window) {
 		// TODO Change this to call Input.update() over a collection of Theaters
-		input.update(window);
+		input.update();
 //		stage.input(window);
 	}
 	

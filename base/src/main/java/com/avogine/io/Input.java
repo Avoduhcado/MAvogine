@@ -2,9 +2,7 @@ package com.avogine.io;
 
 import java.nio.DoubleBuffer;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -31,7 +29,9 @@ import com.avogine.io.listener.MouseScrollListener;
  */
 public class Input {
 
-	private final Map<Long, Set<InputListener>> listeners;
+	private long windowID;
+	
+	private final Set<InputListener> listeners;
 	private final boolean[] keys;
 	
 	private float lastMouseX;
@@ -41,27 +41,30 @@ public class Input {
 	 * Create a new {@link Input} and populate a {@code boolean} array to map all button presses.
 	 */
 	public Input() {
-		listeners = new HashMap<>();
+		listeners = new HashSet<>();
 		
 		keys = new boolean[GLFW.GLFW_KEY_LAST];
 		Arrays.fill(keys, false);
 	}
 	
 	/**
-	 * @param register
+	 * Register this {@code Input} to process {@link Event}s for a given {@link Window}.
+	 * @param registeredWindow the {@code Window} to process {@code Event}s for.
 	 */
-	public void init(Window register) {
+	public void init(Window registeredWindow) {
+		this.windowID = registeredWindow.getId();
+		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			DoubleBuffer xPos = stack.mallocDouble(1);
 			DoubleBuffer yPos = stack.mallocDouble(1);
 			
-			GLFW.glfwGetCursorPos(register.getId(), xPos, yPos);
+			GLFW.glfwGetCursorPos(windowID, xPos, yPos);
 			lastMouseX = (float) xPos.get();
 			lastMouseY = (float) yPos.get();
 		}
 		
-		GLFW.glfwSetKeyCallback(register.getId(), (window, key, scancode, action, mods) -> {
-			fireKeyboardEvent(window, new KeyboardEvent(action, key, window));
+		GLFW.glfwSetKeyCallback(windowID, (window, key, scancode, action, mods) -> {
+			fireKeyboardEvent(new KeyboardEvent(action, key, window));
 			// XXX Hmm, this seems like a terrible way to handle this
 			if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE) {
 				GLFW.glfwSetWindowShouldClose(window, true);
@@ -72,109 +75,85 @@ public class Input {
 			}
 		});
 		
-		GLFW.glfwSetMouseButtonCallback(register.getId(), (window, button, action, mods) -> 
-			fireMouseClickEvent(window, new MouseClickEvent(window, button, lastMouseX, lastMouseY, action)));
+		GLFW.glfwSetMouseButtonCallback(windowID, (window, button, action, mods) -> 
+			fireMouseClickEvent(new MouseClickEvent(window, button, lastMouseX, lastMouseY, action)));
 		
-		GLFW.glfwSetCursorPosCallback(register.getId(), (window, xPos, yPos) -> {
-			fireMouseMotionEvent(window, new MouseMotionEvent(window, xPos, yPos, xPos - lastMouseX, lastMouseY - yPos));
+		GLFW.glfwSetCursorPosCallback(windowID, (window, xPos, yPos) -> {
+			fireMouseMotionEvent(new MouseMotionEvent(window, xPos, yPos, xPos - lastMouseX, lastMouseY - yPos));
 			lastMouseX = (float) xPos;
 			lastMouseY = (float) yPos;
 		});
 		
-		GLFW.glfwSetScrollCallback(register.getId(), (window, xOffset, yOffset) ->
-			fireMouseScrollEvent(window, new MouseScrollEvent(window, xOffset, yOffset)));
+		GLFW.glfwSetScrollCallback(windowID, (window, xOffset, yOffset) ->
+			fireMouseScrollEvent(new MouseScrollEvent(window, xOffset, yOffset)));
 	}
 	
 	/**
-	 * @param window
 	 */
-	public void update(Window window) {
+	public void update() {
 		// GLFW_REPEAT has god awful lag, so we're gonna roll our own keyDown events
 		// Perhaps in the future we'll only update the array of specified key bindings rather than all accessible keys.
 		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
-			if (GLFW.glfwGetKey(window.getId(), i) == GLFW.GLFW_PRESS) {
-				fireKeyboardEvent(window.getId(), new KeyboardEvent(GLFW.GLFW_PRESS, i, window.getId()));
+			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
+				fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_PRESS, i, windowID));
 			}
 		}
 		
 		// TODO Add a repeatable mouse held loop? Doesn't seem necessary?
 		for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
-			if (GLFW.glfwGetMouseButton(window.getId(), i) == GLFW.GLFW_PRESS) {
+			if (GLFW.glfwGetMouseButton(windowID, i) == GLFW.GLFW_PRESS) {
 				// Should this be a different type of event? MouseHeldEvent?
-				fireMouseClickEvent(window.getId(), new MouseClickEvent(window.getId(), i, lastMouseX, lastMouseY, GLFW.GLFW_REPEAT));
+				fireMouseClickEvent(new MouseClickEvent(windowID, i, lastMouseX, lastMouseY, GLFW.GLFW_REPEAT));
 			}
 		}
 	}
 	
 	/**
-	 * @param id
 	 * @param l
 	 * @return
 	 */
-	public InputListener add(long id, InputListener l) {
-		listeners.computeIfAbsent(id, v -> new HashSet<>()).add(l);
+	public InputListener add(InputListener l) {
+		listeners.add(l);
 		return l;
 	}
 	
 	/**
-	 * @param window
-	 * @param l
-	 * @return
-	 */
-	public InputListener add(Window window, InputListener l) {
-		return add(window.getId(), l);
-	}
-	
-	/**
-	 * @param id
 	 * @param listener
 	 * @return
 	 */
-	public InputListener removeListener(long id, InputListener listener) {
-		if (listeners.containsKey(id)) {
-			listeners.get(id).remove(listener);
-		}
+	public InputListener removeListener(InputListener listener) {
+		listeners.remove(listener);
 		return listener;
 	}
 
 	/**
-	 * @param window
-	 * @param l
-	 * @return
-	 */
-	public InputListener removeListener(Window window, InputListener l) {
-		return removeListener(window.getId(), l);
-	}
-	
-	/**
 	 * @param <T>
-	 * @param id
 	 * @param clazz
 	 * @return
 	 */
-	public <T extends InputListener> Stream<T> getListenersOfType(long id, Class<T> clazz) {
-		return listeners.getOrDefault(id, Set.of()).stream()
+	public <T extends InputListener> Stream<T> getListenersOfType(Class<T> clazz) {
+		return listeners.stream()
 				.filter(clazz::isInstance)
 				.map(clazz::cast);
 	}
 	
-	private void fireKeyboardEvent(long id, KeyboardEvent event) {
-		getListenersOfType(id, KeyboardListener.class)
+	private void fireKeyboardEvent(KeyboardEvent event) {
+		getListenersOfType(KeyboardListener.class)
 			.forEach(kl -> kl.keyPressed(event));
 	}
 	
-	private void fireMouseClickEvent(long id, MouseClickEvent event) {
-		getListenersOfType(id, MouseClickListener.class)
+	private void fireMouseClickEvent(MouseClickEvent event) {
+		getListenersOfType(MouseClickListener.class)
 			.forEach(mcl -> mcl.mouseClicked(event));
 	}
 	
-	private void fireMouseMotionEvent(long id, MouseMotionEvent event) {
-		getListenersOfType(id, MouseMotionListener.class)
+	private void fireMouseMotionEvent(MouseMotionEvent event) {
+		getListenersOfType(MouseMotionListener.class)
 			.forEach(mml -> mml.mouseMoved(event));
 	}
 	
-	private void fireMouseScrollEvent(long id, MouseScrollEvent event) {
-		getListenersOfType(id, MouseScrollListener.class)
+	private void fireMouseScrollEvent(MouseScrollEvent event) {
+		getListenersOfType(MouseScrollListener.class)
 			.forEach(msl -> msl.mouseScrolled(event));
 	}
 	
