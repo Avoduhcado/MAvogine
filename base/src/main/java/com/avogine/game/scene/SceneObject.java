@@ -1,5 +1,6 @@
-package com.avogine.core.scene;
+package com.avogine.game.scene;
 
+import com.avogine.experimental.annotation.InDev;
 import com.avogine.io.Window;
 
 /**
@@ -8,6 +9,7 @@ import com.avogine.io.Window;
  * @author Dominus
  *
  */
+@InDev
 public abstract class SceneObject {
 
 	// TODO Change this to a Scene instead of window and source the window from the scene? That path may be difficult since a scene lives inside a Stage inside a Theater

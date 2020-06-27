@@ -1,4 +1,4 @@
-package com.avogine.core.entity;
+package com.avogine.entity;
 
 import com.avogine.render.data.Mesh;
 

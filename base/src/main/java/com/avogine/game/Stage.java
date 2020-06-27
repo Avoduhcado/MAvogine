@@ -1,14 +1,17 @@
 package com.avogine.game;
 
-import com.avogine.core.entity.Renderable;
-import com.avogine.core.scene.Scene;
+import com.avogine.entity.Renderable;
+import com.avogine.experimental.annotation.InDev;
+import com.avogine.game.scene.Scene;
 import com.avogine.io.Window;
 
 /**
  * A {@code Stage} object controls most window specific game logic and rendering.
  * @author Dominus
  *
+ * XXX Should be removed
  */
+@InDev
 public interface Stage {
 
 	/**

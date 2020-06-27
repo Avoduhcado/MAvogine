@@ -17,9 +17,9 @@ import org.lwjgl.stb.STBTTBakedChar;
 import org.lwjgl.stb.STBTTFontinfo;
 import org.lwjgl.stb.STBTruetype;
 
-import com.avogine.core.resource.util.ResourceConstants;
-import com.avogine.core.resource.util.ResourceFileReader;
 import com.avogine.render.data.Texture;
+import com.avogine.util.resource.ResourceConstants;
+import com.avogine.util.resource.ResourceFileReader;
 
 /**
  * TODO Customizable font sizes, scalable bitmap sizes to match, customizable character sets (may require multiple textures and some sort of texture sheet indexing to fit everything)

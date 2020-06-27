@@ -21,6 +21,9 @@ public interface Game {
 	 */
 	public void update(float interval);
 	
+	/**
+	 * 
+	 */
 	public void render();
 	
 	/**

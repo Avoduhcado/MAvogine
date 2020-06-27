@@ -1,4 +1,4 @@
-package com.avogine.core.scene.camera;
+package com.avogine.entity.camera;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.DoubleBuffer;

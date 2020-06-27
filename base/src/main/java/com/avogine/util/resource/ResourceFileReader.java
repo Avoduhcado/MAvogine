@@ -1,4 +1,4 @@
-package com.avogine.core.resource.util;
+package com.avogine.util.resource;
 
 import java.io.BufferedReader;
 import java.io.IOException;

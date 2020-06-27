@@ -1,9 +1,9 @@
-package com.avogine.core.scene.camera;
+package com.avogine.entity.camera;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import com.avogine.core.scene.SceneObject;
+import com.avogine.game.scene.SceneObject;
 import com.avogine.io.Window;
 
 public class Camera extends SceneObject {

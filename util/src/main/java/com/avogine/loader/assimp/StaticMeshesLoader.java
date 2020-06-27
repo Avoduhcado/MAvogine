@@ -30,14 +30,14 @@ import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 
-import com.avogine.core.resource.util.ResourceConstants;
-import com.avogine.core.resource.util.ResourceFileReader;
 import com.avogine.loader.texture.TextureCache;
 import com.avogine.loader.util.ArrayUtils;
 import com.avogine.logging.LogUtil;
 import com.avogine.render.data.Material;
 import com.avogine.render.data.Mesh;
 import com.avogine.render.data.Texture;
+import com.avogine.util.resource.ResourceConstants;
+import com.avogine.util.resource.ResourceFileReader;
 
 public class StaticMeshesLoader {
 

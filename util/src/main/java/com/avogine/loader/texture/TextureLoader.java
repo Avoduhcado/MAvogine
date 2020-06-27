@@ -16,11 +16,11 @@ import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avogine.core.resource.util.ResourceConstants;
-import com.avogine.core.resource.util.ResourceFileReader;
 import com.avogine.render.data.Cubemap;
 import com.avogine.render.data.FrameBuffer;
 import com.avogine.render.data.Texture;
+import com.avogine.util.resource.ResourceConstants;
+import com.avogine.util.resource.ResourceFileReader;
 
 /**
  * TODO Add some default textures if anything fails to load

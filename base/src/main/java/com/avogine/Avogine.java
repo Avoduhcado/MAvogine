@@ -34,7 +34,6 @@ public class Avogine implements Runnable {
 
 	private final Thread gameLoopThread;
 	
-	// TODO Better Theater/Window and Stage hierarchy
 	private final Window window;
 	private final Game game;
 	

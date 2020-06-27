@@ -2,9 +2,9 @@ package com.avogine.render.shader;
 
 import org.lwjgl.opengl.GL20;
 
-import com.avogine.core.resource.util.ResourceConstants;
-import com.avogine.core.resource.util.ResourceFileReader;
 import com.avogine.render.shader.uniform.Uniform;
+import com.avogine.util.resource.ResourceConstants;
+import com.avogine.util.resource.ResourceFileReader;
 
 public abstract class ShaderProgram {
 

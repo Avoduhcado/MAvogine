@@ -11,8 +11,8 @@ import org.lwjgl.glfw.GLFWImage.Buffer;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.core.resource.util.ResourceConstants;
-import com.avogine.core.resource.util.ResourceFileReader;
+import com.avogine.util.resource.ResourceConstants;
+import com.avogine.util.resource.ResourceFileReader;
 
 /**
  * TODO Move this into a more suitable module? It not only deals with loading, which is necessary to have <tt>STB</tt>, but also handles setting the actual icons to avoid memory cleanup issues.

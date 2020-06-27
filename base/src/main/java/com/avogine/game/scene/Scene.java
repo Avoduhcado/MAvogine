@@ -1,4 +1,4 @@
-package com.avogine.core.scene;
+package com.avogine.game.scene;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.avogine.core.entity.Renderable;
+import com.avogine.entity.Renderable;
 import com.avogine.render.data.Mesh;
 
 /**
- *
+ * TODO Remove this generic type, I don't think it's actually useful
  * @param <T>
  */
 public class Scene<T extends Renderable> {
