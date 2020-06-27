@@ -12,10 +12,10 @@ import org.lwjgl.stb.STBTTFontinfo;
 import org.lwjgl.stb.STBTruetype;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.loader.util.ArrayUtils;
 import com.avogine.render.data.Material;
 import com.avogine.render.data.Mesh;
 import com.avogine.render.data.Texture;
+import com.avogine.util.ArrayUtils;
 
 public class FontSTB {
 

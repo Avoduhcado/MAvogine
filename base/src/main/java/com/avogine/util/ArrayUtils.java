@@ -1,4 +1,4 @@
-package com.avogine.loader.util;
+package com.avogine.util;
 
 public class ArrayUtils {
 

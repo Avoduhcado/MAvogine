@@ -31,11 +31,11 @@ import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 
 import com.avogine.loader.texture.TextureCache;
-import com.avogine.loader.util.ArrayUtils;
 import com.avogine.logging.LogUtil;
 import com.avogine.render.data.Material;
 import com.avogine.render.data.Mesh;
 import com.avogine.render.data.Texture;
+import com.avogine.util.ArrayUtils;
 import com.avogine.util.resource.ResourceConstants;
 import com.avogine.util.resource.ResourceFileReader;
 
