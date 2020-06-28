@@ -1,7 +1,4 @@
 /**
- * 
- */
-/**
  *
  */
 package com.avogine.entity;
