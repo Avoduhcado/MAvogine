@@ -11,6 +11,8 @@ import com.avogine.entity.Entity;
 import com.avogine.render.data.Mesh;
 
 /**
+ * A 3D {@link Scene} implementation that contains a map of all meshes and entities currently
+ * existing in the game world. This implementation also provides a {@link Mesh} for a skybox as well.
  */
 public class DefaultScene3D implements Scene {
 
@@ -66,6 +68,10 @@ public class DefaultScene3D implements Scene {
 		this.skybox = skybox;
 	}
 	
+	/**
+	 * 
+	 */
+	@Override
 	public void cleanup() {
 		entities.forEach(Entity::cleanup);
 		if (skybox != null) {
