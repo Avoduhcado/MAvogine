@@ -15,11 +15,12 @@ import com.avogine.util.resource.ResourceConstants;
 import com.avogine.util.resource.ResourceFileReader;
 
 /**
- * TODO Move this into a more suitable module? It not only deals with loading, which is necessary to have <tt>STB</tt>, but also handles setting the actual icons to avoid memory cleanup issues.
- * <p>Utility class for loading images into raw {@link GLFWImage}s.
- * 
- * <p>XXX Whether or not the memory here is properly freed is still unclear as calling free from <tt>STB</tt> causes artifacts in the icons,
- * calling free from the actual <tt>GLFWImage</tt> crashes the JVM, but is just using {@link MemoryStack} enough?
+ * TODO Move this into a more suitable module? It not only deals with loading, which is necessary to have {@code STB}, but also handles setting the actual icons to avoid memory cleanup issues.
+ * <p>
+ * Utility class for loading images into raw {@link GLFWImage}s.
+ * <p>
+ * XXX Whether or not the memory here is properly freed is still unclear as calling free from {@code STB} causes artifacts in the icons,
+ * calling free from the actual {@link GLFWImage} crashes the JVM, but is just using {@link MemoryStack} enough?
  * @author Dominus
  *
  */

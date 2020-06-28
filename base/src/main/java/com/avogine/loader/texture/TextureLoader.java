@@ -24,9 +24,10 @@ import com.avogine.util.resource.ResourceFileReader;
 
 /**
  * TODO Add some default textures if anything fails to load
- * <p>Utility class for loading image files into usable OpenGL textures.
- * 
- * <p>This class has protected access methods and as such should be used through the {@link TextureCache} to avoid
+ * <p>
+ * Utility class for loading image files into usable OpenGL textures.
+ * <p>
+ * This class has protected access methods and as such should be used through the {@link TextureCache} to avoid
  * loading duplicate assets.
  * @author Dominus
  *
@@ -127,17 +128,17 @@ public class TextureLoader {
 	}
 	
 	/**
-	 * <p>Load a cube map texture from a specified directory of textures.
-	 * 
-	 * <p>This method assumes the given directory is a valid directory and contains at least 6 files named:
-	 * <tt><ul>
+	 * Load a cube map texture from a specified directory of textures.
+	 * <p>
+	 * This method assumes the given directory is a valid directory and contains at least 6 files named:
+	 * <ul>
 	 * <li>right.jpg
 	 * <li>left.jpg
 	 * <li>top.jpg
 	 * <li>bottom.jpg
 	 * <li>front.jpg
 	 * <li>back.jpg
-	 * </ul></tt>
+	 * </ul>
 	 * @param directoryName The directory name contained in {@link ResourceConstants#TEXTURE_PATH}
 	 * @return
 	 */

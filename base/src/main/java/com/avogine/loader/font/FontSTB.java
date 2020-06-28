@@ -100,7 +100,7 @@ public class FontSTB {
 		}
 	}
 	
-	/*
+	/**
 	 * XXX Only computes single line width currently, does not take into account any newlines or kerning
 	 */
 	public int getTextWidth(String text) {

@@ -38,8 +38,8 @@ public class ResourceFileReader {
 
 	/**
 	 * Read a resource file as plain text and return a {@link StringBuilder} of the file contents.
-	 * @param filePath the file name starting from <tt>src/main/resources/</tt>
-	 * @return A <tt>StringBuilder</tt> containing the contents of the file.
+	 * @param filePath the file name starting from {@code src/main/resources/}
+	 * @return A {@code StringBuilder} containing the contents of the file.
 	 */
 	public static StringBuilder readTextFile(String filePath) {
 		StringBuilder fileContents = new StringBuilder();

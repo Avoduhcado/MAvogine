@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.avogine.util;
 
 import org.joml.Vector3f;
