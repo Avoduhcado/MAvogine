@@ -1,4 +1,4 @@
-package com.avogine.loader.font;
+package com.avogine.render.loader.font;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;

@@ -10,5 +10,7 @@ public class ResourceConstants {
 	public static final String TEXTURE_PATH = "/textures/";
 	/** {@value #FONT_PATH} */
 	public static final String FONT_PATH = "/fonts/";
+	/** {@value #AUDIO_PATH} */
+	public static final String AUDIO_PATH = "/audio/";
 
 }

@@ -1,4 +1,4 @@
-package com.avogine.loader.texture;
+package com.avogine.render.loader.texture;
 
 import java.io.File;
 import java.lang.invoke.MethodHandles;

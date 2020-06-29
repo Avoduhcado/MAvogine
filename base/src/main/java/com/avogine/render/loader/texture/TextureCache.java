@@ -1,4 +1,4 @@
-package com.avogine.loader.texture;
+package com.avogine.render.loader.texture;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -6,6 +6,9 @@ import java.util.Map;
 
 import com.avogine.render.data.Texture;
 
+/**
+ *
+ */
 public class TextureCache {
 
 	private Map<String, Texture> textureMap = new HashMap<>();
