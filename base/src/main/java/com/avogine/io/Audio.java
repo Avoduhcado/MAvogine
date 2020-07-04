@@ -2,9 +2,7 @@ package com.avogine.io;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.joml.Matrix4f;
@@ -16,7 +14,6 @@ import org.lwjgl.openal.ALC10;
 import org.lwjgl.openal.ALCCapabilities;
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.audio.data.AudioBuffer;
 import com.avogine.audio.data.AudioListener;
 import com.avogine.audio.data.AudioSource;
 
@@ -30,7 +27,6 @@ public class Audio {
 
 	private AudioListener listener;
 
-	private final List<AudioBuffer> audioBufferList;
 	private final Map<String, AudioSource> audioSourceMap;
 
 	private final Matrix4f cameraMatrix;
@@ -39,7 +35,6 @@ public class Audio {
 	 * 
 	 */
 	public Audio() {
-		audioBufferList = new ArrayList<>();
 		audioSourceMap = new HashMap<>();
 		cameraMatrix = new Matrix4f();
 	}
@@ -53,12 +48,12 @@ public class Audio {
 	 * </ul>
 	 */
 	public void init() {
-		this.device = ALC10.alcOpenDevice((ByteBuffer) null);
+		device = ALC10.alcOpenDevice((ByteBuffer) null);
 		if (device == MemoryUtil.NULL) {
 			throw new IllegalStateException("Failed to open the default OpenAL device.");
 		}
 		ALCCapabilities deviceCaps = ALC.createCapabilities(device);
-		this.context = ALC10.alcCreateContext(device, (IntBuffer) null);
+		context = ALC10.alcCreateContext(device, (IntBuffer) null);
 		if (context == MemoryUtil.NULL) {
 			throw new IllegalStateException("Failed to create OpenAL context.");
 		}
@@ -66,31 +61,40 @@ public class Audio {
 		AL.createCapabilities(deviceCaps);
 	}
 
+	/**
+	 * @param name
+	 * @param audioSource
+	 */
 	public void addAudioSource(String name, AudioSource audioSource) {
-		this.audioSourceMap.put(name, audioSource);
+		audioSourceMap.put(name, audioSource);
 	}
 
+	/**
+	 * @param name
+	 * @return
+	 */
 	public AudioSource getAudioSource(String name) {
-		return this.audioSourceMap.get(name);
+		return audioSourceMap.get(name);
 	}
 
+	/**
+	 * @param name
+	 */
 	public void playAudioSource(String name) {
-		AudioSource soundSource = audioSourceMap.get(name);
-		if (soundSource != null && !soundSource.isPlaying()) {
-			soundSource.play();
+		if (audioSourceMap.containsKey(name) && !audioSourceMap.get(name).isPlaying()) {
+			audioSourceMap.get(name).play();
 		}
 	}
 
+	/**
+	 * @param name
+	 */
 	public void removeAudioSource(String name) {
-		this.audioSourceMap.remove(name);
-	}
-
-	public void addAudioBuffer(AudioBuffer audioBuffer) {
-		this.audioBufferList.add(audioBuffer);
+		audioSourceMap.remove(name);
 	}
 
 	public AudioListener getListener() {
-		return this.listener;
+		return listener;
 	}
 
 	public void setListener(AudioListener listener) {
@@ -111,19 +115,21 @@ public class Audio {
 		listener.setOrientation(at, up);
 	}
 
+	/**
+	 * @param model
+	 */
 	public void setAttenuationModel(int model) {
 		AL10.alDistanceModel(model);
 	}
 
+	/**
+	 * 
+	 */
 	public void cleanup() {
 		for (AudioSource soundSource : audioSourceMap.values()) {
 			soundSource.cleanup();
 		}
 		audioSourceMap.clear();
-		for (AudioBuffer soundBuffer : audioBufferList) {
-			soundBuffer.cleanup();
-		}
-		audioBufferList.clear();
 		if (context != MemoryUtil.NULL) {
 			ALC10.alcDestroyContext(context);
 		}

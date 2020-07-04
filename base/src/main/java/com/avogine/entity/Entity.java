@@ -14,9 +14,9 @@ import com.avogine.render.data.Mesh;
 @InDev
 public class Entity implements Renderable {
 	
-	private Vector3f position;
+	protected Vector3f position;
 	
-	private Mesh[] meshes;
+	protected Mesh[] meshes;
 	
 	/**
 	 * @param position
