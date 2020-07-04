@@ -1,5 +1,6 @@
 package com.avogine.render.loader.assimp;
 
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ import com.avogine.util.resource.ResourceFileReader;
 
 public class StaticMeshesLoader {
 
-	private static final Logger logger = LogUtil.requestLogger(StaticMeshesLoader.class);
+	private static final Logger logger = LogUtil.requestLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
 	/**
 	 * A custom {@link AIFileIO} implementation to support loading from jar files.

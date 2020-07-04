@@ -1,5 +1,7 @@
 package com.avogine;
 
+import java.lang.invoke.MethodHandles;
+
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -20,7 +22,7 @@ import com.avogine.logging.LogUtil;
  */
 public class Avogine implements Runnable {
 
-	private static final Logger logger = LogUtil.requestLogger(Avogine.class);
+	private static final Logger logger = LogUtil.requestLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	/**
 	 * Target frames per second. Controls how often the screen is rendered in a single second.

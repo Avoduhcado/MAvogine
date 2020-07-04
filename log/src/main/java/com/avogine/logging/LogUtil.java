@@ -7,8 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Dominus
- *
+ * Simple utility class for retrieving a {@link Logger}.
  */
 public class LogUtil {
 
@@ -17,12 +16,15 @@ public class LogUtil {
 	}
 	
 	/**
-	 * Retrieve a {@link Logger} from {@link LoggerFactory} for the given {@code Class}.
-	 * @param clazz The {@code Class} to get a {@code Logger} for
-	 * @return a {@code Logger} from {@code LoggerFactory} for the given {@code Class}.
+	 * Retrieve a {@link Logger} from {@link LoggerFactory} for the given simple class name.
+	 * <p>
+	 * Example:
+	 * <pre>LogUtil.requestLogger(MethodHandles.lookup().lookupClass().getSimpleName());</pre>
+	 * @param className The class name to get a {@code Logger} for
+	 * @return a {@code Logger} from {@code LoggerFactory} for the given class name.
 	 */
-	public static Logger requestLogger(Class<?> clazz) {
-		return LoggerFactory.getLogger(clazz.getSimpleName());
+	public static Logger requestLogger(String className) {
+		return LoggerFactory.getLogger(className);
 	}
 	
 }

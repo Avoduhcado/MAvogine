@@ -1,0 +1,4 @@
+/**
+ *
+ */
+package com.avogine.logging;
