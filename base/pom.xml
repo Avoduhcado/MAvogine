@@ -8,25 +8,7 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>base</artifactId>
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
-				<configuration>
-					<release>11</release>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
-	<properties>
-		<lwjgl.version>3.2.3</lwjgl.version>
-		<joml.version>1.9.24</joml.version>
-		<lwjgl.natives>natives-windows</lwjgl.natives>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-
+	
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

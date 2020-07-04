@@ -4,8 +4,27 @@
   <artifactId>mavogine</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
+  
   <modules>
   	<module>base</module>
   	<module>log</module>
   </modules>
+  
+  <properties>
+    <maven.compiler.release>11</maven.compiler.release>
+    <lwjgl.version>3.2.3</lwjgl.version>
+    <joml.version>1.9.24</joml.version>
+    <lwjgl.natives>natives-windows</lwjgl.natives>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
+      </plugin>
+    </plugins>
+  </build>
+  
 </project>
