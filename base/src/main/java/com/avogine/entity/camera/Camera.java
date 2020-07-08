@@ -3,10 +3,10 @@ package com.avogine.entity.camera;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import com.avogine.game.scene.SceneObject;
-import com.avogine.io.Window;
+import com.avogine.experimental.annotation.InDev;
 
-public class Camera extends SceneObject {
+@InDev
+public class Camera {
 
 	protected Vector3f position;
 	protected Vector3f velocity;
@@ -26,8 +26,7 @@ public class Camera extends SceneObject {
 	
 	protected final Matrix4f view;
 	
-	public Camera(Window window, Vector3f position, float speed, float yaw, float fov) {
-		super(window);
+	public Camera(Vector3f position, float speed, float yaw, float fov) {
 		this.position = position;
 		this.velocity = new Vector3f();
 		this.speed = speed;
@@ -37,12 +36,12 @@ public class Camera extends SceneObject {
 		view = new Matrix4f();
 	}
 	
-	public Camera(Window window, Vector3f position) {
-		this(window, position, 10f, -90f, 45f);
+	public Camera(Vector3f position) {
+		this(position, 10f, -90f, 45f);
 	}
 	
-	public Camera(Window window) {
-		this(window, new Vector3f());
+	public Camera() {
+		this(new Vector3f());
 	}
 	
 	public void update(float interval) {

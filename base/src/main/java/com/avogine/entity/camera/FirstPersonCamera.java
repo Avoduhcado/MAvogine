@@ -10,7 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avogine.io.Window;
+import com.avogine.experimental.annotation.InDev;
 import com.avogine.io.event.KeyboardEvent;
 import com.avogine.io.event.MouseClickEvent;
 import com.avogine.io.event.MouseMotionEvent;
@@ -20,24 +20,25 @@ import com.avogine.io.listener.MouseClickListener;
 import com.avogine.io.listener.MouseMotionListener;
 import com.avogine.io.listener.MouseScrollListener;
 
+@InDev
 public class FirstPersonCamera extends Camera implements KeyboardListener, MouseMotionListener, MouseClickListener, MouseScrollListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
 	private Vector3f lookAt;
 	
-	public FirstPersonCamera(Window window, Vector3f position, float speed, float yaw, float fov) {
-		super(window, position, speed, yaw, fov);
+	public FirstPersonCamera(Vector3f position, float speed, float yaw, float fov) {
+		super(position, speed, yaw, fov);
 		lookAt = new Vector3f();
 //		Input.add(getContainer().getId(), this);
 	}
 	
-	public FirstPersonCamera(Window window, Vector3f position) {
-		this(window, position, 10f, -90f, 45f);
+	public FirstPersonCamera(Vector3f position) {
+		this(position, 10f, -90f, 45f);
 	}
 	
-	public FirstPersonCamera(Window window) {
-		this(window, new Vector3f());
+	public FirstPersonCamera() {
+		this(new Vector3f());
 	}
 	
 	@Override
