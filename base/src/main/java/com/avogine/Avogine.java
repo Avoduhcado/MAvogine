@@ -1,16 +1,14 @@
 package com.avogine;
 
-import java.lang.invoke.MethodHandles;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
-import org.slf4j.Logger;
 
 import com.avogine.game.Game;
 import com.avogine.game.Timer;
 import com.avogine.io.Input;
 import com.avogine.io.Window;
-import com.avogine.logging.LogUtil;
 
 /**
  * This is the primary entry point into running a game.
@@ -22,7 +20,7 @@ import com.avogine.logging.LogUtil;
  */
 public class Avogine implements Runnable {
 
-	private static final Logger logger = LogUtil.requestLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogManager.getLogger();
 
 	/**
 	 * Target frames per second. Controls how often the screen is rendered in a single second.
