@@ -24,6 +24,8 @@ public class Audio {
 
 	private long device;
 	private long context;
+	
+	private AudioOptions options;
 
 	private AudioListener listener;
 
@@ -32,9 +34,11 @@ public class Audio {
 	private final Matrix4f cameraMatrix;
 
 	/**
+	 * @param options 
 	 * 
 	 */
-	public Audio() {
+	public Audio(AudioOptions options) {
+		this.options = options;
 		audioSourceMap = new HashMap<>();
 		cameraMatrix = new Matrix4f();
 	}
@@ -59,6 +63,10 @@ public class Audio {
 		}
 		ALC10.alcMakeContextCurrent(context);
 		AL.createCapabilities(deviceCaps);
+		
+		if (options != null) {
+			AL10.alDistanceModel(options.attenuationModel);
+		}
 	}
 
 	/**
@@ -116,13 +124,6 @@ public class Audio {
 	}
 
 	/**
-	 * @param model
-	 */
-	public void setAttenuationModel(int model) {
-		AL10.alDistanceModel(model);
-	}
-
-	/**
 	 * 
 	 */
 	public void cleanup() {
@@ -136,6 +137,18 @@ public class Audio {
 		if (device != MemoryUtil.NULL) {
 			ALC10.alcCloseDevice(device);
 		}
+	}
+	
+	/**
+	 * Data structure for any customizable options to use while initializing the audio system.
+	 */
+	public static class AudioOptions {
+		
+		/**
+		 * Value applied to {@link AL10#alDistanceModel(int)}.
+		 */
+		public int attenuationModel;
+		
 	}
 
 }
