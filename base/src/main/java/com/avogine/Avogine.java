@@ -1,9 +1,11 @@
 package com.avogine;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.lang.invoke.MethodHandles;
+
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.avogine.game.Game;
 import com.avogine.game.Timer;
@@ -14,23 +16,24 @@ import com.avogine.io.Window;
  * This is the primary entry point into running a game.
  * <p>
  * To kick off the game loop, create a new {@link Avogine} and supply it with a {@link Window} to render
- * to and a {@link Game} to run.
+ * to and a {@link Game} to run, then call {@link #start()}.
  * @author Dominus
  *
  */
 public class Avogine implements Runnable {
 
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	/**
 	 * Target frames per second. Controls how often the screen is rendered in a single second.
+	 * XXX This needs to be customizable
 	 */
-	public static final int TARGET_FPS = 60;
+	public static final int TARGET_FPS = 142;
 
 	/**
 	 * Target updates per second. Controls how often game logic is run in a single second.
 	 */
-	public static final int TARGET_UPS = 60;
+	public static final int TARGET_UPS = TARGET_FPS;
 
 	private final Thread gameLoopThread;
 	
@@ -42,6 +45,7 @@ public class Avogine implements Runnable {
 	
 	private float frameTime;
 	private int fps;
+	private float sleepRemainder;
 	
 	/**
 	 * @param window
@@ -142,7 +146,6 @@ public class Avogine implements Runnable {
 	}
 	
 	private void input(Window window) {
-		// TODO Change this to call Input.update() over a collection of Theaters
 		input.update();
 //		stage.input(window);
 	}
@@ -165,13 +168,18 @@ public class Avogine implements Runnable {
 	
 	private void sync() {
 		float loopSlot = 1f / TARGET_FPS;
-		double endTime = timer.getLastLoopTime() + loopSlot;
-		while (timer.getTime() < endTime) {
+		double endTime = timer.getLastLoopTime() + loopSlot + sleepRemainder;
+		
+		// Time values are seconds based, so we're subtracting 0.001 to make sure we won't try sleeping for fractions of milliseconds
+		while (timer.getTime() < endTime - 0.001) {
 			try {
 				Thread.sleep(1);
 			} catch (InterruptedException ie) {
 			}
 		}
+		// If there is any time left over, save it for the next sync
+		// This ensures high precision when picking frame rate targets
+		sleepRemainder = (float) Math.max(0, endTime - timer.getTime());
 	}
 	
 	private void cleanup() {
