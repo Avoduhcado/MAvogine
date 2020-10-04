@@ -18,14 +18,15 @@ import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avogine.entity.Renderable;
-
+/**
+ *
+ */
 public class Mesh {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	private int vao;
-	private Map<Integer, Integer> vboMap;
+	protected Map<Integer, Integer> vboMap;
 	private int indexVbo;
 	
 	private float boundingRadius;
@@ -55,14 +56,22 @@ public class Mesh {
 		vertexCount = positions.length / 3;
 	}
 	
-	public void bind() {
+	/**
+	 * Bind the {@link #material} and {@code Vertex Array} for this mesh.
+	 * <p>
+	 * This is called automatically by {@link #render()}.
+	 */
+	protected void bind() {
 		bindMaterial();
 		GL30.glBindVertexArray(vao);
 	}
 	
-	public void unbind() {
+	/**
+	 * Unbind the {@code Vertex Array} and unbind any material textures if they exist.
+	 */
+	protected void unbind() {
 		GL30.glBindVertexArray(0);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		unbindMaterial();
 	}
 
 	/**
@@ -82,6 +91,22 @@ public class Mesh {
 		}
 	}
 	
+	private void unbindMaterial() {
+		if (material == null) {
+			return;
+		}
+		if (material.isTextured()) {
+			// XXX Do we need to call active texture?
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		}
+	}
+	
+	/**
+	 * Draw the vertices of this mesh to the currently bound {@code FrameBuffer}.
+	 * <p>
+	 * This is a simple wrapper to {@link GL11#glDrawElements(GL11.GL_TRIANGLES, int, GL11.GL_UNSIGNED_INT, long)} that handles calling
+	 * {@link #bind()} and {@link #unbind()} before and after drawing to perform any necessary {@code Texture} and {@code Vertex Array} binding.
+	 */
 	public void render() {
 		bind();
 		
@@ -90,11 +115,17 @@ public class Mesh {
 		unbind();
 	}
 	
-	public <T extends Renderable> void renderBatch(Collection<T> entities, Consumer<T> consumer) {
+	/**
+	 * 
+	 * @param <T>
+	 * @param entities
+	 * @param consumer
+	 */
+	public <T> void renderBatch(Collection<T> entities, Consumer<T> consumer) {
 		bind();
 
 		entities.stream()
-		.filter(T::isInsideFrustum)
+//		.filter(T::isInsideFrustum)
 		.forEach(entity -> {
 			// Set up data required by entity
 			consumer.accept(entity);

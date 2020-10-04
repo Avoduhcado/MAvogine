@@ -12,6 +12,7 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
@@ -51,10 +52,10 @@ public class Window {
 	private Input input;
 	
 	/**
-	 * @param width
-	 * @param height
-	 * @param title
-	 * @param options
+	 * @param width The width in pixels for this window
+	 * @param height The height in pixels for this window
+	 * @param title The window title
+	 * @param options An optional object to configure window specific creation options. Can be {@code null}.
 	 */
 	public Window(int width, int height, String title, WindowOptions options) {
 		this.width = width;
@@ -69,17 +70,20 @@ public class Window {
 	 */
 	@InDev
 	public void init() {
-		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
-		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
-//		GLFW.glfwWindowHint(GLFW.GLFW_DECORATED, GLFW.GLFW_FALSE);
-//		GLFW.glfwWindowHint(GLFW.GLFW_FLOATING, GLFW.GLFW_TRUE);
-//		GLFW.glfwWindowHint(GLFW.GLFW_TRANSPARENT_FRAMEBUFFER, GLFW.GLFW_TRUE);
-		
 		GLFWErrorCallback.createPrint(System.err).set();
 		
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Could not initialize GLFW!");
 		}
+
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
+		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
+		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
+		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, 4);
+//		GLFW.glfwWindowHint(GLFW.GLFW_DECORATED, GLFW.GLFW_FALSE);
+//		GLFW.glfwWindowHint(GLFW.GLFW_FLOATING, GLFW.GLFW_TRUE);
+//		GLFW.glfwWindowHint(GLFW.GLFW_TRANSPARENT_FRAMEBUFFER, GLFW.GLFW_TRUE);
 		
 		id = GLFW.glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
 		if (id == MemoryUtil.NULL) {
@@ -134,6 +138,11 @@ public class Window {
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		
+		GL11.glEnable(GL11.GL_CULL_FACE);
+		GL11.glCullFace(GL11.GL_BACK);
+
+		GL11.glEnable(GL13.GL_MULTISAMPLE);
+		
 		GLFW.glfwSetWindowSizeCallback(id, (window, w, h) -> {
 			width = w;
 			height = h;
@@ -152,8 +161,6 @@ public class Window {
 		GLFW.glfwSetWindowPosCallback(id, (window, x, y) -> {
 			logger.debug("x: {} y: {}", x, y);
 		});
-		
-//		Input.registerWindow(this);
 		
 		if (GLFW.glfwRawMouseMotionSupported()) {
 			GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
@@ -252,10 +259,16 @@ public class Window {
 		return (float) width / (float) height;
 	}
 	
+	/**
+	 * @return the width of the window in pixels
+	 */
 	public int getWidth() {
 		return width;
 	}
 	
+	/**
+	 * @return the height of the window in pixels
+	 */
 	public int getHeight() {
 		return height;
 	}

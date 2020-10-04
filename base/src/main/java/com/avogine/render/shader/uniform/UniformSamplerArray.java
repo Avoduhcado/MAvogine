@@ -18,10 +18,10 @@ public class UniformSamplerArray extends Uniform {
 			samplerUniform.storeUniformLocation(programID);
 		}
 	}
-
-	public void loadTexUnitArray(int[] texUnits){
-		for (int i = 0; i < texUnits.length; i++){
-			samplerUniforms[i].loadTexUnit(texUnits[i]);
+	
+	public void loadTexUnitArray(int...units) {
+		for (int i = 0; i < units.length; i++) {
+			samplerUniforms[i].loadTexUnit(units[i]);
 		}
 	}
 	
