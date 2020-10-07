@@ -36,6 +36,10 @@
 		</dependency>
 		<dependency>
 			<groupId>org.lwjgl</groupId>
+			<artifactId>lwjgl-glfw</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.lwjgl</groupId>
 			<artifactId>lwjgl-assimp</artifactId>
 		</dependency>
 		<dependency>
@@ -63,7 +67,17 @@
 		</dependency>
 		<dependency>
 			<groupId>org.lwjgl</groupId>
+			<artifactId>lwjgl-glfw</artifactId>
+			<classifier>${lwjgl.natives}</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.lwjgl</groupId>
 			<artifactId>lwjgl-assimp</artifactId>
+			<classifier>${lwjgl.natives}</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.lwjgl</groupId>
+			<artifactId>lwjgl-par</artifactId>
 			<classifier>${lwjgl.natives}</classifier>
 		</dependency>
 		<dependency>
@@ -75,10 +89,6 @@
 			<groupId>org.joml</groupId>
 			<artifactId>joml</artifactId>
 			<version>${joml.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl-glfw</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.avogine</groupId>

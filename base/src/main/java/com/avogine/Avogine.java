@@ -25,10 +25,10 @@ public class Avogine implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	/**
+	 * TODO This needs to be customizable/read from a property.
 	 * Target frames per second. Controls how often the screen is rendered in a single second.
-	 * XXX This needs to be customizable
 	 */
-	public static final int TARGET_FPS = 142;
+	public static final int TARGET_FPS = 144;
 
 	/**
 	 * Target updates per second. Controls how often game logic is run in a single second.
@@ -48,8 +48,8 @@ public class Avogine implements Runnable {
 	private float sleepRemainder;
 	
 	/**
-	 * @param window
-	 * @param game 
+	 * @param window The primary game {@link Window} to display to
+	 * @param game An implementation of {@link Game} that contains the main game logic
 	 */
 	public Avogine(Window window, Game game) {
 		gameLoopThread = new Thread(this, "GAME_LOOP_THREAD");
@@ -90,8 +90,7 @@ public class Avogine implements Runnable {
 	}
 	
 	private void init() {
-		window.init();
-		window.registerInput(input);
+		window.init(input);
 		game.init(window);
 		timer.init();
 		
@@ -125,14 +124,13 @@ public class Avogine implements Runnable {
 		float accumulator = 0f;
 		float interval = 1f / TARGET_UPS;
 
-		boolean running = true;
-		while (running && !window.shouldClose()) {
+		while (!window.shouldClose()) {
 			// XXX Minor hack to limit frame updates when the window is "held" and instead tie pauses to at least the target UPS
 			elapsedTime = Math.min(interval, timer.getElapsedTime());
 			accumulator += elapsedTime;
 			frameTime += elapsedTime;
 
-			input(window);
+			input();
 
 			while (accumulator >= interval) {
 				update(interval);
@@ -145,9 +143,8 @@ public class Avogine implements Runnable {
 		}
 	}
 	
-	private void input(Window window) {
+	private void input() {
 		input.update();
-//		stage.input(window);
 	}
 	
 	private void render() {
@@ -174,7 +171,9 @@ public class Avogine implements Runnable {
 		while (timer.getTime() < endTime - 0.001) {
 			try {
 				Thread.sleep(1);
-			} catch (InterruptedException ie) {
+			} catch (InterruptedException e) {
+				logger.warn("Sync operation was interrupted?", e);
+				Thread.currentThread().interrupt();
 			}
 		}
 		// If there is any time left over, save it for the next sync

@@ -69,7 +69,7 @@ public class Window {
 	 * 
 	 */
 	@InDev
-	public void init() {
+	public void init(Input input) {
 		GLFWErrorCallback.createPrint(System.err).set();
 		
 		if (!GLFW.glfwInit()) {
@@ -177,12 +177,7 @@ public class Window {
 //			
 //			logger.debug("{} {}", contentScaleX, contentScaleY);
 //		}
-	}
-	
-	/**
-	 * @param input
-	 */
-	public void registerInput(Input input) {
+		
 		this.input = input;
 		input.init(this);
 	}
