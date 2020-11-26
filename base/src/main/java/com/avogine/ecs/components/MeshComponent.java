@@ -6,18 +6,18 @@ import com.avogine.render.data.Mesh;
 /**
  *
  */
-public class MeshRender extends EntityComponent {
+public class MeshComponent extends EntityComponent {
 
 	private Mesh[] meshes;
 	
 	/**
 	 * 
 	 */
-	public MeshRender() {
+	public MeshComponent() {
 		meshes = new Mesh[1];
 	}
 	
-	public MeshRender(Mesh[] meshes) {
+	public MeshComponent(Mesh[] meshes) {
 		this.meshes = meshes;
 	}
 

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.*;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
@@ -19,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * TODO Change meshes to only use one VBO, vertex data can just increment some sort of offset value for the stride stuff in glVertexAttribPointer so that a single VBO can be set per VAO that just contains all relevant data
  */
 public class Mesh {
 	
@@ -34,6 +35,9 @@ public class Mesh {
 	
 	private Material material;
 	
+	/**
+	 * @param positions
+	 */
 	public Mesh(FloatBuffer positions) {
 		vboMap = new HashMap<>();
 		calculateBoundingRadius(positions);
@@ -45,6 +49,9 @@ public class Mesh {
 		vertexCount = positions.limit() / 3;
 	}
 	
+	/**
+	 * @param positions
+	 */
 	public Mesh(float[] positions) {
 		vboMap = new HashMap<>();
 		calculateBoundingRadius(positions);
@@ -122,9 +129,19 @@ public class Mesh {
 	 * @param consumer
 	 */
 	public <T> void renderBatch(Collection<T> entities, Consumer<T> consumer) {
+		renderBatch(entities.stream(), consumer);
+	}
+	
+	/**
+	 * 
+	 * @param <T>
+	 * @param entities
+	 * @param consumer
+	 */
+	public <T> void renderBatch(Stream<T> entities, Consumer<T> consumer) {
 		bind();
 
-		entities.stream()
+		entities
 //		.filter(T::isInsideFrustum)
 		.forEach(entity -> {
 			// Set up data required by entity
@@ -182,6 +199,11 @@ public class Mesh {
 		}
 	}
 	
+	/**
+	 * @param location
+	 * @param data
+	 * @param size
+	 */
 	public void addIntAttribute(int location, IntBuffer data, int size) {
 		bind();
 		
@@ -200,6 +222,11 @@ public class Mesh {
 		unbind();
 	}
 	
+	/**
+	 * @param location
+	 * @param data
+	 * @param size
+	 */
 	public void addIntAttribute(int location, int[] data, int size) {
 		IntBuffer intBuffer = null;
 		try {
@@ -214,6 +241,10 @@ public class Mesh {
 		}
 	}
 	
+	/**
+	 * @param indices
+	 * @param size
+	 */
 	public void addIndexAttribute(IntBuffer indices, int size) {
 		bind();
 		
@@ -227,6 +258,9 @@ public class Mesh {
 		unbind();
 	}
 	
+	/**
+	 * @param indices
+	 */
 	public void addIndexAttribute(int[] indices) {
 		IntBuffer indexBuffer = null;
 		try {
@@ -258,18 +292,30 @@ public class Mesh {
 		}
 	}
 	
+	/**
+	 * @return
+	 */
 	public float getBoundingRadius() {
 		return boundingRadius;
 	}
 	
+	/**
+	 * @return
+	 */
 	public float getBoundingRadiusSquared() {
 		return boundingRadius * boundingRadius;
 	}
 	
+	/**
+	 * @param boundingRadius
+	 */
 	public void setBoundingRadius(float boundingRadius) {
 		this.boundingRadius = boundingRadius;
 	}
 	
+	/**
+	 * @return
+	 */
 	public int getVertexCount() {
 		return vertexCount;
 	}

@@ -3,6 +3,7 @@ package com.avogine.render.data;
 import java.lang.invoke.MethodHandles;
 import java.nio.FloatBuffer;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
@@ -15,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * TODO Potentially include multiple VBOs for instanced meshes, one for static data, and one for dynamic data that is streamed in as the scene updates and meshes transform themselves
  */
 public class InstancedMesh extends Mesh {
 
@@ -54,6 +55,10 @@ public class InstancedMesh extends Mesh {
 		unbind();
 	}
 	
+	/**
+	 * TODO This should not take in anything, or if it does it should be some kind of {@link Consumer}
+	 * @param transforms
+	 */
 	public void render(List<Matrix4f> transforms) {
 		bind();
 		
