@@ -1,35 +1,30 @@
 package com.avogine.render.data;
 
 import java.lang.invoke.MethodHandles;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
+import java.nio.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.*;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.system.MemoryUtil;
+import static org.lwjgl.opengl.GL33.*;
+
+import org.lwjgl.system.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * TODO Change meshes to only use one VBO, vertex data can just increment some sort of offset value for the stride stuff in glVertexAttribPointer so that a single VBO can be set per VAO that just contains all relevant data
  */
-public class Mesh {
+public class Mesh implements Renderable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	private int vao;
-	protected Map<Integer, Integer> vboMap;
-	private int indexVbo;
+	private int vbo;
+	private int ebo;
 	
+	/** XXX ??? */
 	private float boundingRadius;
 	private int vertexCount;
 	
@@ -39,10 +34,11 @@ public class Mesh {
 	 * @param positions
 	 */
 	public Mesh(FloatBuffer positions) {
-		vboMap = new HashMap<>();
 		calculateBoundingRadius(positions);
 		
-		vao = GL30.glGenVertexArrays();
+		vao = glGenVertexArrays();
+		vbo = glGenBuffers();
+		ebo = glGenBuffers();
 		
 		addAttribute(0, positions, 3);
 		
@@ -50,13 +46,47 @@ public class Mesh {
 	}
 	
 	/**
+	 * 
+	 * @param data
+	 * @param indices
+	 */
+	public Mesh(FloatBuffer data, IntBuffer indices) {
+		vao = glGenVertexArrays();
+		vbo = glGenBuffers();
+		ebo = glGenBuffers();
+		
+		bind();
+		
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
+		glEnableVertexAttribArray(2);
+		
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		
+		// XXX Don't unbind this, or make sure to rebind it before calling drawElements
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+		
+		vertexCount = indices.limit();
+		
+		unbind();
+	}
+	
+	/**
 	 * @param positions
 	 */
 	public Mesh(float[] positions) {
-		vboMap = new HashMap<>();
 		calculateBoundingRadius(positions);
 		
-		vao = GL30.glGenVertexArrays();
+		vao = glGenVertexArrays();
+		vbo = glGenBuffers();
+		ebo = glGenBuffers();
 		
 		addAttribute(0, positions, 3);
 		
@@ -68,16 +98,18 @@ public class Mesh {
 	 * <p>
 	 * This is called automatically by {@link #render()}.
 	 */
-	protected void bind() {
+	@Override
+	public void bind() {
 		bindMaterial();
-		GL30.glBindVertexArray(vao);
+		glBindVertexArray(vao);
 	}
 	
 	/**
 	 * Unbind the {@code Vertex Array} and unbind any material textures if they exist.
 	 */
-	protected void unbind() {
-		GL30.glBindVertexArray(0);
+	@Override
+	public void unbind() {
+		glBindVertexArray(0);
 		unbindMaterial();
 	}
 
@@ -89,11 +121,11 @@ public class Mesh {
 			return;
 		}
 		if (material.isTextured()) {
-			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+			glActiveTexture(GL_TEXTURE0);
 			material.getTexture().bind();
 		}
 		if (material.hasNormalMap()) {
-			GL13.glActiveTexture(GL13.GL_TEXTURE1);
+			glActiveTexture(GL_TEXTURE1);
 			material.getNormalMap().bind();
 		}
 	}
@@ -104,20 +136,23 @@ public class Mesh {
 		}
 		if (material.isTextured()) {
 			// XXX Do we need to call active texture?
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
 	
 	/**
 	 * Draw the vertices of this mesh to the currently bound {@code FrameBuffer}.
 	 * <p>
+	 * <b>TODO: Importing things for openGL doc doesn't work with static imports?</b>
+	 * <p>
 	 * This is a simple wrapper to {@link GL11#glDrawElements(GL11.GL_TRIANGLES, int, GL11.GL_UNSIGNED_INT, long)} that handles calling
 	 * {@link #bind()} and {@link #unbind()} before and after drawing to perform any necessary {@code Texture} and {@code Vertex Array} binding.
 	 */
+	@Override
 	public void render() {
 		bind();
 		
-		GL11.glDrawElements(GL11.GL_TRIANGLES, getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
 		
 		unbind();
 	}
@@ -128,6 +163,7 @@ public class Mesh {
 	 * @param entities
 	 * @param consumer
 	 */
+	@Override
 	public <T> void renderBatch(Collection<T> entities, Consumer<T> consumer) {
 		renderBatch(entities.stream(), consumer);
 	}
@@ -138,6 +174,7 @@ public class Mesh {
 	 * @param entities
 	 * @param consumer
 	 */
+	@Override
 	public <T> void renderBatch(Stream<T> entities, Consumer<T> consumer) {
 		bind();
 
@@ -147,7 +184,7 @@ public class Mesh {
 			// Set up data required by entity
 			consumer.accept(entity);
 			// Render this entity
-			GL11.glDrawElements(GL11.GL_TRIANGLES, getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
 		});
 
 		unbind();
@@ -162,17 +199,12 @@ public class Mesh {
 	public void addAttribute(int location, FloatBuffer data, int size) {
 		bind();
 		
-		int vbo = GL15.glGenBuffers();
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, data, GL15.GL_STATIC_DRAW);
-		
-		GL20.glEnableVertexAttribArray(location);
-		GL20.glVertexAttribPointer(location, size, GL11.GL_FLOAT, false, size * Float.BYTES, 0);
-		
-		if (vboMap.containsKey(location)) {
-			logger.warn("Overwriting location: {}", location);
-		}
-		vboMap.put(location, vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(location);
+		glVertexAttribPointer(location, size, GL_FLOAT, false, size * Float.BYTES, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		
 		unbind();
 	}
@@ -207,17 +239,12 @@ public class Mesh {
 	public void addIntAttribute(int location, IntBuffer data, int size) {
 		bind();
 		
-		int vbo = GL15.glGenBuffers();
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, data, GL15.GL_STATIC_DRAW);
-		
-		GL30.glVertexAttribIPointer(location, size, GL11.GL_INT, size * Integer.BYTES, 0);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-		
-		if (vboMap.containsKey(location)) {
-			logger.warn("Overwriting location: {}", location);
-		}
-		vboMap.put(location, vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(location);
+		glVertexAttribIPointer(location, size, GL_INT, size * Integer.BYTES, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		
 		unbind();
 	}
@@ -248,10 +275,9 @@ public class Mesh {
 	public void addIndexAttribute(IntBuffer indices, int size) {
 		bind();
 		
-		indexVbo = GL15.glGenBuffers();
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, indexVbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		
-		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, indices, GL15.GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 		
 		vertexCount = size;
 		
@@ -314,34 +340,53 @@ public class Mesh {
 	}
 	
 	/**
-	 * @return
+	 * @return the number of vertices in this mesh
 	 */
 	public int getVertexCount() {
 		return vertexCount;
 	}
 	
+	/**
+	 * @return
+	 */
 	public Material getMaterial() {
 		return material;
 	}
 
+	/**
+	 * @param material
+	 */
 	public void setMaterial(Material material) {
 		this.material = material;
 	}
 
+	/**
+	 * 
+	 */
 	public void cleanup() {
-		vboMap.values().forEach(GL15::glDeleteBuffers);
-		GL15.glDeleteBuffers(indexVbo);
+		glDeleteBuffers(vbo);
+		glDeleteBuffers(ebo);
 		
-		GL30.glBindVertexArray(0);
-		GL30.glDeleteVertexArrays(vao);
+		glBindVertexArray(0);
+		glDeleteVertexArrays(vao);
 	}
 	
+	/**
+	 * @param length
+	 * @param defaultValue
+	 * @return
+	 */
 	public static float[] createEmptyFloatArray(int length, float defaultValue) {
 		float[] result = new float[length];
 		Arrays.fill(result, defaultValue);
 		return result;
 	}
 
+	/**
+	 * @param length
+	 * @param defaultValue
+	 * @return
+	 */
 	public static int[] createEmptyIntArray(int length, int defaultValue) {
 		int[] result = new int[length];
 		Arrays.fill(result, defaultValue);
