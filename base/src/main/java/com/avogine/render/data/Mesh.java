@@ -9,12 +9,11 @@ import java.util.stream.*;
 
 import static org.lwjgl.opengl.GL33.*;
 
-import org.lwjgl.system.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO Change meshes to only use one VBO, vertex data can just increment some sort of offset value for the stride stuff in glVertexAttribPointer so that a single VBO can be set per VAO that just contains all relevant data
+ * 
  */
 public class Mesh implements Renderable {
 	
@@ -24,26 +23,9 @@ public class Mesh implements Renderable {
 	private int vbo;
 	private int ebo;
 	
-	/** XXX ??? */
-	private float boundingRadius;
 	private int vertexCount;
 	
 	private Material material;
-	
-	/**
-	 * @param positions
-	 */
-	public Mesh(FloatBuffer positions) {
-		calculateBoundingRadius(positions);
-		
-		vao = glGenVertexArrays();
-		vbo = glGenBuffers();
-		ebo = glGenBuffers();
-		
-		addAttribute(0, positions, 3);
-		
-		vertexCount = positions.limit() / 3;
-	}
 	
 	/**
 	 * 
@@ -79,21 +61,6 @@ public class Mesh implements Renderable {
 	}
 	
 	/**
-	 * @param positions
-	 */
-	public Mesh(float[] positions) {
-		calculateBoundingRadius(positions);
-		
-		vao = glGenVertexArrays();
-		vbo = glGenBuffers();
-		ebo = glGenBuffers();
-		
-		addAttribute(0, positions, 3);
-		
-		vertexCount = positions.length / 3;
-	}
-	
-	/**
 	 * Bind the {@link #material} and {@code Vertex Array} for this mesh.
 	 * <p>
 	 * This is called automatically by {@link #render()}.
@@ -122,10 +89,14 @@ public class Mesh implements Renderable {
 		}
 		if (material.isTextured()) {
 			glActiveTexture(GL_TEXTURE0);
-			material.getTexture().bind();
+			material.getDiffuse().bind();
+		}
+		if (material.getSpecular() != null) {
+			glActiveTexture(GL_TEXTURE1);
+			material.getSpecular().bind();
 		}
 		if (material.hasNormalMap()) {
-			glActiveTexture(GL_TEXTURE1);
+			glActiveTexture(GL_TEXTURE2);
 			material.getNormalMap().bind();
 		}
 	}
@@ -135,7 +106,15 @@ public class Mesh implements Renderable {
 			return;
 		}
 		if (material.isTextured()) {
-			// XXX Do we need to call active texture?
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+		if (material.getSpecular() != null) {
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+		if (material.hasNormalMap()) {
+			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
@@ -191,155 +170,6 @@ public class Mesh implements Renderable {
 	}
 	
 	/**
-	 * Generate and load a new {@code Vertex Buffer Object} into this mesh's {@code Vertex Array Object}.
-	 * @param location The index this VBO should occupy in the mesh's VAO
-	 * @param data The actual vertex data to load
-	 * @param size How many values are associated per vertex, {@code data / size} should return a whole number
-	 */
-	public void addAttribute(int location, FloatBuffer data, int size) {
-		bind();
-		
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(location);
-		glVertexAttribPointer(location, size, GL_FLOAT, false, size * Float.BYTES, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		
-		unbind();
-	}
-	
-	/**
-	 * Generate and load a new {@code Vertex Buffer Object} into this mesh's {@code Vertex Array Object}.
-	 * <p>
-	 * This method will allocate and free a new {@link FloatBuffer} as directly loading float arrays is not preferred when loading buffer data. 
-	 * @param location The index this VBO should occupy in the mesh's VAO
-	 * @param data The actual vertex data to load
-	 * @param size How many values are associated per vertex, {@code data / size} should return a whole number
-	 */
-	public void addAttribute(int location, float[] data, int size) {
-		FloatBuffer floatBuffer = null;
-		try {
-			floatBuffer = MemoryUtil.memAllocFloat(data.length);
-			floatBuffer.put(data).flip();
-			
-			addAttribute(location, floatBuffer, size);
-		} finally {
-			if (floatBuffer != null) {
-				MemoryUtil.memFree(floatBuffer);
-			}
-		}
-	}
-	
-	/**
-	 * @param location
-	 * @param data
-	 * @param size
-	 */
-	public void addIntAttribute(int location, IntBuffer data, int size) {
-		bind();
-		
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(location);
-		glVertexAttribIPointer(location, size, GL_INT, size * Integer.BYTES, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		
-		unbind();
-	}
-	
-	/**
-	 * @param location
-	 * @param data
-	 * @param size
-	 */
-	public void addIntAttribute(int location, int[] data, int size) {
-		IntBuffer intBuffer = null;
-		try {
-			intBuffer = MemoryUtil.memAllocInt(data.length);
-			intBuffer.put(data).flip();
-			
-			addIntAttribute(location, intBuffer, size);
-		} finally {
-			if (intBuffer != null) {
-				MemoryUtil.memFree(intBuffer);
-			}
-		}
-	}
-	
-	/**
-	 * @param indices
-	 * @param size
-	 */
-	public void addIndexAttribute(IntBuffer indices, int size) {
-		bind();
-		
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-		
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
-		
-		vertexCount = size;
-		
-		unbind();
-	}
-	
-	/**
-	 * @param indices
-	 */
-	public void addIndexAttribute(int[] indices) {
-		IntBuffer indexBuffer = null;
-		try {
-			indexBuffer = MemoryUtil.memAllocInt(indices.length);
-			indexBuffer.put(indices).flip();
-			
-			addIndexAttribute(indexBuffer, indices.length);
-		} finally {
-			if(indexBuffer != null) {
-				MemoryUtil.memFree(indexBuffer);
-			}
-		}
-	}
-	
-	private void calculateBoundingRadius(FloatBuffer positions) {
-		boundingRadius = 0;
-		while (positions.hasRemaining()) {
-			float pos = positions.get();
-			boundingRadius = Math.max(pos, boundingRadius);
-		}
-		positions.rewind();
-	}
-	
-	private void calculateBoundingRadius(float positions[]) {
-		boundingRadius = 0;
-		for (int i = 0; i < positions.length; i++) {
-			float pos = positions[i];
-			boundingRadius = Math.max(Math.abs(pos), boundingRadius);
-		}
-	}
-	
-	/**
-	 * @return
-	 */
-	public float getBoundingRadius() {
-		return boundingRadius;
-	}
-	
-	/**
-	 * @return
-	 */
-	public float getBoundingRadiusSquared() {
-		return boundingRadius * boundingRadius;
-	}
-	
-	/**
-	 * @param boundingRadius
-	 */
-	public void setBoundingRadius(float boundingRadius) {
-		this.boundingRadius = boundingRadius;
-	}
-	
-	/**
 	 * @return the number of vertices in this mesh
 	 */
 	public int getVertexCount() {
@@ -359,10 +189,8 @@ public class Mesh implements Renderable {
 	public void setMaterial(Material material) {
 		this.material = material;
 	}
-
-	/**
-	 * 
-	 */
+	
+	@Override
 	public void cleanup() {
 		glDeleteBuffers(vbo);
 		glDeleteBuffers(ebo);

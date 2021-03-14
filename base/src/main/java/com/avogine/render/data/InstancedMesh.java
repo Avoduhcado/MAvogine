@@ -286,10 +286,8 @@ public class InstancedMesh implements Renderable {
 	public void setMaterial(Material material) {
 		this.material = material;
 	}
-	
-	/**
-	 * 
-	 */
+
+	@Override
 	public void cleanup() {
 		glDeleteBuffers(vbo);
 		glDeleteBuffers(ebo);

@@ -12,6 +12,14 @@ public class Texture {
 	protected int rows;
 	protected int columns;
 
+	/**
+	 * Create a Texture Atlas with different texture sub regions contained within.
+	 * @param id
+	 * @param width
+	 * @param height
+	 * @param columns
+	 * @param rows
+	 */
 	public Texture(int id, int width, int height, int columns, int rows) {
 		this.id = id;
 		this.width = width;

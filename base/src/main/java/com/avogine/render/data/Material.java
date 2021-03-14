@@ -1,64 +1,92 @@
 package com.avogine.render.data;
 
-import org.joml.Vector4f;
+import org.joml.*;
 
 public class Material {
 
-	public static final Vector4f DEFAULT_COLOR = new Vector4f(1f);
+	public static final Vector3f DEFAULT_COLOR = new Vector3f(1f);
 
-	private Vector4f diffuseColor;
-	private Vector4f specularColor;
+	private final Vector3f ambientColor;
+	private final Vector3f diffuseColor;
+	private final Vector3f specularColor;
 
 	private float shininess;
 	private float reflectance;
 	
-	private Texture texture;
+	private Texture diffuse;
+	private Texture specular;
 	private Texture normalMap;
+	private Texture emission;
 	
-	public Material() {
-		diffuseColor = DEFAULT_COLOR;
-		specularColor = DEFAULT_COLOR;
-		texture = null;
-		reflectance = 0;
-	}
-	
-	public Material(Vector4f color, float reflectance) {
-		this(color, color, reflectance);
-	}
-	
-	public Material(Vector4f diffuseColor, Vector4f specularColor, float reflectance) {
-		this(diffuseColor, specularColor, null, reflectance);
-	}	
-	
-	public Material(Texture texture) {
-		this(DEFAULT_COLOR, DEFAULT_COLOR, texture, 0);
-	}
-	
-	public Material(Texture texture, float reflectance) {
-		this(DEFAULT_COLOR, DEFAULT_COLOR, texture, reflectance);
-	}
-	
-	public Material(Vector4f diffuseColor, Vector4f specularColor, Texture texture, float reflectance) {
+	public Material(Vector3f ambientColor, Vector3f diffuseColor, Vector3f specularColor, float shininess, Texture diffuse, float reflectance) {
+		this.ambientColor = ambientColor;
 		this.diffuseColor = diffuseColor;
 		this.specularColor = specularColor;
-		this.texture = texture;
+		this.shininess = shininess;
+		this.diffuse = diffuse;
 		this.reflectance = reflectance;
 	}
 	
-	public Vector4f getDiffuseColor() {
+	public Material(Texture diffuse, Texture specular, Texture emission, float shininess) {
+		this.diffuse = diffuse;
+		this.specular = specular;
+		this.shininess = shininess;
+		this.emission = emission;
+		
+		this.ambientColor = new Vector3f();
+		this.diffuseColor = new Vector3f();
+		this.specularColor = new Vector3f();
+		this.reflectance = 1.0f;
+	}
+
+	public Material(Vector3f ambientColor, Vector3f diffuseColor, Vector3f specularColor, float shininess) {
+		this(ambientColor, diffuseColor, specularColor, shininess, null, 1.0f);
+	}	
+	
+	public Material(Vector3f color, Texture texture, float shininess) {
+		this(color, color, color, shininess);
+	}
+
+	public Material(Texture texture, float shininess) {
+		this(DEFAULT_COLOR, texture, shininess);
+	}
+
+	public Material(Texture diffuse) {
+		this(diffuse, 32f);
+	}
+	
+	public Material() {
+		this(null);
+	}
+
+	/**
+	 * @return the ambient color
+	 */
+	public Vector3f getAmbientColor() {
+		return ambientColor;
+	}
+	
+	/**
+	 * @param ambient the ambient color to set
+	 */
+	public void setAmbientColor(Vector3f ambient) {
+		this.ambientColor.set(ambient);
+	}
+	
+	public Vector3f getDiffuseColor() {
 		return diffuseColor;
 	}
 	
-	public void setDiffuseColor(Vector4f diffuseColor) {
-		this.diffuseColor = diffuseColor;
+	public void setDiffuseColor(Vector3f diffuseColor) {
+		this.diffuseColor.set(diffuseColor);
 	}
 	
-	public Vector4f getSpecularColor() {
+	public Vector3f getSpecularColor() {
 		return specularColor;
 	}
 	
-	public void setSpecularColor(Vector4f specularColor) {
-		this.specularColor = specularColor;
+	public void setSpecularColor(Vector3f specularColor) {
+		this.specularColor.set(specularColor);
 	}
 	
 	public float getShininess() {
@@ -78,15 +106,37 @@ public class Material {
 	}
 	
 	public boolean isTextured() {
-		return texture != null;
+		return diffuse != null;
 	}
 	
-	public Texture getTexture() {
-		return texture;
+	public Texture getDiffuse() {
+		return diffuse;
 	}
 	
-	public void setTexture(Texture texture) {
-		this.texture = texture;
+	public void setDiffuse(Texture diffuse) {
+		this.diffuse = diffuse;
+	}
+	
+	public Texture getSpecular() {
+		return specular;
+	}
+	
+	public void setSpecular(Texture specular) {
+		this.specular = specular;
+	}
+	
+	/**
+	 * @return the emission
+	 */
+	public Texture getEmission() {
+		return emission;
+	}
+	
+	/**
+	 * @param emission the emission to set
+	 */
+	public void setEmission(Texture emission) {
+		this.emission = emission;
 	}
 	
 	public boolean hasNormalMap() {

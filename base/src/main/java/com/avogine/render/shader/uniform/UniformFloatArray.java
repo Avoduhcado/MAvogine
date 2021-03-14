@@ -1,21 +1,24 @@
 package com.avogine.render.shader.uniform;
 
+import java.util.*;
+
+import com.avogine.render.shader.uniform.light.*;
+
 public class UniformFloatArray extends Uniform {
 
 	private UniformFloat[] floatUniforms;
 	
-	public UniformFloatArray(String name, int size) {
-		super(name);
+	public UniformFloatArray(int size) {
 		floatUniforms = new UniformFloat[size];
-		for (int i = 0; i < size; i++){
-			floatUniforms[i] = new UniformFloat(name + "[" + i + "]");
+		for (int i = 0; i < size; i++) {
+			floatUniforms[i] = new UniformFloat();
 		}
 	}
 	
 	@Override
-	public void storeUniformLocation(int programID) {
-		for (UniformFloat floatUniform : floatUniforms) {
-			floatUniform.storeUniformLocation(programID);
+	public void storeUniformLocation(int programID, String name) {
+		for (int i = 0; i < floatUniforms.length; i++) {
+			floatUniforms[i].storeUniformLocation(programID, name + "[" + i + "]");
 		}
 	}
 

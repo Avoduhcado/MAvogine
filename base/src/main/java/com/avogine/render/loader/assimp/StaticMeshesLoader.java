@@ -1,33 +1,13 @@
 package com.avogine.render.loader.assimp;
 
+import java.lang.Math;
 import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.*;
+import java.util.*;
 
-import org.joml.Vector4f;
+import org.joml.*;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.assimp.AIColor4D;
-import org.lwjgl.assimp.AIFace;
-import org.lwjgl.assimp.AIFile;
-import org.lwjgl.assimp.AIFileCloseProc;
-import org.lwjgl.assimp.AIFileCloseProcI;
-import org.lwjgl.assimp.AIFileIO;
-import org.lwjgl.assimp.AIFileOpenProc;
-import org.lwjgl.assimp.AIFileOpenProcI;
-import org.lwjgl.assimp.AIFileReadProc;
-import org.lwjgl.assimp.AIFileReadProcI;
-import org.lwjgl.assimp.AIFileSeek;
-import org.lwjgl.assimp.AIFileSeekI;
-import org.lwjgl.assimp.AIFileTellProc;
-import org.lwjgl.assimp.AIFileTellProcI;
-import org.lwjgl.assimp.AIMaterial;
-import org.lwjgl.assimp.AIMesh;
-import org.lwjgl.assimp.AIScene;
-import org.lwjgl.assimp.AIString;
-import org.lwjgl.assimp.AIVector3D;
-import org.lwjgl.assimp.Assimp;
+import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 
@@ -36,7 +16,6 @@ import com.avogine.render.data.Material;
 import com.avogine.render.data.Mesh;
 import com.avogine.render.data.Texture;
 import com.avogine.render.loader.texture.TextureCache;
-import com.avogine.util.ArrayUtils;
 import com.avogine.util.resource.ResourceConstants;
 import com.avogine.util.resource.ResourceFileReader;
 
@@ -134,7 +113,7 @@ public class StaticMeshesLoader {
 
 	protected static void processMaterial(AIMaterial aiMaterial, List<Material> materials, String texturesDir) {
 		AIColor4D color = AIColor4D.create();
-
+		
 		AIString path = AIString.calloc();
 		Assimp.aiGetMaterialTexture(aiMaterial, Assimp.aiTextureType_DIFFUSE, 0, path, (IntBuffer) null, null, null, null, null, null);
 		String textPath = path.dataString();
@@ -150,33 +129,34 @@ public class StaticMeshesLoader {
 			texture = textCache.getTexture(textureFile);
 		}
 
-		Vector4f diffuse = Material.DEFAULT_COLOR;
-		int result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_DIFFUSE, Assimp.aiTextureType_NONE, 0, color);
+		Vector3f ambient = Material.DEFAULT_COLOR;
+		int result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_AMBIENT, Assimp.aiTextureType_NONE, 0, color);
 		if (result == 0) {
-			diffuse = new Vector4f(color.r(), color.g(), color.b(), color.a());
+			ambient = new Vector3f(color.r(), color.g(), color.b());
+		}
+		
+		Vector3f diffuse = Material.DEFAULT_COLOR;
+		result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_DIFFUSE, Assimp.aiTextureType_NONE, 0, color);
+		if (result == 0) {
+			diffuse = new Vector3f(color.r(), color.g(), color.b());
 		}
 
-		Vector4f specular = Material.DEFAULT_COLOR;
+		Vector3f specular = Material.DEFAULT_COLOR;
 		result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_SPECULAR, Assimp.aiTextureType_NONE, 0, color);
 		if (result == 0) {
-			specular = new Vector4f(color.r(), color.g(), color.b(), color.a());
+			specular = new Vector3f(color.r(), color.g(), color.b());
 		}
 
-		Material material = new Material(diffuse, specular, 1.0f);
-		material.setTexture(texture);
+		Material material = new Material(ambient, diffuse, specular, 32f);
+		material.setDiffuse(texture);
 		materials.add(material);
 	}
 
 	private static Mesh processMesh(AIMesh aiMesh, List<Material> materials, int numberOfInstances) {
-		List<Float> vertices = new ArrayList<>();
-		List<Float> textures = new ArrayList<>();
-		List<Float> normals = new ArrayList<>();
-		List<Integer> indices = new ArrayList<>();
-
-		processVertices(aiMesh, vertices);
-		processNormals(aiMesh, normals);
-		processTextCoords(aiMesh, textures);
-		processIndices(aiMesh, indices);
+		FloatBuffer vertexData = processData(aiMesh);
+		IntBuffer indexData = processIndexData(aiMesh);
+		
+		Mesh mesh = new Mesh(vertexData, indexData);
 		
 		// TODO Bounding box
 //		Vector3f min = new Vector3f();
@@ -192,23 +172,7 @@ public class StaticMeshesLoader {
 //			max.z = Math.max(vertices.get(i + 2), max.z);
 //		}
 
-		Mesh mesh = null;
-		if (numberOfInstances > 1) {
-//			mesh = new InstancedMesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)),
-//					ArrayUtils.toPrimitive(textures.toArray(Float[]::new)),
-//					ArrayUtils.toPrimitive(normals.toArray(Float[]::new)),
-//					indices.stream().mapToInt(Integer::intValue).toArray(), 
-//					numberOfInstances);
-		} else {
-			mesh = new Mesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)));
-			if (textures.isEmpty()) {
-				mesh.addAttribute(1, Mesh.createEmptyFloatArray((vertices.size() / 3) * 2, 0), 2);
-			} else {
-				mesh.addAttribute(1, ArrayUtils.toPrimitive(textures.toArray(Float[]::new)), 2);
-			}
-			mesh.addAttribute(2, ArrayUtils.toPrimitive(normals.toArray(Float[]::new)), 3);
-			mesh.addIndexAttribute(indices.stream().mapToInt(Integer::intValue).toArray());
-		}
+		// TODO support multiple materials per mesh
 		Material material;
 		int materialIdx = aiMesh.mMaterialIndex();
 		if (materialIdx >= 0 && materialIdx < materials.size()) {
@@ -247,6 +211,7 @@ public class StaticMeshesLoader {
 		for (int i = 0; i < numTextCoords; i++) {
 			AIVector3D textCoord = textCoords.get();
 			textures.add(textCoord.x());
+			// TODO Hum, don't inverse this?
 			textures.add(1 - textCoord.y());
 		}
 	}
@@ -259,6 +224,79 @@ public class StaticMeshesLoader {
 			IntBuffer buffer = aiFace.mIndices();
 			while (buffer.remaining() > 0) {
 				indices.add(buffer.get());
+			}
+		}
+	}
+	
+	protected static IntBuffer processIndexData(AIMesh aiMesh) {
+		int numFaces = aiMesh.mNumFaces();
+		AIFace.Buffer aiFaces = aiMesh.mFaces();
+		
+		IntBuffer indexData = null;
+		try {
+			// As long as the aiProcess_Triangulate flag is being used we should be good to assume that each face is a triangle
+			indexData = MemoryUtil.memAllocInt(numFaces * aiFaces.mNumIndices());
+			
+			for (int i = 0; i < numFaces; i++) {
+				AIFace aiFace = aiFaces.get(i);
+				IntBuffer buffer = aiFace.mIndices();
+				while (buffer.remaining() > 0) {
+					indexData.put(buffer.get());
+				}
+			}
+			indexData.flip();
+			
+			return indexData;
+		} finally {
+			if (indexData != null) {
+				MemoryUtil.memFree(indexData);
+			}
+		}
+	}
+	
+	/**
+	 * 
+	 * @param aiMesh
+	 * @return
+	 */
+	protected static FloatBuffer processData(AIMesh aiMesh) {
+		FloatBuffer verticesBuffer = null;
+		try {
+			verticesBuffer = MemoryUtil.memAllocFloat(aiMesh.mNumVertices() * (3 + 3 + 2));
+			AIVector3D.Buffer positions = aiMesh.mVertices();
+			AIVector3D.Buffer normals = aiMesh.mNormals();
+			// TODO Potentially support multiple texture coordinates per mesh?
+			AIVector3D.Buffer textureCoordinates = aiMesh.mTextureCoords().hasRemaining() ? aiMesh.mTextureCoords(0) : null;
+			
+			for (int i = 0; i < aiMesh.mNumVertices(); i++) {
+				// Vertex positions
+				AIVector3D vector = positions.get();
+				verticesBuffer.put(vector.x());
+				verticesBuffer.put(vector.y());
+				verticesBuffer.put(vector.z());
+				
+				// Vertex normals
+				vector = normals.get();
+				verticesBuffer.put(vector.x());
+				verticesBuffer.put(vector.y());
+				verticesBuffer.put(vector.z());
+				
+				// Vertex texture coordinates
+				if (textureCoordinates != null) {
+					vector = textureCoordinates.get();
+					verticesBuffer.put(vector.x());
+					verticesBuffer.put(vector.y());
+				} else {
+					verticesBuffer.put(0.0f);
+					verticesBuffer.put(0.0f);
+				}
+			}
+			verticesBuffer.flip();
+			
+			return verticesBuffer;
+		} finally {
+			if (verticesBuffer != null) {
+				MemoryUtil.memFree(verticesBuffer);
 			}
 		}
 	}

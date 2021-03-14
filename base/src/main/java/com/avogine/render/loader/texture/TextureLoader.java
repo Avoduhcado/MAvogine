@@ -51,6 +51,7 @@ public class TextureLoader {
 		
 		int width;
 		int height;
+		int channels;
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer widthBuffer = stack.mallocInt(1);
 			IntBuffer heightBuffer = stack.mallocInt(1);
@@ -59,6 +60,65 @@ public class TextureLoader {
 			String filePath = ResourceConstants.TEXTURE_PATH + filename;
 			ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
 			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
+//			STBImage.stbi_set_flip_vertically_on_load(true);
+			if (imageData != null) {
+				width = widthBuffer.get();
+				height = heightBuffer.get();
+				channels = nrChannels.get();
+				int format = 0;
+				if (channels == 1) {
+					format = GL11.GL_RED;
+				} else if (channels == 3) {
+					format = GL11.GL_RGB;
+				} else if (channels == 4) {
+					format = GL11.GL_RGBA;
+				}
+//				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, imageData);
+				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, format, width, height, 0, format, GL11.GL_UNSIGNED_BYTE, imageData);
+				// TODO Add check to some sort of Options object for mipmaps/anisotropic filtering
+				GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+				// TODO Add customizable options for these when loading textures
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
+				if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
+					// XXX: Extract some global Anisotropic filtering value
+					float amount = Math.min(4f, GL11.glGetFloat(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT));
+					GL11.glTexParameterf(GL11.GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
+				}
+				STBImage.stbi_image_free(imageData);
+			} else {
+				logger.error("Texture failed to load at path: {}", filePath);
+				return null;
+			}
+		}
+		
+		return new Texture(textureID, width, height);
+	}
+	
+	/**
+	 * 
+	 * @param filename
+	 * @param columns
+	 * @param rows
+	 * @return
+	 */
+	protected static Texture loadTextureAtlas(String filename, int columns, int rows) {
+		int textureID = GL11.glGenTextures();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
+		
+		int width;
+		int height;
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			IntBuffer widthBuffer = stack.mallocInt(1);
+			IntBuffer heightBuffer = stack.mallocInt(1);
+			IntBuffer nrChannels = stack.mallocInt(1);
+			
+			String filePath = ResourceConstants.TEXTURE_PATH + filename;
+			ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
+			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
+//			STBImage.stbi_set_flip_vertically_on_load(true);
 			if (imageData != null) {
 				width = widthBuffer.get();
 				height = heightBuffer.get();
@@ -82,7 +142,7 @@ public class TextureLoader {
 			STBImage.stbi_image_free(imageData);
 		}
 		
-		return new Texture(textureID, width, height);
+		return new Texture(textureID, width, height, columns, rows);
 	}
 	
 	/**

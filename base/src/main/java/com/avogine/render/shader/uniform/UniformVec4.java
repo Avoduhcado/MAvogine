@@ -11,16 +11,12 @@ public class UniformVec4 extends Uniform {
 	private float currentW;
 	private boolean used = false;
 
-	public UniformVec4(String name) {
-		super(name);
-	}
-
 	public void loadVec4(Vector4f vector) {
 		loadVec4(vector.x, vector.y, vector.z, vector.w);
 	}
 
 	public void loadVec4(float x, float y, float z, float w) {
-		if(!used || x != currentX || y != currentY || z != currentZ || w != currentW) {
+		if (!used || x != currentX || y != currentY || z != currentZ || w != currentW) {
 			this.currentX = x;
 			this.currentY = y;
 			this.currentZ = z;

@@ -26,6 +26,10 @@ public class TextureCache {
 		return textureMap.computeIfAbsent(textureFile, v -> TextureLoader.loadTexture(textureFile));
 	}
 	
+	public Texture getTextureAtlas(String textureFile, int columns, int rows) {
+		return textureMap.computeIfAbsent(textureFile, v -> TextureLoader.loadTextureAtlas(textureFile, columns, rows));
+	}
+	
 	public Texture getCubemap(String...textureFiles) {
 		// XXX Might be better to standardize cubemap loading and instead reference a singular directory to load generic file names from for each side of the cube
 		return textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().reduce((a, b) -> a + " " + b).get(), v -> TextureLoader.loadCubemap(textureFiles));

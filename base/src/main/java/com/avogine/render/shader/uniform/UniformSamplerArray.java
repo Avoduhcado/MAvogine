@@ -1,21 +1,24 @@
 package com.avogine.render.shader.uniform;
 
+import java.util.*;
+
+import com.avogine.render.shader.uniform.light.*;
+
 public class UniformSamplerArray extends Uniform {
 
 	private UniformSampler[] samplerUniforms;
 	
-	public UniformSamplerArray(String name, int size) {
-		super(name);
+	public UniformSamplerArray(int size) {
 		samplerUniforms = new UniformSampler[size];
-		for (int i = 0; i < size; i++){
-			samplerUniforms[i] = new UniformSampler(name + "[" + i + "]");
+		for (int i = 0; i < size; i++) {
+			samplerUniforms[i] = new UniformSampler();
 		}
 	}
 	
 	@Override
-	public void storeUniformLocation(int programID) {
-		for(UniformSampler samplerUniform : samplerUniforms){
-			samplerUniform.storeUniformLocation(programID);
+	public void storeUniformLocation(int programID, String name) {
+		for (int i = 0; i < samplerUniforms.length; i++) {
+			samplerUniforms[i].storeUniformLocation(programID, name + "[" + i + "]");
 		}
 	}
 	

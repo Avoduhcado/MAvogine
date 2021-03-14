@@ -35,10 +35,9 @@ public class DefaultRenderer implements Renderer<DefaultScene3D> {
 		simple.projectionMatrix.loadMatrix(projection);
 		simple.viewMatrix.loadMatrix(view);
 
-		simple.lightPosition.loadVec3(-10, 10, 0);
-		simple.lightColor.loadVec3(1f, 1f, 1f);
+//		simple.lightPosition.loadVec3(-10, 10, 0);
+//		simple.lightColor.loadVec3(1f, 1f, 1f);
 
-		simple.useColor.loadInteger(1);
 		for (Entry<Mesh, Set<Entity>> entry : scene.getMeshMap().entrySet()) {
 			// TODO Load per mesh material
 			entry.getKey().renderBatch(entry.getValue(), (entity -> {
