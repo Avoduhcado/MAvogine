@@ -31,7 +31,22 @@ public class FontLoaderSTB {
 	/** {@value #FONT_HEIGHT} */
 	private static final int FONT_HEIGHT = 24;
 	
-	public static FontSTB loadFont(String fontname) {
+	/**
+	 * 
+		fread(ttf_buffer, 1, 1<<20, fopen("c:/windows/fonts/times.ttf", "rb"));
+	    stbtt_BakeFontBitmap(ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
+	    // can free ttf_buffer at this point
+	    glGenTextures(1, &ftex);
+	    glBindTexture(GL_TEXTURE_2D, ftex);
+	    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512,512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_bitmap);
+	    // can free temp_bitmap at this point
+	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	 * @param fontname
+	 * @param fontSize
+	 * @return
+	 */
+	public static FontSTB loadFont(String fontname, int fontSize) {
 		//ByteBuffer ttfBuffer = ResourceFileReader.readResourceToByteBuffer(ResourceConstants.FONT_PATH + fontname);
 		ByteBuffer ttfBuffer = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONT_PATH + fontname, 1024);
 		
@@ -43,7 +58,7 @@ public class FontLoaderSTB {
 		STBTTBakedChar.Buffer cdata = STBTTBakedChar.malloc(96);
 		
 		ByteBuffer bitmap = BufferUtils.createByteBuffer(512 * 512);
-		STBTruetype.stbtt_BakeFontBitmap(ttfBuffer, FONT_HEIGHT, bitmap, 512, 512, 32, cdata);
+		STBTruetype.stbtt_BakeFontBitmap(ttfBuffer, fontSize, bitmap, 512, 512, 32, cdata);
 		
 		int bTex = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, bTex);
@@ -57,7 +72,11 @@ public class FontLoaderSTB {
 		
 		Texture bitmapTexture = new Texture(bTex);
 		
-		return new FontSTB(FONT_HEIGHT, info, cdata, bitmapTexture);
+		return new FontSTB(fontSize, info, cdata, bitmapTexture);
+	}
+	
+	public static FontSTB loadFont(String fontname) {
+		return loadFont(fontname, FONT_HEIGHT);
 	}
 	
 	/**

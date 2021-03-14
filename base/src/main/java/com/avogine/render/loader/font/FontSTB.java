@@ -12,9 +12,7 @@ import org.lwjgl.stb.STBTTFontinfo;
 import org.lwjgl.stb.STBTruetype;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.render.data.Material;
-import com.avogine.render.data.Mesh;
-import com.avogine.render.data.Texture;
+import com.avogine.render.data.*;
 import com.avogine.util.ArrayUtils;
 
 public class FontSTB {
@@ -32,7 +30,7 @@ public class FontSTB {
 		this.bitmapTexture = texture;
 	}
 	
-	public Mesh buildTextMesh(String text, float x, float y) {
+	public RawMesh buildTextMesh(String text) {
 		List<Float> vertices = new ArrayList<>();
 		List<Float> textureCoords = new ArrayList<>();
 		List<Integer> indices = new ArrayList<>();
@@ -40,8 +38,8 @@ public class FontSTB {
 		int index = 0;
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			// Using stack.floats(n) will presumably handle the values being re-used. IDK why repeated calls will start returning Integer.MIN_VALUE
-			FloatBuffer xpos = stack.floats(x);
-			FloatBuffer ypos = stack.floats(y);
+			FloatBuffer xpos = stack.floats(1);
+			FloatBuffer ypos = stack.floats(1);
 			
 			STBTTAlignedQuad q = STBTTAlignedQuad.mallocStack(stack);
 			
@@ -52,7 +50,7 @@ public class FontSTB {
 				// If the character is a newline, increment the ypos
 				if (c == '\n') {
 					ypos.put(0, ypos.get(0) + height);
-					xpos.put(0, x);
+					xpos.put(0, 0);
 					continue;
 					// If it's outside of the character set, skip it
 				} else if (c < 32 || 128 <= c) {
@@ -76,7 +74,7 @@ public class FontSTB {
 			}
 		}
 		
-		Mesh textMesh = new Mesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)));
+		RawMesh textMesh = new RawMesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)));
 		textMesh.addAttribute(1, ArrayUtils.toPrimitive(textureCoords.toArray(Float[]::new)), 2);
 		textMesh.addIndexAttribute(indices.stream().mapToInt(Integer::intValue).toArray());
 		textMesh.setMaterial(new Material(bitmapTexture));
