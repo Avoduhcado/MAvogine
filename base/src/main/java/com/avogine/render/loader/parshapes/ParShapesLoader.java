@@ -3,7 +3,7 @@ package com.avogine.render.loader.parshapes;
 import org.lwjgl.util.par.ParShapes;
 import org.lwjgl.util.par.ParShapesMesh;
 
-import com.avogine.render.data.Mesh;
+import com.avogine.render.data.*;
 
 /**
  * TODO Add param objects to pass to each method for shape customization
@@ -14,27 +14,32 @@ import com.avogine.render.data.Mesh;
  */
 public class ParShapesLoader {
 
+	/**
+	 * Generate a new cube {@link Mesh}.
+	 * <p>
+	 * This will automatically scale and re-center the cube to 0, 0, 0
+	 * @return
+	 */
 	public static Mesh loadCubemap() {
-		ParShapesMesh parMesh = ParShapes.par_shapes_create_cube();
 		// ParShapes generates a 1x1x1 cube centered around (0.5, 0.5, 0.5) so we need to scale and offset it to cover -1 to 1
-		ParShapes.par_shapes_scale(parMesh, 2, 2, 2);
-		ParShapes.par_shapes_translate(parMesh, -1, -1, -1);
-		
-		Mesh mesh = new Mesh(parMesh.points(parMesh.npoints() * 3));
-		mesh.addIndexAttribute(parMesh.triangles(parMesh.ntriangles() * 3), parMesh.ntriangles() * 3);
-		
-		parMesh.free();
-		
-		return mesh;
+		// XXX Reading the above comment, does this actually do what it says it should?
+		return new ParShapesBuilder()
+				.createCube()
+				.scale(2, 2, 2)
+				.translate(-1, -1, -1)
+				.build();
 	}
 	
-	public static Mesh loadPlane() {
+	/**
+	 * @return
+	 */
+	public static RawMesh loadPlane() {
 		ParShapesMesh parMesh = ParShapes.par_shapes_create_plane(100, 100);
 		ParShapes.par_shapes_scale(parMesh, 512, 512, 1);
 		ParShapes.par_shapes_rotate(parMesh, (float) Math.toRadians(-90), new float[] {1, 0, 0});
 		ParShapes.par_shapes_translate(parMesh, -256, 0, 256);
 		
-		Mesh mesh = new Mesh(parMesh.points(parMesh.npoints() * 3));
+		RawMesh mesh = new RawMesh(parMesh.points(parMesh.npoints() * 3));
 		mesh.addAttribute(1, parMesh.tcoords(parMesh.npoints() * 2), 2);
 		mesh.addAttribute(2, parMesh.normals(parMesh.npoints() * 3), 3);
 		mesh.addIndexAttribute(parMesh.triangles(parMesh.ntriangles() * 3), parMesh.ntriangles() * 3);
@@ -44,13 +49,17 @@ public class ParShapesLoader {
 		return mesh;
 	}
 	
-	public static Mesh loadSphere(float radius) {
+	/**
+	 * @param radius
+	 * @return
+	 */
+	public static RawMesh loadSphere(float radius) {
 		ParShapesMesh parMesh = ParShapes.par_shapes_create_parametric_sphere(16, 16);
 		
 		ParShapes.par_shapes_scale(parMesh, radius, radius, radius);
 		ParShapes.par_shapes_translate(parMesh, 0, radius * 0.5f, 0);
 		
-		Mesh mesh = new Mesh(parMesh.points(parMesh.npoints() * 3));
+		RawMesh mesh = new RawMesh(parMesh.points(parMesh.npoints() * 3));
 		mesh.addAttribute(1, parMesh.tcoords(parMesh.npoints() * 2), 2);
 		mesh.addAttribute(2, parMesh.normals(parMesh.npoints() * 3), 3);
 		mesh.addIndexAttribute(parMesh.triangles(parMesh.ntriangles() * 3), parMesh.ntriangles() * 3);
@@ -60,7 +69,10 @@ public class ParShapesLoader {
 		return mesh;
 	}
 	
-	public static Mesh loadLSystem() {
+	/**
+	 * @return
+	 */
+	public static RawMesh loadLSystem() {
 		String program =
 	            "sx 2 sy 2" +
 	            " ry -90 rx 90" +
@@ -89,7 +101,7 @@ public class ParShapesLoader {
 	            "     call llimb";
 		ParShapesMesh parMesh = ParShapes.par_shapes_create_lsystem(program, 5, 60);
 		
-		Mesh mesh = new Mesh(parMesh.points(parMesh.npoints() * 3));
+		RawMesh mesh = new RawMesh(parMesh.points(parMesh.npoints() * 3));
 		mesh.addIndexAttribute(parMesh.triangles(parMesh.ntriangles() * 3), parMesh.ntriangles() * 3);
 		
 		parMesh.free();
