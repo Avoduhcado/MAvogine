@@ -12,7 +12,7 @@ import com.avogine.render.data.Mesh;
  *
  */
 @InDev
-public class Entity implements Renderable {
+public class Entity {
 	
 	protected Vector3f position;
 	
@@ -27,11 +27,6 @@ public class Entity implements Renderable {
 		this.setMeshes(meshes);
 	}
 	
-	@Override
-	public boolean isInsideFrustum() {
-		return true;
-	}
-
 	public Vector3f getPosition() {
 		return position;
 	}
@@ -46,12 +41,6 @@ public class Entity implements Renderable {
 
 	public void setMeshes(Mesh[] meshes) {
 		this.meshes = meshes;
-	}
-
-	@Override
-	public void cleanup() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

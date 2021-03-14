@@ -141,4 +141,10 @@ public class FirstPersonCamera extends Camera implements KeyboardListener, Mouse
 		}
 	}
 
+	@Override
+	public void keyReleased(KeyboardEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

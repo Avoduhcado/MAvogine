@@ -1,9 +1,7 @@
 package com.avogine.game.scene;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,28 +14,21 @@ import com.avogine.render.data.Mesh;
  */
 public class DefaultScene3D implements Scene {
 
-	private List<Entity> entities = new ArrayList<>();
 	private Map<Mesh, Set<Entity>> meshMap = new HashMap<>();
 	
 	private Mesh skybox;
 	
 	/**
-	 * @return
+	 * @param entity
 	 */
-	public List<Entity> getEntities() {
-		return entities;
+	public void addEntity(Entity entity) {
+		addToMeshMap(entity);
 	}
 	
 	/**
 	 * @param entity
 	 */
-	public void addEntity(Entity entity) {
-		entities.add(entity);
-		addToMeshMap(entity);
-	}
-	
 	public void removeEntity(Entity entity) {
-		entities.remove(entity);
 		removeFromMeshMap(entity);
 	}
 	
@@ -56,10 +47,16 @@ public class DefaultScene3D implements Scene {
 		}
 	}
 	
+	/**
+	 * @return
+	 */
 	public Map<Mesh, Set<Entity>> getMeshMap() {
 		return meshMap;
 	}
 	
+	/**
+	 * @return
+	 */
 	public Mesh getSkybox() {
 		return skybox;
 	}
@@ -73,7 +70,7 @@ public class DefaultScene3D implements Scene {
 	 */
 	@Override
 	public void cleanup() {
-		entities.forEach(Entity::cleanup);
+		meshMap.keySet().forEach(Mesh::cleanup);
 		if (skybox != null) {
 			skybox.cleanup();
 		}
