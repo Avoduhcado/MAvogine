@@ -139,7 +139,16 @@ public class Input {
 	
 	private void fireKeyboardEvent(KeyboardEvent event) {
 		getListenersOfType(KeyboardListener.class)
-			.forEach(kl -> kl.keyPressed(event));
+			.forEach(kl -> {
+				switch (event.getType()) {
+				case GLFW.GLFW_PRESS:
+					kl.keyPressed(event);
+					break;
+				case GLFW.GLFW_RELEASE:
+					kl.keyReleased(event);
+					break;
+				}
+			});
 	}
 	
 	private void fireMouseClickEvent(MouseClickEvent event) {

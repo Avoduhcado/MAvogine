@@ -2,8 +2,6 @@ package com.avogine;
 
 import java.lang.invoke.MethodHandles;
 
-import org.lwjgl.glfw.Callbacks;
-import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +31,7 @@ public class Avogine implements Runnable {
 	/**
 	 * Target updates per second. Controls how often game logic is run in a single second.
 	 */
-	public static final int TARGET_UPS = TARGET_FPS;
+	public static final int TARGET_UPS = 60;
 
 	private final Thread gameLoopThread;
 	
@@ -46,7 +44,7 @@ public class Avogine implements Runnable {
 	private float frameTime;
 	private int fps;
 	private float sleepRemainder;
-	
+		
 	/**
 	 * @param window The primary game {@link Window} to display to
 	 * @param game An implementation of {@link Game} that contains the main game logic
@@ -116,31 +114,50 @@ public class Avogine implements Runnable {
 	/**
 	 * Call once to kick off game loop.
 	 * <p>
-	 * Runs as long as {@link #window} is not set to close as specified by {@link GLFW#glfwWindowShouldClose(long)}.
-	 * In order, once per frame the {@link #frameTime} is calculated, input is processed, update code is run, the screen is rendered, and then also synced.
+	 * Runs as long as {@link #window} is not set to close.
+	 * <p>
+	 * In order, once per frame the {@link #frameTime} is calculated, input is processed, update code is run, the screen is rendered, and then also synced to the target framerate.
 	 */
 	private void loop() {
 		float elapsedTime;
-		float accumulator = 0f;
-		float interval = 1f / TARGET_UPS;
-
+//		float accumulator = 0f;
+//		float interval = 1f / TARGET_UPS;
+		
 		while (!window.shouldClose()) {
 			// XXX Minor hack to limit frame updates when the window is "held" and instead tie pauses to at least the target UPS
-			elapsedTime = Math.min(interval, timer.getElapsedTime());
-			accumulator += elapsedTime;
+//			elapsedTime = Math.min(interval, timer.getElapsedTime());
+			elapsedTime = timer.getElapsedTime();
 			frameTime += elapsedTime;
 
 			input();
 
-			while (accumulator >= interval) {
-				update(interval);
-				accumulator -= interval;
-			}
+			update(elapsedTime);
 			
 			render();
-
+			
+			// XXX Should syncing occur at the start of the frame? If a frame takes a long time to render/process, by the time we get here we could've already surpassed our frame time budget
 			sync();
 		}
+		
+		// XXX Updates with a constant delta time, but blows up if frame rate is consistently low
+//		while (!window.shouldClose()) {
+//			// XXX Minor hack to limit frame updates when the window is "held" and instead tie pauses to at least the target UPS
+//			elapsedTime = Math.min(interval, timer.getElapsedTime());
+//			accumulator += elapsedTime;
+//			frameTime += elapsedTime;
+//
+//			input();
+//
+//			while (accumulator >= interval) {
+//				update(interval);
+//				accumulator -= interval;
+//			}
+//			
+//			render();
+//			
+//			// XXX Should syncing occur at the start of the frame? If a frame takes a long time to render/process, by the time we get here we could've already surpassed our frame time budget
+//			sync();
+//		}
 	}
 	
 	private void input() {
@@ -148,12 +165,14 @@ public class Avogine implements Runnable {
 	}
 	
 	private void render() {
-		fps++;
 		if (frameTime >= 1.0f) {
 			window.setFps(fps);
+			logger.info("FPS: {}", fps);
 			frameTime = 0;
 			fps = 0;
 		}
+		fps++;
+		
 		game.render();
 		window.update();
 	}
@@ -184,11 +203,7 @@ public class Avogine implements Runnable {
 	private void cleanup() {
 		game.cleanup();
 		
-		Callbacks.glfwFreeCallbacks(window.getId());
-		GLFW.glfwDestroyWindow(window.getId());
-		
-		GLFW.glfwTerminate();
-		GLFW.glfwSetErrorCallback(null).free();
+		window.cleanup();
 	}
 
 }

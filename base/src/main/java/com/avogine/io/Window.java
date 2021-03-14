@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avogine.Avogine;
 import com.avogine.experimental.annotation.InDev;
+import com.avogine.io.listener.*;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.
@@ -46,7 +47,7 @@ public class Window {
 	private WindowOptions options;
 	
 	public static boolean debugMode;
-	
+		
 	private List<Long> monitorList = new ArrayList<>();
 	
 	private Input input;
@@ -55,7 +56,7 @@ public class Window {
 	 * @param width The width in pixels for this window
 	 * @param height The height in pixels for this window
 	 * @param title The window title
-	 * @param options An optional object to configure window specific creation options. Can be {@code null}.
+	 * @param options window specific settings for configuring OpenGL
 	 */
 	public Window(int width, int height, String title, WindowOptions options) {
 		this.width = width;
@@ -96,9 +97,7 @@ public class Window {
 			long monitorID = monitorBuffer.get();
 			monitorList.add(monitorID);
 		}
-		if (options != null) {
-			monitor = monitorList.get(options.monitorIndex);
-		}
+		monitor = monitorList.get(options.monitorIndex);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -118,7 +117,7 @@ public class Window {
 		
 		GLFW.glfwMakeContextCurrent(id);
 		
-		if (options != null && options.vsync) {
+		if (options.vsync) {
 			GLFW.glfwSwapInterval(1);
 		} else {
 			GLFW.glfwSwapInterval(0);
@@ -132,18 +131,29 @@ public class Window {
 
 		GL.createCapabilities();
 		
-		GL11.glClearColor(100f / 255f, 149f / 255f, 237f / 255f, 1f);
-		GL11.glEnable(GL11.GL_DEPTH_TEST);
-
-		GL11.glEnable(GL11.GL_BLEND);
-		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		// All of this should be handled through settings in WindowOptions
+		GL11.glClearColor(options.clearColor[0], options.clearColor[1], options.clearColor[2], options.clearColor[3]);
 		
-		GL11.glEnable(GL11.GL_CULL_FACE);
-		GL11.glCullFace(GL11.GL_BACK);
+		if (options.depthTest) {
+			GL11.glEnable(GL11.GL_DEPTH_TEST);
+		}
 
-		GL11.glEnable(GL13.GL_MULTISAMPLE);
+		if (options.blend) {
+			GL11.glEnable(GL11.GL_BLEND);
+			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		}
 		
-		GLFW.glfwSetWindowSizeCallback(id, (window, w, h) -> {
+		if (options.cullFaces) {
+			GL11.glEnable(GL11.GL_CULL_FACE);
+			// TODO Fetch which face to cull from options as well
+			GL11.glCullFace(GL11.GL_BACK);
+		}
+
+		if (options.multisample) {
+			GL11.glEnable(GL13.GL_MULTISAMPLE);
+		}
+		
+		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> {
 			width = w;
 			height = h;
 			GL11.glViewport(0, 0, width, height);
@@ -228,6 +238,18 @@ public class Window {
 	}
 	
 	/**
+	 * Close this window <b>and</b> terminate GLFW.
+	 * <p>
+	 * This should only be called when exiting the entire application.
+	 */
+	public void cleanup() {
+		close();
+		
+		GLFW.glfwTerminate();
+		GLFW.glfwSetErrorCallback(null).free();
+	}
+	
+	/**
 	 * @return the input
 	 */
 	public Input getInput() {
@@ -286,7 +308,17 @@ public class Window {
 		/**
 		 * The default monitor that the window should be placed on.
 		 */
-		public int monitorIndex;
+		public int monitorIndex = 0;
+		
+		public float[] clearColor = new float[] {100f / 255f, 149f / 255f, 237f / 255f, 1f};
+
+		public boolean depthTest;
+		
+		public boolean cullFaces;
+		
+		public boolean blend;
+		
+		public boolean multisample;
 		
 	}
 	

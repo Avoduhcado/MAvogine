@@ -12,4 +12,10 @@ public interface KeyboardListener extends InputListener {
 	 */
 	public void keyPressed(KeyboardEvent event);
 	
+	/**
+	 * Fired when a keyboard key is released
+	 * @param event
+	 */
+	public void keyReleased(KeyboardEvent event);
+	
 }

@@ -23,12 +23,20 @@ public interface Game {
 	public void update(float interval);
 	
 	/**
-	 * 
+	 * Draw the current scene.
+	 * <p>
+	 * This should be called exactly once per frame.
+	 * <p>
+	 * <b>XXX Should explicit calls to GL methods be avoided from this implementation? And be dependent on something deeper? I don't
+	 * particularly care about abstract rendering methods at the moment.</b>
 	 */
 	public void render();
 	
 	/**
-	 * 
+	 * Free up any allocated memory defined from this object.
+	 * <p>
+	 * Typically this just consists of calling {@code cleanup()} on any objects that were created
+	 * in the {@code init()} method like meshes, shaders, etc.
 	 */
 	public void cleanup();
 	
