@@ -22,7 +22,8 @@ public class EntityComponentQuery {
 	}
 	
 	/**
-	 * @param set
+	 * TODO Replace {@code set} param with EntityWorld param to encourage proper use of {@code EntityWorld}?
+	 * @param set The set of all {@link EntityChunk}s to collect components from
 	 * @return a collection of all {@link EntityComponentMap}s guaranteed to contain all of the necessary components for this system's query
 	 */
 	public Set<EntityComponentMap> fetch(Set<EntityChunk> set) {

@@ -15,9 +15,11 @@ public class EntityComponentMap extends HashMap<Class<? extends EntityComponent>
 	/**
 	 * @param <T>
 	 * @param clazz
-	 * @return
+	 * @return the component contained in this map of type {@code clazz} automatically cast to that type
+	 * or {@code null} if no such component exists in this map
 	 */
 	public <T extends EntityComponent> T getAs(Class<T> clazz) {
-		return (T) get(clazz);
+		return clazz.cast(get(clazz));
 	}
+	
 }

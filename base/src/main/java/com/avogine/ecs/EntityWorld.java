@@ -1,15 +1,12 @@
 package com.avogine.ecs;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.lang.reflect.*;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- *
+ * TODO Document process of adding entities here, how they're stored and updated, and how to access them through component queries
+ * Rename this to EntityManager? For Component/System naming scheme
  */
 public class EntityWorld {
 
@@ -60,14 +57,17 @@ public class EntityWorld {
 	
 	/**
 	 * @param archetype
-	 * @return
+	 * @return a new Entity ID with default components specified by the given {@code EntityArchetype}
 	 */
 	public long createEntityWith(EntityArchetype archetype) {
 		long entityID = getNewEntityID();
 		EntityComponentMap componentMap = new EntityComponentMap();
 		archetype.forEach(clazz -> {
 			try {
-				componentMap.put(clazz, clazz.getDeclaredConstructor().newInstance());
+				Constructor<? extends EntityComponent> constructor = clazz.getDeclaredConstructor();
+				if (constructor.trySetAccessible()) {
+					componentMap.put(clazz, constructor.newInstance());
+				}
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException	| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				// TODO This whole method is sus and I'd really prefer to not have reflection baked in to such a central feature...
 				e.printStackTrace();
@@ -80,7 +80,7 @@ public class EntityWorld {
 	
 	/**
 	 * @param components
-	 * @return
+	 * @return a new Entity ID created with the supplied {@code EntityComponent}s
 	 */
 	public long createEntityWith(EntityComponent...components) {
 		long entityID = getNewEntityID();
@@ -88,7 +88,7 @@ public class EntityWorld {
 		for (EntityComponent component : components) {
 			componentMap.put(component.getClass(), component);
 		}
-		EntityArchetype archetype = new EntityArchetype(components);
+		EntityArchetype archetype = EntityArchetype.of(components);
 		storeChunk(entityID, archetype, componentMap);
 		
 		return entityID;

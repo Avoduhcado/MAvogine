@@ -3,9 +3,8 @@ package com.avogine.ecs;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.avogine.ecs.components.MeshRender;
-import com.avogine.ecs.components.Transform;
+import com.avogine.ecs.components.MeshComponent;
+import com.avogine.ecs.components.TransformComponent;
 import com.avogine.ecs.system.RenderSystem;
 
 /**
@@ -31,9 +30,9 @@ class ECSTest {
 		
 		assert(entity1 != entity2 && entity2 != entity3);
 		
-		EntityArchetype arch1 = new EntityArchetype(Transform.class, MeshRender.class);
-		EntityArchetype arch2 = new EntityArchetype(Transform.class, MeshRender.class);
-		EntityArchetype arch3 = new EntityArchetype(Transform.class);
+		EntityArchetype arch1 = new EntityArchetype(TransformComponent.class, MeshComponent.class);
+		EntityArchetype arch2 = new EntityArchetype(TransformComponent.class, MeshComponent.class);
+		EntityArchetype arch3 = new EntityArchetype(TransformComponent.class);
 		
 		assert(arch1.equals(arch2));
 		assert(!arch1.equals(arch3));
@@ -43,8 +42,8 @@ class ECSTest {
 		
 		assert(world.getChunks().size() == 1);
 		
-		long entity6 = world.createEntityWith(new Transform(new Vector3f(1, 5, 3)), new MeshRender());
-		long entity7 = world.createEntityWith(new Transform(new Vector3f(7, 12, 31)), new MeshRender());
+		long entity6 = world.createEntityWith(new TransformComponent(new Vector3f(1, 5, 3)), new MeshComponent());
+		long entity7 = world.createEntityWith(new TransformComponent(new Vector3f(7, 12, 31)), new MeshComponent());
 		
 		RenderSystem renderSystem = new RenderSystem(world);
 		renderSystem.process();
