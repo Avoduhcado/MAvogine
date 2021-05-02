@@ -6,14 +6,14 @@ import com.avogine.render.data.Mesh;
 /**
  *
  */
-public class MeshComponent extends EntityComponent {
+public class ModelComponent extends EntityComponent {
 
 	private Mesh[] meshes;
 	
 	/**
 	 * 
 	 */
-	public MeshComponent() {
+	public ModelComponent() {
 		meshes = new Mesh[1];
 	}
 	
@@ -21,14 +21,14 @@ public class MeshComponent extends EntityComponent {
 	 * 
 	 * @param mesh
 	 */
-	public MeshComponent(Mesh mesh) {
+	public ModelComponent(Mesh mesh) {
 		this.meshes = new Mesh[] {mesh};
 	}
 	
 	/**
 	 * @param meshes
 	 */
-	public MeshComponent(Mesh[] meshes) {
+	public ModelComponent(Mesh[] meshes) {
 		this.meshes = meshes;
 	}
 

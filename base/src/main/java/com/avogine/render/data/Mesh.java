@@ -37,27 +37,24 @@ public class Mesh implements Renderable {
 		vbo = glGenBuffers();
 		ebo = glGenBuffers();
 		
-		bind();
+		glBindVertexArray(vao);
 		
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
-		glEnableVertexAttribArray(2);
-		
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		
-		// XXX Don't unbind this, or make sure to rebind it before calling drawElements
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 		
 		vertexCount = indices.limit();
 		
-		unbind();
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
+		
+		glBindVertexArray(0);
 	}
 	
 	/**
