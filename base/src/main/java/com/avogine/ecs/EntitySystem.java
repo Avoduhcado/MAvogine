@@ -17,8 +17,13 @@ public abstract class EntitySystem {
 	
 	/**
 	 * TODO Remove?
-	 * Alternatively, some form of generic record would need to be passed in here for systems that need additional data to process components
+	 * Alternatively, some form of generic game state record would need to be passed in here for systems that need additional data to process components
 	 */
 	public abstract void process();
+	
+	/**
+	 * Free up any allocated memory if necessary
+	 */
+	public abstract void cleanup();
 	
 }

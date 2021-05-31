@@ -2,7 +2,7 @@ package com.avogine.render.data;
 
 import org.lwjgl.opengl.GL11;
 
-public class Texture {
+public class TextureAtlas {
 
 	protected int id;
 
@@ -15,12 +15,12 @@ public class Texture {
 	/**
 	 * Create a Texture Atlas with different texture sub regions contained within.
 	 * @param id
-	 * @param width
-	 * @param height
-	 * @param columns
-	 * @param rows
+	 * @param width The width of an individual cell in pixels
+	 * @param height The height of an individual cell in pixels
+	 * @param columns The number of columns contained in the atlas
+	 * @param rows The number of rows contained in the atlas
 	 */
-	public Texture(int id, int width, int height, int columns, int rows) {
+	public TextureAtlas(int id, int width, int height, int columns, int rows) {
 		this.id = id;
 		this.width = width;
 		this.height = height;
@@ -28,11 +28,11 @@ public class Texture {
 		this.columns = columns;
 	}
 	
-	public Texture(int id, int width, int height) {
+	public TextureAtlas(int id, int width, int height) {
 		this(id, width, height, 1, 1);
 	}
 	
-	public Texture(int id) {
+	public TextureAtlas(int id) {
 		this(id, 1, 1, 1, 1);
 	}
 	

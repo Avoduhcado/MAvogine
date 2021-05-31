@@ -21,9 +21,9 @@ public class FontSTB {
 	private STBTTFontinfo info;
 	private STBTTBakedChar.Buffer cdata;
 	
-	private Texture bitmapTexture;
+	private TextureAtlas bitmapTexture;
 	
-	public FontSTB(int height, STBTTFontinfo info, STBTTBakedChar.Buffer charData, Texture texture) {
+	public FontSTB(int height, STBTTFontinfo info, STBTTBakedChar.Buffer charData, TextureAtlas texture) {
 		this.height = height;
 		this.info = info;
 		this.cdata = charData;

@@ -4,11 +4,11 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
 /**
- * A {@link Texture} wrapper that overrides specific texture binding operations to use cubemapping.
+ * A {@link TextureAtlas} wrapper that overrides specific texture binding operations to use cubemapping.
  * @author Dominus
  *
  */
-public class Cubemap extends Texture {
+public class Cubemap extends TextureAtlas {
 
 	public Cubemap(int id) {
 		super(id);

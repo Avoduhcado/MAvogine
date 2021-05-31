@@ -8,14 +8,14 @@ import static org.lwjgl.opengl.GL33.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.avogine.experimental.annotation.InDev;
+import com.avogine.experimental.annotation.*;
 import com.avogine.io.Window;
 
 /**
  * @author Dominus
  *
  */
-@InDev
+@MemoryManaged
 public class FrameBuffer {
 
 	protected static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
@@ -27,7 +27,7 @@ public class FrameBuffer {
 	
 	protected Window window;
 	
-	protected Texture colorTexture;
+	protected TextureAtlas colorTexture;
 	protected int colorAttachment;
 	protected int rbo;
 	
@@ -78,7 +78,7 @@ public class FrameBuffer {
 		// Attach the color texture to this framebuffer
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachment, 0);
 		
-		colorTexture = new Texture(colorAttachment, width.get(), height.get());
+		colorTexture = new TextureAtlas(colorAttachment, width.get(), height.get());
 		
 		// Create a depth and stencil renderbuffer
 		rbo = glGenRenderbuffers();
@@ -126,7 +126,7 @@ public class FrameBuffer {
 	/**
 	 * @return The texture containing the color buffer 
 	 */
-	public Texture getColorTexture() {
+	public TextureAtlas getColorTexture() {
 		return colorTexture;
 	}
 	

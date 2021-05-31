@@ -17,7 +17,7 @@ import org.lwjgl.stb.STBTTBakedChar;
 import org.lwjgl.stb.STBTTFontinfo;
 import org.lwjgl.stb.STBTruetype;
 
-import com.avogine.render.data.Texture;
+import com.avogine.render.data.TextureAtlas;
 import com.avogine.util.resource.ResourceConstants;
 import com.avogine.util.resource.ResourceFileReader;
 
@@ -70,7 +70,7 @@ public class FontLoaderSTB {
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
 		
-		Texture bitmapTexture = new Texture(bTex);
+		TextureAtlas bitmapTexture = new TextureAtlas(bTex);
 		
 		return new FontSTB(fontSize, info, cdata, bitmapTexture);
 	}

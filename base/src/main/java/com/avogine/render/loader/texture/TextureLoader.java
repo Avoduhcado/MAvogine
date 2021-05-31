@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avogine.render.data.Cubemap;
 import com.avogine.render.data.FrameBuffer;
-import com.avogine.render.data.Texture;
+import com.avogine.render.data.TextureAtlas;
 import com.avogine.util.resource.ResourceConstants;
 import com.avogine.util.resource.ResourceFileReader;
 
@@ -43,9 +43,9 @@ public class TextureLoader {
 	/**
 	 * Load a single image file into memory and bind it to an OpenGL texture ID.
 	 * @param filename The file to be loaded.
-	 * @return A {@link Texture} for the image
+	 * @return A {@link TextureAtlas} for the image
 	 */
-	protected static Texture loadTexture(String filename) {
+	protected static TextureAtlas loadTexture(String filename) {
 		int textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
 		
@@ -94,7 +94,64 @@ public class TextureLoader {
 			}
 		}
 		
-		return new Texture(textureID, width, height);
+		return new TextureAtlas(textureID, width, height);
+	}
+	
+	/**
+	 * XXX TODO Refactor this garbage
+	 * @param filename
+	 * @return
+	 */
+	public static com.avogine.render.data.mesh.Texture loadTexturePro(String filename) {
+		int textureID = GL11.glGenTextures();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
+		
+		int width;
+		int height;
+		int channels;
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			IntBuffer widthBuffer = stack.mallocInt(1);
+			IntBuffer heightBuffer = stack.mallocInt(1);
+			IntBuffer nrChannels = stack.mallocInt(1);
+			
+			String filePath = ResourceConstants.TEXTURE_PATH + filename;
+			ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
+			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
+//			STBImage.stbi_set_flip_vertically_on_load(true);
+			if (imageData != null) {
+				width = widthBuffer.get();
+				height = heightBuffer.get();
+				channels = nrChannels.get();
+				int format = 0;
+				if (channels == 1) {
+					format = GL11.GL_RED;
+				} else if (channels == 3) {
+					format = GL11.GL_RGB;
+				} else if (channels == 4) {
+					format = GL11.GL_RGBA;
+				}
+//				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, imageData);
+				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, format, width, height, 0, format, GL11.GL_UNSIGNED_BYTE, imageData);
+				// TODO Add check to some sort of Options object for mipmaps/anisotropic filtering
+				GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+				// TODO Add customizable options for these when loading textures
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
+				if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
+					// XXX: Extract some global Anisotropic filtering value
+					float amount = Math.min(4f, GL11.glGetFloat(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT));
+					GL11.glTexParameterf(GL11.GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
+				}
+				STBImage.stbi_image_free(imageData);
+			} else {
+				logger.error("Texture failed to load at path: {}", filePath);
+				return null;
+			}
+		}
+		
+		return new com.avogine.render.data.mesh.Texture(textureID);
 	}
 	
 	/**
@@ -104,7 +161,7 @@ public class TextureLoader {
 	 * @param rows
 	 * @return
 	 */
-	protected static Texture loadTextureAtlas(String filename, int columns, int rows) {
+	protected static TextureAtlas loadTextureAtlas(String filename, int columns, int rows) {
 		int textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
 		
@@ -142,7 +199,7 @@ public class TextureLoader {
 			STBImage.stbi_image_free(imageData);
 		}
 		
-		return new Texture(textureID, width, height, columns, rows);
+		return new TextureAtlas(textureID, width, height, columns, rows);
 	}
 	
 	/**
@@ -150,7 +207,7 @@ public class TextureLoader {
 	 * @param filenames The images to construct a cubemap from, these should consist of 6 images, and be ordered from {@link GL13#GL_TEXTURE_CUBE_MAP_POSITIVE_X} to {@link GL13#GL_TEXTURE_CUBE_MAP_NEGATIVE_Z}
 	 * @return A {@link Cubemap} for the images
 	 */
-	protected static Texture loadCubemap(String... filenames) {
+	protected static TextureAtlas loadCubemap(String... filenames) {
 		if (filenames.length != 6) {
 			throw new IllegalArgumentException("Can't load a cubemap without 6 textures!");
 		}
@@ -202,7 +259,7 @@ public class TextureLoader {
 	 * @param directoryName The directory name contained in {@link ResourceConstants#TEXTURE_PATH}
 	 * @return
 	 */
-	protected static Texture loadCubemap(String directoryName) {
+	protected static TextureAtlas loadCubemap(String directoryName) {
 		String texturePathPrefix = directoryName + File.separator;
 		return loadCubemap(texturePathPrefix + "right.jpg", texturePathPrefix + "left.jpg", texturePathPrefix + "top.jpg", texturePathPrefix + "bottom.jpg", texturePathPrefix + "front.jpg", texturePathPrefix + "back.jpg");
 	}
@@ -217,7 +274,7 @@ public class TextureLoader {
 	 * @param height the height of the Texture
 	 * @return a new {@code Texture} with a specified size that does not contain any actual data.
 	 */
-	public static Texture createEmptyTexture(int width, int height) {
+	public static TextureAtlas createEmptyTexture(int width, int height) {
 		int textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
 		
@@ -226,7 +283,7 @@ public class TextureLoader {
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
 		
-		return new Texture(textureID, width, height);
+		return new TextureAtlas(textureID, width, height);
 	}
 	
 }

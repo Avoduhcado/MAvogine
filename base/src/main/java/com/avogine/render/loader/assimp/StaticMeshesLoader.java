@@ -12,13 +12,14 @@ import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 
 import com.avogine.logging.LogUtil;
-import com.avogine.render.data.Material;
-import com.avogine.render.data.Mesh;
-import com.avogine.render.data.Texture;
-import com.avogine.render.loader.texture.TextureCache;
+import com.avogine.render.data.*;
+import com.avogine.render.loader.texture.*;
 import com.avogine.util.resource.ResourceConstants;
 import com.avogine.util.resource.ResourceFileReader;
 
+/**
+ *
+ */
 public class StaticMeshesLoader {
 
 	private static final Logger logger = LogUtil.requestLogger(MethodHandles.lookup().lookupClass().getSimpleName());
@@ -77,7 +78,8 @@ public class StaticMeshesLoader {
 	}
 	
 	public static Mesh[] load(String resourcePath, String texturesDir) {
-		return load(resourcePath, texturesDir, Assimp.aiProcess_JoinIdenticalVertices | Assimp.aiProcess_Triangulate | Assimp.aiProcess_FixInfacingNormals, 1);
+		//return load(resourcePath, texturesDir, Assimp.aiProcess_JoinIdenticalVertices | Assimp.aiProcess_Triangulate | Assimp.aiProcess_FixInfacingNormals, 1);
+		return load(resourcePath, texturesDir, Assimp.aiProcess_Triangulate, 1);
 	}
 	
 	public static Mesh[] load(String resourcePath, String texturesDir, int numberOfInstances) {
@@ -110,14 +112,14 @@ public class StaticMeshesLoader {
 
 		return meshes;
 	}
-
+	
 	protected static void processMaterial(AIMaterial aiMaterial, List<Material> materials, String texturesDir) {
 		AIColor4D color = AIColor4D.create();
 		
 		AIString path = AIString.calloc();
 		Assimp.aiGetMaterialTexture(aiMaterial, Assimp.aiTextureType_DIFFUSE, 0, path, (IntBuffer) null, null, null, null, null, null);
 		String textPath = path.dataString();
-		Texture texture = null;
+		TextureAtlas texture = null;
 		if (textPath != null && textPath.length() > 0) {
 			TextureCache textCache = TextureCache.getInstance();
 			String textureFile = "";
@@ -153,10 +155,11 @@ public class StaticMeshesLoader {
 	}
 
 	private static Mesh processMesh(AIMesh aiMesh, List<Material> materials, int numberOfInstances) {
-		FloatBuffer vertexData = processData(aiMesh);
+//		FloatBuffer vertexData = processData(aiMesh);
+		List<Float> vertices = processDataArray(aiMesh);
 		IntBuffer indexData = processIndexData(aiMesh);
 		
-		Mesh mesh = new Mesh(vertexData, indexData);
+		Mesh mesh = new Mesh(vertices, indexData);
 		
 		// TODO Bounding box
 //		Vector3f min = new Vector3f();
@@ -232,72 +235,92 @@ public class StaticMeshesLoader {
 		int numFaces = aiMesh.mNumFaces();
 		AIFace.Buffer aiFaces = aiMesh.mFaces();
 		
-		IntBuffer indexData = null;
-		try {
-			// As long as the aiProcess_Triangulate flag is being used we should be good to assume that each face is a triangle
-			indexData = MemoryUtil.memAllocInt(numFaces * aiFaces.mNumIndices());
-			
-			for (int i = 0; i < numFaces; i++) {
-				AIFace aiFace = aiFaces.get(i);
-				IntBuffer buffer = aiFace.mIndices();
-				while (buffer.remaining() > 0) {
-					indexData.put(buffer.get());
-				}
-			}
-			indexData.flip();
-			
-			return indexData;
-		} finally {
-			if (indexData != null) {
-				MemoryUtil.memFree(indexData);
+		// As long as the aiProcess_Triangulate flag is being used we should be good to assume that each face is a triangle
+		IntBuffer indexData = MemoryUtil.memAllocInt(numFaces * aiFaces.mNumIndices());
+
+		for (int i = 0; i < numFaces; i++) {
+			AIFace aiFace = aiFaces.get(i);
+			IntBuffer buffer = aiFace.mIndices();
+			while (buffer.remaining() > 0) {
+				indexData.put(buffer.get());
 			}
 		}
+		indexData.flip();
+
+		return indexData;
 	}
 	
 	/**
-	 * 
+	 * XXX The FloatBuffer returned here is never freed
 	 * @param aiMesh
 	 * @return
 	 */
 	protected static FloatBuffer processData(AIMesh aiMesh) {
-		FloatBuffer verticesBuffer = null;
-		try {
-			verticesBuffer = MemoryUtil.memAllocFloat(aiMesh.mNumVertices() * (3 + 3 + 2));
-			AIVector3D.Buffer positions = aiMesh.mVertices();
-			AIVector3D.Buffer normals = aiMesh.mNormals();
-			// TODO Potentially support multiple texture coordinates per mesh?
-			AIVector3D.Buffer textureCoordinates = aiMesh.mTextureCoords().hasRemaining() ? aiMesh.mTextureCoords(0) : null;
-			
-			for (int i = 0; i < aiMesh.mNumVertices(); i++) {
-				// Vertex positions
-				AIVector3D vector = positions.get();
+		FloatBuffer verticesBuffer = MemoryUtil.memAllocFloat(aiMesh.mNumVertices() * (3 + 3 + 2));
+		AIVector3D.Buffer positions = aiMesh.mVertices();
+		AIVector3D.Buffer normals = aiMesh.mNormals();
+		// TODO Potentially support multiple texture coordinates per mesh?
+		AIVector3D.Buffer textureCoordinates = aiMesh.mTextureCoords().hasRemaining() ? aiMesh.mTextureCoords(0) : null;
+
+		for (int i = 0; i < aiMesh.mNumVertices(); i++) {
+			// Vertex positions
+			AIVector3D vector = positions.get();
+			verticesBuffer.put(vector.x());
+			verticesBuffer.put(vector.y());
+			verticesBuffer.put(vector.z());
+
+			// Vertex normals
+			vector = normals.get();
+			verticesBuffer.put(vector.x());
+			verticesBuffer.put(vector.y());
+			verticesBuffer.put(vector.z());
+
+			// Vertex texture coordinates
+			if (textureCoordinates != null) {
+				vector = textureCoordinates.get();
 				verticesBuffer.put(vector.x());
 				verticesBuffer.put(vector.y());
-				verticesBuffer.put(vector.z());
-				
-				// Vertex normals
-				vector = normals.get();
-				verticesBuffer.put(vector.x());
-				verticesBuffer.put(vector.y());
-				verticesBuffer.put(vector.z());
-				
-				// Vertex texture coordinates
-				if (textureCoordinates != null) {
-					vector = textureCoordinates.get();
-					verticesBuffer.put(vector.x());
-					verticesBuffer.put(vector.y());
-				} else {
-					verticesBuffer.put(0.0f);
-					verticesBuffer.put(0.0f);
-				}
-			}
-			verticesBuffer.flip();
-			
-			return verticesBuffer;
-		} finally {
-			if (verticesBuffer != null) {
-				MemoryUtil.memFree(verticesBuffer);
+			} else {
+				verticesBuffer.put(0.0f);
+				verticesBuffer.put(0.0f);
 			}
 		}
+		verticesBuffer.flip();
+
+		return verticesBuffer;
+	}
+	
+	protected static List<Float> processDataArray(AIMesh aiMesh) {
+		List<Float> vertices = new ArrayList<>();
+		AIVector3D.Buffer positions = aiMesh.mVertices();
+		AIVector3D.Buffer normals = aiMesh.mNormals();
+		// TODO Potentially support multiple texture coordinates per mesh?
+		AIVector3D.Buffer textureCoordinates = aiMesh.mTextureCoords().hasRemaining() ? aiMesh.mTextureCoords(0) : null;
+
+		for (int i = 0; i < aiMesh.mNumVertices(); i++) {
+			// Vertex positions
+			AIVector3D vector = positions.get();
+			vertices.add(vector.x());
+			vertices.add(vector.y());
+			vertices.add(vector.z());
+
+			// Vertex normals
+			vector = normals.get();
+			vertices.add(vector.x());
+			vertices.add(vector.y());
+			vertices.add(vector.z());
+
+			// Vertex texture coordinates
+			if (textureCoordinates != null) {
+				vector = textureCoordinates.get();
+				vertices.add(vector.x());
+				vertices.add(vector.y());
+			} else {
+				vertices.add(0.0f);
+				vertices.add(0.0f);
+			}
+		}
+
+		return vertices;
 	}
 }

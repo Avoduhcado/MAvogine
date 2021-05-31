@@ -31,7 +31,7 @@ public class ModelComponent extends EntityComponent {
 	public ModelComponent(Mesh[] meshes) {
 		this.meshes = meshes;
 	}
-
+	
 	/**
 	 * @return the array of Meshes used by this component
 	 */

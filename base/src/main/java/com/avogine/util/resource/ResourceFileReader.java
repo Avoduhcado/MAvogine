@@ -1,16 +1,10 @@
 package com.avogine.util.resource;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.invoke.MethodHandles;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.*;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -102,7 +96,7 @@ public class ResourceFileReader {
 		Path path = Paths.get(resource);
 		if (Files.isReadable(path)) {
 			try (SeekableByteChannel fc = Files.newByteChannel(path)) {
-				buffer = MemoryUtil.memAlloc((int) fc.size() + 1);
+				buffer = BufferUtils.createByteBuffer((int) fc.size() + 1);
 				while (fc.read(buffer) != -1) {
 					
 				}
@@ -114,15 +108,15 @@ public class ResourceFileReader {
 		} else {
 			try (InputStream in = ResourceFileReader.class.getResourceAsStream(resource);
 					ReadableByteChannel rbc = Channels.newChannel(in)) {
-				buffer = MemoryUtil.memAlloc(bufferSize);
-
+				buffer = BufferUtils.createByteBuffer(bufferSize);
+				
 				while (true) {
 					int bytes = rbc.read(buffer);
 					if (bytes == -1) {
 						break;
 					}
-					if (buffer.remaining() == 0) {
-						buffer = resizeBuffer(buffer, buffer.capacity() * 2);
+					if (buffer.remaining() < bytes) {
+						buffer = resizeBuffer(buffer, Math.max(buffer.capacity() * 2, buffer.capacity() - buffer.remaining() + bytes));
 					}
 				}
 				buffer.flip();
@@ -141,5 +135,5 @@ public class ResourceFileReader {
 		newBuffer.put(buffer);
 		return newBuffer;
 	}
-
+	
 }

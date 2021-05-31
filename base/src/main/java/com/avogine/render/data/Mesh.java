@@ -2,19 +2,22 @@ package com.avogine.render.data;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.*;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.*;
 
 import static org.lwjgl.opengl.GL33.*;
 
+import org.lwjgl.system.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.avogine.experimental.annotation.*;
+
 /**
- * 
+ * TODO Refactor into taking in raw Vertex data, indices, and Texture IDs followed by a setup method that locally converts all of the data into buffers to feed into openGL
  */
+@MemoryManaged
 public class Mesh implements Renderable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
@@ -43,6 +46,37 @@ public class Mesh implements Renderable {
 		glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+		
+		vertexCount = indices.limit();
+		
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
+		
+		glBindVertexArray(0);
+	}
+	
+	public Mesh(List<Float> data, IntBuffer indices) {
+		vao = glGenVertexArrays();
+		vbo = glGenBuffers();
+		ebo = glGenBuffers();
+		
+		FloatBuffer vertexData = allocateVertexData(data);
+		
+		glBindVertexArray(vao);
+		
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertexData, GL_STATIC_DRAW);
+		if (vertexData != null) {
+			MemoryUtil.memFree(vertexData);
+		}
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		// TODO 
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 		
 		vertexCount = indices.limit();
@@ -89,7 +123,7 @@ public class Mesh implements Renderable {
 			material.getDiffuse().bind();
 		}
 		if (material.getSpecular() != null) {
-			glActiveTexture(GL_TEXTURE1);
+			glActiveTexture(GL_TEXTURE4);
 			material.getSpecular().bind();
 		}
 		if (material.hasNormalMap()) {
@@ -107,7 +141,7 @@ public class Mesh implements Renderable {
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 		if (material.getSpecular() != null) {
-			glActiveTexture(GL_TEXTURE1);
+			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 		if (material.hasNormalMap()) {
@@ -185,6 +219,17 @@ public class Mesh implements Renderable {
 	 */
 	public void setMaterial(Material material) {
 		this.material = material;
+	}
+	
+	/**
+	 * @param data
+	 * @return
+	 */
+	private FloatBuffer allocateVertexData(List<Float> data) {
+		FloatBuffer vertexData = MemoryUtil.memAllocFloat(data.size());
+		data.forEach(vertexData::put);
+		vertexData.flip();
+		return vertexData;
 	}
 	
 	@Override

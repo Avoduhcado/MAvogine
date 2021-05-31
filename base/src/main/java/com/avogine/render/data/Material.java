@@ -13,12 +13,12 @@ public class Material {
 	private float shininess;
 	private float reflectance;
 	
-	private Texture diffuse;
-	private Texture specular;
-	private Texture normalMap;
-	private Texture emission;
+	private TextureAtlas diffuse;
+	private TextureAtlas specular;
+	private TextureAtlas normalMap;
+	private TextureAtlas emission;
 	
-	public Material(Vector3f ambientColor, Vector3f diffuseColor, Vector3f specularColor, float shininess, Texture diffuse, float reflectance) {
+	public Material(Vector3f ambientColor, Vector3f diffuseColor, Vector3f specularColor, float shininess, TextureAtlas diffuse, float reflectance) {
 		this.ambientColor = ambientColor;
 		this.diffuseColor = diffuseColor;
 		this.specularColor = specularColor;
@@ -27,7 +27,7 @@ public class Material {
 		this.reflectance = reflectance;
 	}
 	
-	public Material(Texture diffuse, Texture specular, Texture emission, float shininess) {
+	public Material(TextureAtlas diffuse, TextureAtlas specular, TextureAtlas emission, float shininess) {
 		this.diffuse = diffuse;
 		this.specular = specular;
 		this.shininess = shininess;
@@ -43,15 +43,15 @@ public class Material {
 		this(ambientColor, diffuseColor, specularColor, shininess, null, 1.0f);
 	}	
 	
-	public Material(Vector3f color, Texture texture, float shininess) {
+	public Material(Vector3f color, TextureAtlas texture, float shininess) {
 		this(color, color, color, shininess);
 	}
 
-	public Material(Texture texture, float shininess) {
+	public Material(TextureAtlas texture, float shininess) {
 		this(DEFAULT_COLOR, texture, shininess);
 	}
 
-	public Material(Texture diffuse) {
+	public Material(TextureAtlas diffuse) {
 		this(diffuse, 32f);
 	}
 	
@@ -109,33 +109,33 @@ public class Material {
 		return diffuse != null;
 	}
 	
-	public Texture getDiffuse() {
+	public TextureAtlas getDiffuse() {
 		return diffuse;
 	}
 	
-	public void setDiffuse(Texture diffuse) {
+	public void setDiffuse(TextureAtlas diffuse) {
 		this.diffuse = diffuse;
 	}
 	
-	public Texture getSpecular() {
+	public TextureAtlas getSpecular() {
 		return specular;
 	}
 	
-	public void setSpecular(Texture specular) {
+	public void setSpecular(TextureAtlas specular) {
 		this.specular = specular;
 	}
 	
 	/**
 	 * @return the emission
 	 */
-	public Texture getEmission() {
+	public TextureAtlas getEmission() {
 		return emission;
 	}
 	
 	/**
 	 * @param emission the emission to set
 	 */
-	public void setEmission(Texture emission) {
+	public void setEmission(TextureAtlas emission) {
 		this.emission = emission;
 	}
 	
@@ -143,11 +143,11 @@ public class Material {
 		return normalMap != null;
 	}
 	
-	public Texture getNormalMap() {
+	public TextureAtlas getNormalMap() {
 		return normalMap;
 	}
 	
-	public void setNormalMap(Texture normalMap) {
+	public void setNormalMap(TextureAtlas normalMap) {
 		this.normalMap = normalMap;
 	}
 
