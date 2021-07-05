@@ -22,13 +22,13 @@ public class EntityComponentQuery {
 	}
 	
 	/**
-	 * TODO Replace {@code set} param with EntityWorld param to encourage proper use of {@code EntityWorld}?
-	 * @param set The set of all {@link EntityChunk}s to collect components from
+	 * Fetch all entity components from a given world that match this query's archetype.
+	 * @param world The {@link EntityWorld} that contains all of the {@link EntityChunk}s to query from
 	 * @return a collection of all {@link EntityComponentMap}s guaranteed to contain all of the necessary components for this system's query
 	 */
-	public Set<EntityComponentMap> fetch(Set<EntityChunk> set) {
+	public Set<EntityComponentMap> fetch(EntityWorld world) {
 		resultMap.clear();
-		for (EntityChunk chunk : set) {
+		for (EntityChunk chunk : world.getChunks()) {
 			if (chunk.containsAll(queryArchetype)) {
 				resultMap.addAll(chunk.getComponentMaps().values());
 			}
@@ -39,11 +39,11 @@ public class EntityComponentQuery {
 	
 	/**
 	 * <b>XXX This very well could not be very memory efficient as each call instantiates a new Stream.</b>
-	 * @param chunks
+	 * @param world 
 	 * @return a Stream of {@link EntityComponentMap}s guaranteed to contain all of the {@link EntityComponent}s determined by this system's query archetype
 	 */
-	public Stream<EntityComponentMap> fetchStream(Set<EntityChunk> chunks) {
-		return chunks.stream()
+	public Stream<EntityComponentMap> fetchStream(EntityWorld world) {
+		return world.getChunks().stream()
 				.filter(chunk -> chunk.containsAll(queryArchetype))
 				.flatMap(chunk -> chunk.getComponentMaps().values().stream());
 	}

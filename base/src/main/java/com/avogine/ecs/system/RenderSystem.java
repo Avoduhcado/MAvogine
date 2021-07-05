@@ -36,7 +36,7 @@ public class RenderSystem extends EntitySystem {
 	 * 
 	 */
 	public void process(ECSScene scene) {
-		Set<EntityComponentMap> componentSet = renderQuery.fetch(scene.getEntityWorld().getChunks());
+		Set<EntityComponentMap> componentSet = renderQuery.fetch(scene.getEntityWorld());
 		for (EntityComponentMap componentMap : componentSet) {
 			TransformComponent transform = componentMap.getAs(TransformComponent.class);
 			ModelComponent render = componentMap.getAs(ModelComponent.class);
