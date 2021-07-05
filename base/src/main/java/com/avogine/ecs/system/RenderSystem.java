@@ -1,12 +1,8 @@
 package com.avogine.ecs.system;
 
-import java.util.Set;
-
 import com.avogine.ecs.EntityArchetype;
-import com.avogine.ecs.EntityComponentMap;
 import com.avogine.ecs.EntityComponentQuery;
 import com.avogine.ecs.EntitySystem;
-import com.avogine.ecs.EntityWorld;
 import com.avogine.ecs.components.ModelComponent;
 import com.avogine.ecs.components.TransformComponent;
 import com.avogine.game.scene.*;
@@ -28,16 +24,17 @@ public class RenderSystem extends EntitySystem {
 	
 	@Override
 	public void init(Window window) {
-		// TODO Auto-generated method stub
-		
+		// Not implemented
 	}
 	
 	/**
+	 * @param scene 
 	 * 
 	 */
 	public void process(ECSScene scene) {
-		Set<EntityComponentMap> componentSet = renderQuery.fetch(scene.getEntityWorld());
-		for (EntityComponentMap componentMap : componentSet) {
+		renderQuery.fetch(scene.getEntityWorld());
+		
+		renderQuery.getResultMap().forEach(componentMap -> {
 			TransformComponent transform = componentMap.getAs(TransformComponent.class);
 			ModelComponent render = componentMap.getAs(ModelComponent.class);
 			
@@ -45,13 +42,12 @@ public class RenderSystem extends EntitySystem {
 			
 			System.out.println(transform.getPosition());
 			System.out.println(render.toString());
-		}
+		});
 	}
 
 	@Override
 	public void cleanup() {
-		// TODO Auto-generated method stub
-		
+		// Not implemented
 	}
 
 }

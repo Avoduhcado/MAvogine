@@ -18,7 +18,7 @@ public class EntityComponentQuery {
 	 * 
 	 */
 	public EntityComponentQuery(EntityArchetype queryArchetype) {
-		this.queryArchetype = queryArchetype;
+		setQueryArchetype(queryArchetype);
 	}
 	
 	/**

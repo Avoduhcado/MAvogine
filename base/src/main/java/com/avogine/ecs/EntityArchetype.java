@@ -1,7 +1,6 @@
 package com.avogine.ecs;
 
 import java.util.*;
-import java.util.stream.*;
 
 /**
  * TODO

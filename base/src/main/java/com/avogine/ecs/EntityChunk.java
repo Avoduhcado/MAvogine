@@ -45,11 +45,28 @@ public class EntityChunk {
 	}
 	
 	/**
+	 * 
+	 * @param entityID
+	 * @return
+	 */
+	public EntityComponentMap removeComponentMap(long entityID) {
+		return componentsMap.remove(entityID);
+	}
+	
+	/**
 	 * @param archetype
 	 * @return true if the {@link EntityArchetype} for this chunk contains all of the {@link EntityComponent}s in {@code archetype}
 	 */
 	public boolean containsAll(EntityArchetype archetype) {
 		return this.archetype.containsAll(archetype);
+	}
+	
+	/**
+	 * @param entityID the Long ID of an entity
+	 * @return true if this chunk contains the given entity ID
+	 */
+	public boolean containsEntity(long entityID) {
+		return componentsMap.containsKey(entityID);
 	}
 	
 	/**

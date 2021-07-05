@@ -12,16 +12,16 @@ public class EntityWorld {
 
 	private final AtomicLong entityIDCount;
 	
-	private final Map<Long, EntityChunk> entityMap;
+	private final Set<EntityChunk> chunks;
 	
-	private Set<EntityChunk> chunks = new HashSet<>();
+	private static final EntityArchetype EMPTY_ARCHETYPE = new EntityArchetype();
 	
 	/**
 	 * 
 	 */
 	public EntityWorld() {
 		entityIDCount = new AtomicLong();
-		entityMap = new HashMap<>();
+		chunks = new HashSet<>();
 	}
 	
 	private long getNewEntityID() {
@@ -36,14 +36,17 @@ public class EntityWorld {
 	 * @param componentMap
 	 */
 	private void storeChunk(long entityID, EntityArchetype archetype, EntityComponentMap componentMap) {
-		Optional<EntityChunk> targetChunk = chunks.stream()
-				.filter(chunk -> chunk.getArchetype().equals(archetype))
-				.findFirst();
-		chunks.add(entityMap.computeIfAbsent(entityID, value -> {
-			EntityChunk chunkForEntity = targetChunk.orElseGet(() -> new EntityChunk(archetype));
-			chunkForEntity.addComponentMap(entityID, componentMap);
-			return chunkForEntity;
-		}));
+		chunks.stream()
+		.filter(chunk -> chunk.getArchetype().equals(archetype))
+		.findFirst()
+		.orElseGet(() -> {
+			var entityChunk = new EntityChunk(archetype);
+			chunks.add(entityChunk);
+			return entityChunk;
+		})
+		.addComponentMap(entityID, componentMap);
+		
+		chunks.removeIf(chunk -> chunk.getComponentMaps().isEmpty());
 	}
 	
 	/**
@@ -52,9 +55,8 @@ public class EntityWorld {
 	 */
 	public long createEntity() {
 		long entityID = getNewEntityID();
-		if (!entityMap.containsKey(entityID)) {
-			entityMap.put(entityID, null);
-		}
+		storeChunk(entityID, EMPTY_ARCHETYPE, new EntityComponentMap());
+		
 		return entityID;
 	}
 	
@@ -95,6 +97,66 @@ public class EntityWorld {
 		storeChunk(entityID, archetype, componentMap);
 		
 		return entityID;
+	}
+
+	/**
+	 * @param entityID
+	 */
+	public void removeEntity(long entityID) {
+		chunks.stream()
+		.filter(chunk -> chunk.containsEntity(entityID))
+		.findFirst()
+		.ifPresent(chunk -> chunk.removeComponentMap(entityID));
+		
+		chunks.removeIf(chunk -> chunk.getComponentMaps().isEmpty());
+	}
+	
+	/**
+	 * @param entityID
+	 * @return
+	 * @throws NoSuchElementException if no entity with the given ID exists in this world
+	 */
+	public EntityComponentMap getEntity(long entityID) {
+		return chunks.stream()
+		.filter(chunk -> chunk.containsEntity(entityID))
+		.findFirst()
+		.orElseThrow()
+		.getComponentMap(entityID);
+	}
+	
+	/**
+	 * @param entityID
+	 * @param component
+	 */
+	public void addComponent(long entityID, EntityComponent component) {
+		chunks.stream()
+		.filter(chunk -> chunk.containsEntity(entityID))
+		.findFirst()
+		.ifPresentOrElse(chunk -> {
+			EntityComponentMap entityMap = chunk.removeComponentMap(entityID);
+			entityMap.put(component.getClass(), component);
+			storeChunk(entityID, EntityArchetype.of(entityMap.values().toArray(new EntityComponent[0])), entityMap);
+		}, () -> {
+			// Not preferred, but this method can be used to store a new entity
+			var entityMap = new EntityComponentMap();
+			entityMap.put(component.getClass(), component);
+			storeChunk(entityID, EntityArchetype.of(entityMap.values().toArray(new EntityComponent[0])), entityMap);
+		});
+	}
+	
+	/**
+	 * @param entityID
+	 * @param component
+	 */
+	public void removeComponent(long entityID, EntityComponent component) {
+		chunks.stream()
+		.filter(chunk -> chunk.containsEntity(entityID))
+		.findFirst()
+		.ifPresent(chunk -> {
+			EntityComponentMap entityMap = chunk.removeComponentMap(entityID);
+			entityMap.remove(component.getClass());
+			storeChunk(entityID, EntityArchetype.of(entityMap.values().toArray(new EntityComponent[0])), entityMap);
+		});
 	}
 	
 	/**

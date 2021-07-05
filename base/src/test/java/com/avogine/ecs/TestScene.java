@@ -21,14 +21,12 @@ public class TestScene extends ECSScene {
 
 	@Override
 	public void init(Window window) {
-		// TODO Auto-generated method stub
-
+		// Not implemented
 	}
 
 	@Override
 	public void cleanup() {
-		// TODO Auto-generated method stub
-
+		// Not implemented
 	}
 
 }
