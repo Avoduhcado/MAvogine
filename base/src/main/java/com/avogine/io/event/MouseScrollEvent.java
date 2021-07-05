@@ -1,26 +1,20 @@
 package com.avogine.io.event;
 
-public class MouseScrollEvent extends MouseEvent {
+/**
+ *
+ * @param xOffset
+ * @param yOffset
+ * @param window
+ */
+public record MouseScrollEvent(float xOffset, float yOffset, long window) implements MouseEvent {
 
-	private float xOffset;
-	private float yOffset;
-	
-	public MouseScrollEvent(long window, float xOffset, float yOffset) {
-		this.window = window;
-		this.xOffset = xOffset;
-		this.yOffset = yOffset;
-	}
-
-	public MouseScrollEvent(long window, double xOffset, double yOffset) {
-		this(window, (float) xOffset, (float) yOffset);
-	}
-	
-	public float getxOffset() {
-		return xOffset;
-	}
-	
-	public float getyOffset() {
-		return yOffset;
+	/**
+	 * @param xOffset
+	 * @param yOffset
+	 * @param window
+	 */
+	public MouseScrollEvent(double xOffset, double yOffset, long window) {
+		this((float) xOffset, (float) yOffset, window);
 	}
 	
 }

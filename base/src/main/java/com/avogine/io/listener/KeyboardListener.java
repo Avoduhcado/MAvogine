@@ -3,7 +3,7 @@ package com.avogine.io.listener;
 import com.avogine.io.event.KeyboardEvent;
 
 /**
- * TODO keyReleased method and maybe a keyTyped?
+ * 
  */
 public interface KeyboardListener extends InputListener {
 
@@ -18,4 +18,9 @@ public interface KeyboardListener extends InputListener {
 	 */
 	public void keyReleased(KeyboardEvent event);
 	
+	/**
+	 * Fired when a key is first pressed only once until it's released.
+	 * @param event
+	 */
+	public void keyTyped(KeyboardEvent event);
 }

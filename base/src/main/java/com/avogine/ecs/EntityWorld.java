@@ -33,6 +33,7 @@ public class EntityWorld {
 	 * Find the {@link EntityChunk} that has a matching archetype to the entity being created, if no such {@code EntityChunk} exists, a new one will be created.
 	 * @param entityID
 	 * @param archetype
+	 * @param componentMap
 	 */
 	private void storeChunk(long entityID, EntityArchetype archetype, EntityComponentMap componentMap) {
 		Optional<EntityChunk> targetChunk = chunks.stream()
@@ -51,7 +52,9 @@ public class EntityWorld {
 	 */
 	public long createEntity() {
 		long entityID = getNewEntityID();
-		entityMap.computeIfAbsent(entityID, value -> null);
+		if (!entityMap.containsKey(entityID)) {
+			entityMap.put(entityID, null);
+		}
 		return entityID;
 	}
 	
@@ -61,7 +64,7 @@ public class EntityWorld {
 	 */
 	public long createEntityWith(EntityArchetype archetype) {
 		long entityID = getNewEntityID();
-		EntityComponentMap componentMap = new EntityComponentMap();
+		var componentMap = new EntityComponentMap();
 		archetype.forEach(clazz -> {
 			try {
 				Constructor<? extends EntityComponent> constructor = clazz.getDeclaredConstructor();
@@ -84,11 +87,11 @@ public class EntityWorld {
 	 */
 	public long createEntityWith(EntityComponent...components) {
 		long entityID = getNewEntityID();
-		EntityComponentMap componentMap = new EntityComponentMap();
+		var componentMap = new EntityComponentMap();
 		for (EntityComponent component : components) {
 			componentMap.put(component.getClass(), component);
 		}
-		EntityArchetype archetype = EntityArchetype.of(components);
+		var archetype = EntityArchetype.of(components);
 		storeChunk(entityID, archetype, componentMap);
 		
 		return entityID;

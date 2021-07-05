@@ -51,10 +51,6 @@ public class TransformComponent extends EntityComponent {
 		return model.identity().translate(position).rotate(orientation).scale(scale);
 	}
 	
-	public void addPosition(float x, float y, float z) {
-		this.position.add(x, y, z);
-	}
-	
 	/**
 	 * @return the position
 	 */

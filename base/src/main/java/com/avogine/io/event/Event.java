@@ -1,5 +1,8 @@
 package com.avogine.io.event;
 
-public abstract class Event {
+/**
+ *
+ */
+public interface Event {
 
 }

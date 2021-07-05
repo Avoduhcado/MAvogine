@@ -32,6 +32,7 @@ public class Input {
 	private long windowID;
 	
 	private final Set<InputListener> listeners;
+	// True if the key at index is currently pressed
 	private final boolean[] keys;
 	
 	private float lastMouseX;
@@ -76,16 +77,16 @@ public class Input {
 		});
 		
 		GLFW.glfwSetMouseButtonCallback(windowID, (window, button, action, mods) -> 
-			fireMouseClickEvent(new MouseClickEvent(window, button, lastMouseX, lastMouseY, action)));
+			fireMouseClickEvent(new MouseClickEvent(action, button, lastMouseX, lastMouseY, window)));
 		
 		GLFW.glfwSetCursorPosCallback(windowID, (window, xPos, yPos) -> {
-			fireMouseMotionEvent(new MouseMotionEvent(window, xPos, yPos, xPos - lastMouseX, lastMouseY - yPos));
+			fireMouseMotionEvent(new MouseMotionEvent(xPos, yPos, xPos - lastMouseX, lastMouseY - yPos, window));
 			lastMouseX = (float) xPos;
 			lastMouseY = (float) yPos;
 		});
 		
 		GLFW.glfwSetScrollCallback(windowID, (window, xOffset, yOffset) ->
-			fireMouseScrollEvent(new MouseScrollEvent(window, xOffset, yOffset)));
+			fireMouseScrollEvent(new MouseScrollEvent(xOffset, yOffset, window)));
 	}
 	
 	/**
@@ -95,7 +96,13 @@ public class Input {
 		// Perhaps in the future we'll only update the array of specified key bindings rather than all accessible keys.
 		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
 			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
+				if (!keys[i]) {
+					fireKeyboardEvent(new KeyboardEvent(KeyboardEvent.KEY_TYPED, i, windowID));
+				}
+				keys[i] = true;
 				fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_PRESS, i, windowID));
+			} else {
+				keys[i] = false;
 			}
 		}
 		
@@ -103,7 +110,7 @@ public class Input {
 		for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
 			if (GLFW.glfwGetMouseButton(windowID, i) == GLFW.GLFW_PRESS) {
 				// Should this be a different type of event? MouseHeldEvent?
-				fireMouseClickEvent(new MouseClickEvent(windowID, i, lastMouseX, lastMouseY, GLFW.GLFW_REPEAT));
+				fireMouseClickEvent(new MouseClickEvent(GLFW.GLFW_REPEAT, i, lastMouseX, lastMouseY, windowID));
 			}
 		}
 	}
@@ -140,12 +147,15 @@ public class Input {
 	private void fireKeyboardEvent(KeyboardEvent event) {
 		getListenersOfType(KeyboardListener.class)
 			.forEach(kl -> {
-				switch (event.getType()) {
+				switch (event.type()) {
 				case GLFW.GLFW_PRESS:
 					kl.keyPressed(event);
 					break;
 				case GLFW.GLFW_RELEASE:
 					kl.keyReleased(event);
+					break;
+				case KeyboardEvent.KEY_TYPED:
+					kl.keyTyped(event);
 					break;
 				}
 			});

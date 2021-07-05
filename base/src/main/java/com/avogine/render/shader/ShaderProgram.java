@@ -84,7 +84,7 @@ public abstract class ShaderProgram {
 	 * Read in the shader file provided into a {@code CharSequence} so it can be compiled into GLSL shader code.
 	 * @param shaderFile The file name of the shader file to be created, including file extension
 	 * @param shaderType The type of shader being loaded
-	 * @return An int address to the shader in memory
+	 * @return An integer address to the shader in memory
 	 * @throws Exception If there are any errors reading, creating, or compiling the shader
 	 */
 	protected int createShader(String shaderFile, int shaderType) {
@@ -120,10 +120,8 @@ public abstract class ShaderProgram {
 		}
 		
 		glValidateProgram(programId);
-		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
-			if (log.isWarnEnabled()) {
-				log.warn("Warning validating shader code: {}", glGetProgramInfoLog(programId));
-			}
+		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0 && log.isWarnEnabled()) {
+			log.warn("Warning validating shader code: {}", glGetProgramInfoLog(programId));
 		}
 		
 		// Detaching shaders will delete the source code of the shader itself, which may make debugging difficult for minimal performance gain
@@ -142,9 +140,7 @@ public abstract class ShaderProgram {
 	 */
 	public void cleanup() {
 		unbind();
-		if (programId != 0) {
-			glDeleteProgram(programId);
-		}
+		glDeleteProgram(programId);
 	}
 	
 }

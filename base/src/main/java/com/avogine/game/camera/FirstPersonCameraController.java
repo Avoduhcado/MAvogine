@@ -18,6 +18,8 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 	private float lastX;
 	private float lastY;
 	
+	private boolean flymode;
+	
 	/**
 	 * @param camera 
 	 * 
@@ -28,35 +30,35 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 	
 	@Override
 	public void mouseClicked(MouseClickEvent event) {
-		if (event.getType() != GLFW.GLFW_RELEASE) {
+		if (event.type() != GLFW.GLFW_RELEASE) {
 			return;
 		}
 		
-		if (event.getButton() == GLFW.GLFW_MOUSE_BUTTON_1) {
-			GLFW.glfwSetInputMode(event.getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_1) {
+			GLFW.glfwSetInputMode(event.window(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 			try (MemoryStack stack = MemoryStack.stackPush()) {
 				DoubleBuffer xPos = stack.mallocDouble(1);
 				DoubleBuffer yPos = stack.mallocDouble(1);
 
-				GLFW.glfwGetCursorPos(event.getWindow(), xPos, yPos);
+				GLFW.glfwGetCursorPos(event.window(), xPos, yPos);
 				lastX = (float) xPos.get();
 				lastY = (float) yPos.get();
 			}
-		} else if (event.getButton() == GLFW.GLFW_MOUSE_BUTTON_2) {
-			GLFW.glfwSetInputMode(event.getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+		} else if (event.button() == GLFW.GLFW_MOUSE_BUTTON_2) {
+			GLFW.glfwSetInputMode(event.window(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
 		}
 	}
 
 	@Override
 	public void mouseMoved(MouseMotionEvent event) {
-		if (GLFW.glfwGetInputMode(event.getWindow(), GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_DISABLED) {
+		if (GLFW.glfwGetInputMode(event.window(), GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_DISABLED) {
 			return;
 		}
 		
-		float xOffset = event.getXPosition() - lastX;
-		float yOffset = lastY - event.getYPosition(); // reversed since y-coordinates go from bottom to top
-		lastX = event.getXPosition();
-		lastY = event.getYPosition();
+		float xOffset = event.xPosition() - lastX;
+		float yOffset = lastY - event.yPosition(); // reversed since y-coordinates go from bottom to top
+		lastX = event.xPosition();
+		lastY = event.yPosition();
 
 		float sensitivity = 0.1f; // TODO Make this a customizable mouse sensitivity option
 		xOffset *= sensitivity;
@@ -86,7 +88,7 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 		//		jump = 0;
 		//		return;
 		//	}
-		switch (event.getKey()) {
+		switch (event.key()) {
 		case GLFW.GLFW_KEY_W:
 			camera.getDirection().add(camera.getForward());
 			break;
@@ -113,19 +115,32 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 			//		}
 			camera.getDirection().add(camera.getUp());
 			break;
-		case GLFW.GLFW_KEY_LEFT_SHIFT:
-		case GLFW.GLFW_KEY_RIGHT_SHIFT:
+		case GLFW.GLFW_KEY_LEFT_SHIFT,
+			GLFW.GLFW_KEY_RIGHT_SHIFT:
 			camera.getDirection().sub(camera.getUp());
 			break;
 		default:
 			break;
 		}
+		if (!flymode) {
+			camera.getDirection().y = 0;
+		}
 	}
 
 	@Override
 	public void keyReleased(KeyboardEvent event) {
-		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void keyTyped(KeyboardEvent event) {
+		switch (event.key()) {
+		case GLFW.GLFW_KEY_LEFT_CONTROL:
+			flymode = !flymode;
+			break;
+		default:
+			break;
+		}
 	}
 
 }

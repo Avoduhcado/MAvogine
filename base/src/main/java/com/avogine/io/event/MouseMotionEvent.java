@@ -1,38 +1,24 @@
 package com.avogine.io.event;
 
-public class MouseMotionEvent extends MouseEvent {
+/**
+ *
+ * @param xPosition
+ * @param yPosition
+ * @param xDelta
+ * @param yDelta
+ * @param window
+ */
+public record MouseMotionEvent(float xPosition, float yPosition, float xDelta, float yDelta, long window) implements MouseEvent {
 
-	private float xPosition;
-	private float yPosition;
-	
-	private float xDelta;
-	private float yDelta;
-	
-	public MouseMotionEvent(long window, float xPosition, float yPosition, float xDelta, float yDelta) {
-		this.window = window;
-		this.xPosition = xPosition;
-		this.yPosition = yPosition;
-		this.xDelta = xDelta;
-		this.yDelta = yDelta;
+	/**
+	 * @param xPosition
+	 * @param yPosition
+	 * @param xDelta
+	 * @param yDelta
+	 * @param window
+	 */
+	public MouseMotionEvent(double xPosition, double yPosition, double xDelta, double yDelta, long window) {
+		this((float) xPosition, (float) yPosition, (float) xDelta, (float) yDelta, window);
 	}
 	
-	public MouseMotionEvent(long window, double xPosition, double yPosition, double xDelta, double yDelta) {
-		this(window, (float) xPosition, (float) yPosition, (float) xDelta, (float) yDelta);
-	}
-	
-	public float getXPosition() {
-		return xPosition;
-	}
-	
-	public float getYPosition() {
-		return yPosition;
-	}
-
-	public float getXDelta() {
-		return xDelta;
-	}
-	
-	public float getYDelta() {
-		return yDelta;
-	}
 }

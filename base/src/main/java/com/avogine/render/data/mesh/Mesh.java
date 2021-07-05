@@ -52,24 +52,20 @@ public class Mesh {
 		
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, vertexData, GL_STATIC_DRAW);
-		if (vertexData != null) {
-			MemoryUtil.memFree(vertexData);
-		}
+		MemoryUtil.memFree(vertexData);
 		
 		IntBuffer indexData = allocateIndexData();
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData, GL_STATIC_DRAW);
-		if (indexData != null) {
-			MemoryUtil.memFree(indexData);
-		}
+		MemoryUtil.memFree(indexData);
 		
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3L * Float.BYTES);
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
+		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6L * Float.BYTES);
 		
 		glBindVertexArray(0);
 	}

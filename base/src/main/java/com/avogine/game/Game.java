@@ -1,9 +1,6 @@
-/**
- * 
- */
 package com.avogine.game;
 
-import com.avogine.io.Window;
+import com.avogine.io.*;
 
 /**
  *
@@ -12,7 +9,7 @@ public interface Game {
 
 	/**
 	 * Initialize all relevant game logic to start the game loop.
-	 * @param window 
+	 * @param window
 	 */
 	public void init(Window window);
 	

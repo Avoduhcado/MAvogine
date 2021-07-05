@@ -50,15 +50,17 @@ public class Camera {
 		up.set(0, 1, 0);
 		
 		rotation.y = -90f;
-				
-		view.lookAt(position, position.add(forward, target), up);
+		
+		calculateView(0);
 		
 		speed = 15f;
 		angularSpeed = 5f;
 	}
 
 	/**
-	 * Apply any pending direction and rotation changes and coalesce movement into the view matrix.
+	 * Apply any pending direction and rotation changes and update view matrix to look in the direction of the 
+	 * camera's forward vector. This will also clear the direction vector, so subsequent calls in the same frame
+	 * should result in no change to the position.
 	 * @param interval the time passed between calls
 	 */
 	public void calculateView(float interval) {

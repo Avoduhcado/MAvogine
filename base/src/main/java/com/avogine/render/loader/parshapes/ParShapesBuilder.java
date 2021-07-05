@@ -17,6 +17,12 @@ public class ParShapesBuilder {
 
 	private ParShapesMesh parMesh;
 	
+	/**
+	 * {@link ParShapes#par_shapes_create_plane(int, int)}
+	 * @param slices
+	 * @param stacks
+	 * @return
+	 */
 	public ParShapesBuilder createPlane(int slices, int stacks) {
 		parMesh = ParShapes.par_shapes_create_plane(slices, stacks);
 		// XXX Planes created through ParShapes seem to be created "backwards"?
@@ -24,11 +30,21 @@ public class ParShapesBuilder {
 		return this;
 	}
 	
+	/**
+	 * {@link ParShapes#par_shapes_create_parametric_sphere(int, int)}
+	 * @param slices
+	 * @param stacks
+	 * @return
+	 */
 	public ParShapesBuilder createSphere(int slices, int stacks) {
 		parMesh = ParShapes.par_shapes_create_parametric_sphere(slices, stacks);
 		return this;
 	}
 	
+	/**
+	 * {@link ParShapes#par_shapes_create_cube()}
+	 * @return
+	 */
 	public ParShapesBuilder createCube() {
 		parMesh = ParShapes.par_shapes_create_cube();
 		return this;

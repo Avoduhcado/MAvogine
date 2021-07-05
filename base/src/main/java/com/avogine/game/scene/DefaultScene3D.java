@@ -5,18 +5,36 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.joml.*;
+
+import com.avogine.ecs.*;
 import com.avogine.entity.Entity;
+import com.avogine.game.camera.*;
+import com.avogine.io.*;
 import com.avogine.render.data.Mesh;
 
 /**
  * A 3D {@link Scene} implementation that contains a map of all meshes and entities currently
  * existing in the game world. This implementation also provides a {@link Mesh} for a skybox as well.
  */
-public class DefaultScene3D implements Scene {
+public class DefaultScene3D extends Scene {
 
 	private Map<Mesh, Set<Entity>> meshMap = new HashMap<>();
 	
 	private Mesh skybox;
+
+	/**
+	 * 
+	 */
+	public DefaultScene3D() {
+		super(new Matrix4f(), new Camera());
+	}
+	
+	@Override
+	public void init(Window window) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	/**
 	 * @param entity
@@ -61,6 +79,9 @@ public class DefaultScene3D implements Scene {
 		return skybox;
 	}
 	
+	/**
+	 * @param skybox
+	 */
 	public void setSkybox(Mesh skybox) {
 		this.skybox = skybox;
 	}
@@ -75,5 +96,5 @@ public class DefaultScene3D implements Scene {
 			skybox.cleanup();
 		}
 	}
-	
+
 }

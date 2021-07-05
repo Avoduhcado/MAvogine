@@ -117,7 +117,7 @@ public class FrameBuffer {
 	}
 
 	/**
-	 * @return
+	 * @return The ID of this framebuffer object
 	 */
 	public int getFbo() {
 		return fbo;

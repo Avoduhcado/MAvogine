@@ -1,27 +1,20 @@
 package com.avogine.io.event;
 
-public class KeyboardEvent extends Event {
+import org.lwjgl.glfw.*;
 
-	private final int type;
-	private int key;
+/**
+ * @param type the type of event, one of {@link GLFW#GLFW_PRESS}, {@link GLFW#GLFW_RELEASE} or {@link #KEY_TYPED}
+ * @param key the key that triggered the event
+ * @param window the window ID the key was triggered from
+ *
+ */
+public record KeyboardEvent(int type, int key, long window) implements Event {
+
+	/**
+	 * Constant value for events where a key was just pressed.
+	 * </p>
+	 * This will only fire one event regardless of how long a key is held down for.
+	 */
+	public static final int KEY_TYPED = 3;
 	
-	private long window;
-	
-	public KeyboardEvent(int type, int key, long window) {
-		this.type = type;
-		this.key = key;
-		this.window = window;
-	}
-	
-	public int getType() {
-		return type;
-	}
-	
-	public int getKey() {
-		return key;
-	}
-	
-	public long getWindow() {
-		return window;
-	}
 }
