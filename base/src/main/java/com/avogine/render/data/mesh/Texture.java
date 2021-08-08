@@ -40,7 +40,7 @@ public class Texture {
 	/**
 	 *
 	 */
-	public static enum TextureType {
+	public enum TextureType {
 		/**
 		 * 
 		 */

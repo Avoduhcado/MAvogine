@@ -1,7 +1,10 @@
 package com.avogine.render.data;
 
-import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.*;
 
+/**
+ *
+ */
 public class TextureAtlas {
 
 	protected int id;

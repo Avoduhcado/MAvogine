@@ -1,26 +1,17 @@
 package com.avogine.io;
 
-import java.lang.invoke.MethodHandles;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.invoke.*;
+import java.nio.*;
+import java.util.*;
 
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.Callbacks;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.lwjgl.*;
+import org.lwjgl.glfw.*;
+import org.lwjgl.opengl.*;
+import org.lwjgl.system.*;
+import org.slf4j.*;
 
-import com.avogine.Avogine;
-import com.avogine.experimental.annotation.InDev;
-import com.avogine.io.listener.*;
+import com.avogine.*;
+import com.avogine.experimental.annotation.*;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.

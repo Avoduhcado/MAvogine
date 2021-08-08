@@ -1,24 +1,14 @@
 package com.avogine.io;
 
-import java.nio.DoubleBuffer;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Stream;
+import java.nio.*;
+import java.util.*;
+import java.util.stream.*;
 
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.glfw.*;
+import org.lwjgl.system.*;
 
-import com.avogine.io.event.Event;
-import com.avogine.io.event.KeyboardEvent;
-import com.avogine.io.event.MouseClickEvent;
-import com.avogine.io.event.MouseMotionEvent;
-import com.avogine.io.event.MouseScrollEvent;
-import com.avogine.io.listener.InputListener;
-import com.avogine.io.listener.KeyboardListener;
-import com.avogine.io.listener.MouseClickListener;
-import com.avogine.io.listener.MouseMotionListener;
-import com.avogine.io.listener.MouseScrollListener;
+import com.avogine.io.event.*;
+import com.avogine.io.listener.*;
 
 /**
  * {@link Input} controls processing all user inputs on a per {@link Window} basis.
@@ -29,6 +19,7 @@ import com.avogine.io.listener.MouseScrollListener;
  */
 public class Input {
 
+	private Window registeredWindow;
 	private long windowID;
 	
 	private final Set<InputListener> listeners;
@@ -53,6 +44,7 @@ public class Input {
 	 * @param registeredWindow the {@code Window} to process {@code Event}s for.
 	 */
 	public void init(Window registeredWindow) {
+		this.registeredWindow = registeredWindow;
 		this.windowID = registeredWindow.getId();
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {

@@ -2,7 +2,7 @@ package com.avogine.ecs.components;
 
 import org.joml.*;
 
-import com.avogine.ecs.EntityComponent;
+import com.avogine.ecs.*;
 
 /**
  *
@@ -12,8 +12,6 @@ public class TransformComponent extends EntityComponent {
 	private final Vector3f position;
 	private final Quaternionf orientation;
 	private final Vector3f scale;
-	
-	private final Matrix4f model;
 	
 	/**
 	 * 
@@ -39,17 +37,9 @@ public class TransformComponent extends EntityComponent {
 		this.position = position;
 		orientation = new Quaternionf();
 		this.scale = scale;
-		this.model = new Matrix4f();
 	}
 	
 	// TODO More constructors
-	
-	/**
-	 * @return
-	 */
-	public Matrix4f getMatrix() {
-		return model.identity().translate(position).rotate(orientation).scale(scale);
-	}
 	
 	/**
 	 * @return the position
