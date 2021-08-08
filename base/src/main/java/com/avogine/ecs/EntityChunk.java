@@ -1,12 +1,17 @@
 package com.avogine.ecs;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 /**
  *
  */
-public class EntityChunk {
+public class EntityChunk implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	private EntityArchetype archetype;
 	
@@ -41,6 +46,7 @@ public class EntityChunk {
 	 * @param componentMap
 	 */
 	public void addComponentMap(long entityID, EntityComponentMap componentMap) {
+		componentMap.setEntityId(entityID);
 		componentsMap.put(entityID, componentMap);
 	}
 	

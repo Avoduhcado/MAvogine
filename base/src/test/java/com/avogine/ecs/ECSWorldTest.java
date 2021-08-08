@@ -2,12 +2,14 @@ package com.avogine.ecs;
 
 import static org.junit.Assert.*;
 
-import org.joml.Vector3f;
+import java.io.*;
+
+import org.joml.*;
 import org.junit.jupiter.api.*;
 
-import com.avogine.ecs.components.ModelComponent;
-import com.avogine.ecs.components.TransformComponent;
-import com.avogine.ecs.system.RenderSystem;
+import com.avogine.ecs.components.*;
+import com.avogine.io.serializer.*;
+import com.fasterxml.jackson.core.*;
 
 /**
  *
@@ -58,9 +60,15 @@ class ECSWorldTest {
 
 		assertEquals(2, world.getChunks().size());
 		
-		RenderSystem renderSystem = new RenderSystem();
-		renderSystem.process(scene);
-		renderSystem.process(scene);
+		try {
+			SceneMapper.serializeScene(scene);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Test

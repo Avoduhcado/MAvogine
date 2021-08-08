@@ -13,6 +13,12 @@ public abstract class Scene {
 	protected Matrix4f projection;
 	protected Camera camera;
 	
+	/**
+	 * 
+	 */
+	protected Scene() {
+	}
+	
 	protected Scene(Matrix4f projection, Camera camera) {
 		this.projection = projection;
 		this.camera = camera;

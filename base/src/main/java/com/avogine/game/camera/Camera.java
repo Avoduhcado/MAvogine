@@ -1,11 +1,13 @@
 package com.avogine.game.camera;
 
+import java.io.*;
+
 import org.joml.*;
 
 /**
  *
  */
-public class Camera {
+public class Camera implements Externalizable {
 	
 	private final Matrix4f view;
 
@@ -142,6 +144,19 @@ public class Camera {
 	 */
 	public float getAngularSpeed() {
 		return angularSpeed;
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeObject(position);
+		out.writeObject(forward);
+		out.writeObject(up);
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
