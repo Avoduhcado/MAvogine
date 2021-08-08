@@ -2,7 +2,7 @@ package com.avogine.ecs;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 
 /**
  * TODO Document process of adding entities here, how they're stored and updated, and how to access them through component queries
