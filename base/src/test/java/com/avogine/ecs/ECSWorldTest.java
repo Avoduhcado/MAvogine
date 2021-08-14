@@ -43,8 +43,8 @@ class ECSWorldTest {
 		assertNotEquals(entity1, entity2);
 		assertNotEquals(entity2, entity3);
 		
-		EntityArchetype arch1 = new EntityArchetype(TransformComponent.class, ModelComponent.class);
-		EntityArchetype arch2 = new EntityArchetype(TransformComponent.class, ModelComponent.class);
+		EntityArchetype arch1 = new EntityArchetype(TransformComponent.class, MeshComponent.class);
+		EntityArchetype arch2 = new EntityArchetype(TransformComponent.class, MeshComponent.class);
 		EntityArchetype arch3 = new EntityArchetype(TransformComponent.class);
 		
 		assertEquals(arch1, arch2);
@@ -55,8 +55,8 @@ class ECSWorldTest {
 		
 		assertEquals(2, world.getChunks().size());
 		
-		world.createEntityWith(new TransformComponent(new Vector3f(1, 5, 3)), new ModelComponent());
-		world.createEntityWith(new TransformComponent(new Vector3f(7, 12, 31)), new ModelComponent());
+		world.createEntityWith(new TransformComponent(new Vector3f(1, 5, 3)), new MeshComponent());
+		world.createEntityWith(new TransformComponent(new Vector3f(7, 12, 31)), new MeshComponent());
 
 		assertEquals(2, world.getChunks().size());
 		
