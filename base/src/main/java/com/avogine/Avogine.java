@@ -1,14 +1,12 @@
 package com.avogine;
 
-import java.lang.invoke.MethodHandles;
+import java.lang.invoke.*;
+import java.util.concurrent.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
-import com.avogine.game.Game;
-import com.avogine.game.Timer;
-import com.avogine.io.Input;
-import com.avogine.io.Window;
+import com.avogine.game.*;
+import com.avogine.io.*;
 
 /**
  * This is the primary entry point into running a game.
@@ -167,7 +165,7 @@ public class Avogine implements Runnable {
 	private void render() {
 		if (frameTime >= 1.0f) {
 			window.setFps(fps);
-			logger.info("FPS: {}", fps);
+//			logger.info("FPS: {}", fps);
 			frameTime = 0;
 			fps = 0;
 		}
@@ -204,6 +202,10 @@ public class Avogine implements Runnable {
 		game.cleanup();
 		
 		window.cleanup();
+		
+		// When using coroutines, the default context utilizes the commonPool, which needs to be manually stopped before the system exits.
+		ForkJoinPool.commonPool().awaitQuiescence(1000, TimeUnit.MILLISECONDS);
+		System.exit(0);
 	}
 
 }
