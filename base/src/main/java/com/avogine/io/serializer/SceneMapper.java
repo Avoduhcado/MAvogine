@@ -14,6 +14,10 @@ public class SceneMapper {
 		
 	}
 	
+	/**
+	 * @param scene
+	 * @throws IOException
+	 */
 	public static void serializeScene(Scene scene) throws IOException {
 		var mapper = new ObjectMapper();
 //	    mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);

@@ -14,6 +14,8 @@ public class EntityWorld {
 	
 	private final Set<EntityChunk> chunks;
 	
+	private final Map<Class<? extends EntitySystemAddon>, EntitySystemAddon> addons;
+	
 	private static final EntityArchetype EMPTY_ARCHETYPE = new EntityArchetype();
 	
 	/**
@@ -22,6 +24,7 @@ public class EntityWorld {
 	public EntityWorld() {
 		entityIDCount = new AtomicLong();
 		chunks = new HashSet<>();
+		addons = new HashMap<>();
 	}
 	
 	private long getNewEntityID() {
@@ -160,10 +163,40 @@ public class EntityWorld {
 	}
 	
 	/**
+	 * Register an {@link EntitySystemAddon} to this {@link EntityWorld}.
+	 * <p>
+	 * {@code EntitySystemAddon}s can contain arbitrary data useful to managing {@link EntitySystem}s. If an {@code EntitySystem}
+	 * would otherwise need to contain data to manage processing, that data should be relocated into an
+	 * {@code EntitySystemAddon}. {@code EntitySystemAddon}s will be automatically serialized when saving the
+	 * game state, and can contain global data that would not otherwise make sense to be stored in individual
+	 * components, ie. shared data.
+	 * @param addon the {@code EntitySystemAddon} to register
+	 * @return the previous value associated with the given addon's class, or null if there was no mapping for that class.
+	 */
+	public EntitySystemAddon registerAddon(EntitySystemAddon addon) {
+		return this.addons.put(addon.getClass(), addon);
+	}
+	
+	/**
 	 * @return the chunks
 	 */
 	public Set<EntityChunk> getChunks() {
 		return chunks;
+	}
+	
+	/**
+	 * @param clazz
+	 * @return
+	 */
+	public <T extends EntitySystemAddon> T getAddon(Class<T> clazz) {
+		return clazz.cast(addons.get(clazz));
+	}
+	
+	/**
+	 * @return the addons
+	 */
+	public Map<Class<? extends EntitySystemAddon>, EntitySystemAddon> getAddons() {
+		return addons;
 	}
 	
 }
