@@ -164,8 +164,8 @@ public class EntityWorld {
 	
 	/**
 	 * Register an {@link EntitySystemAddon} to this {@link EntityWorld}.
-	 * <p>
-	 * {@code EntitySystemAddon}s can contain arbitrary data useful to managing {@link EntitySystem}s. If an {@code EntitySystem}
+	 * 
+	 * <p>{@code EntitySystemAddon}s can contain arbitrary data useful to managing {@link EntitySystem}s. If an {@code EntitySystem}
 	 * would otherwise need to contain data to manage processing, that data should be relocated into an
 	 * {@code EntitySystemAddon}. {@code EntitySystemAddon}s will be automatically serialized when saving the
 	 * game state, and can contain global data that would not otherwise make sense to be stored in individual

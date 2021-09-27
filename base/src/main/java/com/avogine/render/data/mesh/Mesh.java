@@ -1,19 +1,20 @@
 package com.avogine.render.data.mesh;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.*;
 import java.util.*;
+
 import org.lwjgl.system.*;
 
-import com.avogine.render.data.*;
 import com.avogine.render.data.mesh.Texture.*;
 
 /**
- *
+ * Used by {@link Model}.
  */
 public class Mesh {
 
@@ -26,17 +27,19 @@ public class Mesh {
 	private int ebo;
 	
 	// TODO Implement this better
-	public Material material;
+	private int materialIndex;
 	
 	/**
 	 * @param vertices
 	 * @param indices
 	 * @param textures
+	 * @param materialIndex 
 	 */
-	public Mesh(List<Vertex> vertices, List<Integer> indices, List<Texture> textures) {
+	public Mesh(List<Vertex> vertices, List<Integer> indices, List<Texture> textures, int materialIndex) {
 		this.vertices = vertices;
 		this.indices = indices;
 		this.textures = textures;
+		this.materialIndex = materialIndex;
 		
 		setupMesh();
 	}
@@ -120,8 +123,15 @@ public class Mesh {
 	 * XXX Should this return vertex.size instead?
 	 * @return the number of vertices to render in a single draw call
 	 */
-	public int getVertexCount() {
+	private int getVertexCount() {
 		return indices.size();
+	}
+	
+	/**
+	 * @return the materialIndex
+	 */
+	public int getMaterialIndex() {
+		return materialIndex;
 	}
 	
 	/**

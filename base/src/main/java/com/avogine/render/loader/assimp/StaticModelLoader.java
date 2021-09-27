@@ -1,7 +1,6 @@
 package com.avogine.render.loader.assimp;
 
 import java.lang.Math;
-import java.lang.invoke.*;
 import java.nio.*;
 import java.util.*;
 
@@ -9,12 +8,10 @@ import org.joml.*;
 import org.lwjgl.*;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.*;
-import org.slf4j.*;
 
 import com.avogine.render.data.*;
 import com.avogine.render.data.mesh.*;
 import com.avogine.render.data.mesh.Mesh;
-import com.avogine.render.data.mesh.Texture;
 import com.avogine.render.data.mesh.Texture.*;
 import com.avogine.render.loader.texture.*;
 import com.avogine.util.resource.*;
@@ -38,6 +35,10 @@ public class StaticModelLoader {
 	 * This is to facilitate a manageable shader uniform for activating specific texture material types.
 	 */
 	public static final int MAX_SPECULAR_TEXTURES = 4;
+	
+	private StaticModelLoader() {
+		
+	}
 	
 	/**
 	 * @param resourcePath
@@ -112,7 +113,7 @@ public class StaticModelLoader {
 
 		Assimp.aiReleaseImport(aiScene);
 
-		Model model = new Model(meshes);
+		var model = new Model(meshes, materials);
 
 		return model;
 	}
@@ -135,15 +136,15 @@ public class StaticModelLoader {
 		List<Integer> indices = processIndices(aiMesh);
 		List<Texture> textures = processTextures(aiMesh, scene, texturesDir);
 		
-		Mesh mesh = new Mesh(vertices, indices, textures);
-
-		Material material = new Material();
+//		Material material = new Material();
 		int materialIdx = aiMesh.mMaterialIndex();
 		// TODO Store material cache to load from?
-		if (materialIdx >= 0 && materialIdx < materials.size()) {
-			material = materials.get(materialIdx);
-		}
-		mesh.material = material;
+//		if (materialIdx >= 0 && materialIdx < materials.size()) {
+//			material = materials.get(materialIdx);
+//		}
+//		mesh.material = material;
+
+		Mesh mesh = new Mesh(vertices, indices, textures, materialIdx);
 
 		return mesh;
 	}
