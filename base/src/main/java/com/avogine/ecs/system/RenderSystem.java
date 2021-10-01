@@ -3,7 +3,7 @@ package com.avogine.ecs.system;
 import com.avogine.ecs.EntityArchetype;
 import com.avogine.ecs.EntityComponentQuery;
 import com.avogine.ecs.EntitySystem;
-import com.avogine.ecs.components.ModelComponent;
+import com.avogine.ecs.components.MeshComponent;
 import com.avogine.ecs.components.TransformComponent;
 import com.avogine.game.scene.*;
 import com.avogine.io.*;
@@ -19,7 +19,7 @@ public class RenderSystem extends EntitySystem {
 	 * 
 	 */
 	public RenderSystem() {
-		renderQuery = new EntityComponentQuery(EntityArchetype.of(TransformComponent.class, ModelComponent.class));
+		renderQuery = new EntityComponentQuery(EntityArchetype.of(TransformComponent.class, MeshComponent.class));
 	}
 	
 	@Override
@@ -36,7 +36,7 @@ public class RenderSystem extends EntitySystem {
 		
 		renderQuery.getResultMap().forEach(componentMap -> {
 			TransformComponent transform = componentMap.getAs(TransformComponent.class);
-			ModelComponent render = componentMap.getAs(ModelComponent.class);
+			MeshComponent render = componentMap.getAs(MeshComponent.class);
 			
 			transform.getPosition().add(1, 1, 1);
 			
