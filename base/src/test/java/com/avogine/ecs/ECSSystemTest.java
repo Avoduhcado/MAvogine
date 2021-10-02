@@ -33,7 +33,7 @@ class ECSSystemTest {
 		RenderSystem renderSystem = new RenderSystem();
 		renderSystem.init(null);
 		
-		long entityA = world.createEntityWith(EntityArchetype.of(TransformComponent.class, ModelComponent.class));
+		long entityA = world.createEntityWith(EntityArchetype.of(TransformComponent.class, MeshComponent.class));
 		long entityB = world.createEntityWith(EntityArchetype.of(TransformComponent.class));
 		
 		renderSystem.process(scene);

@@ -2,12 +2,14 @@ package com.avogine.ecs;
 
 import static org.junit.Assert.*;
 
-import org.joml.Vector3f;
+import java.io.*;
+
+import org.joml.*;
 import org.junit.jupiter.api.*;
 
-import com.avogine.ecs.components.ModelComponent;
-import com.avogine.ecs.components.TransformComponent;
-import com.avogine.ecs.system.RenderSystem;
+import com.avogine.ecs.components.*;
+import com.avogine.io.serializer.*;
+import com.fasterxml.jackson.core.*;
 
 /**
  *
@@ -41,8 +43,8 @@ class ECSWorldTest {
 		assertNotEquals(entity1, entity2);
 		assertNotEquals(entity2, entity3);
 		
-		EntityArchetype arch1 = new EntityArchetype(TransformComponent.class, ModelComponent.class);
-		EntityArchetype arch2 = new EntityArchetype(TransformComponent.class, ModelComponent.class);
+		EntityArchetype arch1 = new EntityArchetype(TransformComponent.class, MeshComponent.class);
+		EntityArchetype arch2 = new EntityArchetype(TransformComponent.class, MeshComponent.class);
 		EntityArchetype arch3 = new EntityArchetype(TransformComponent.class);
 		
 		assertEquals(arch1, arch2);
@@ -53,14 +55,20 @@ class ECSWorldTest {
 		
 		assertEquals(2, world.getChunks().size());
 		
-		world.createEntityWith(new TransformComponent(new Vector3f(1, 5, 3)), new ModelComponent());
-		world.createEntityWith(new TransformComponent(new Vector3f(7, 12, 31)), new ModelComponent());
+		world.createEntityWith(new TransformComponent(new Vector3f(1, 5, 3)), new MeshComponent());
+		world.createEntityWith(new TransformComponent(new Vector3f(7, 12, 31)), new MeshComponent());
 
 		assertEquals(2, world.getChunks().size());
 		
-		RenderSystem renderSystem = new RenderSystem();
-		renderSystem.process(scene);
-		renderSystem.process(scene);
+		try {
+			SceneMapper.serializeScene(scene);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Test
