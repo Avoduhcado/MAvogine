@@ -58,6 +58,7 @@ public class Window {
 	}
 	
 	/**
+	 * @param input 
 	 * 
 	 */
 	@InDev
@@ -282,6 +283,7 @@ public class Window {
 	}
 	
 	/**
+	 * TODO Convert to record
 	 * Assorted options to be set prior to window creation to control optional parameters.
 	 */
 	public static class WindowOptions {

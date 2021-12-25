@@ -9,7 +9,7 @@ public class EntityArchetype extends HashSet<Class<? extends EntityComponent>> {
 	private static final long serialVersionUID = 1L;
 	
 	private static final Map<Integer, EntityArchetype> ARCHETYPE_MAP = new HashMap<>();
-	
+		
 	/**
 	 * @param classes 
 	 */

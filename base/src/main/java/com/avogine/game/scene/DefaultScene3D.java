@@ -1,17 +1,13 @@
 package com.avogine.game.scene;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.joml.*;
 
-import com.avogine.ecs.*;
-import com.avogine.entity.Entity;
+import com.avogine.entity.*;
 import com.avogine.game.camera.*;
 import com.avogine.io.*;
-import com.avogine.render.data.Mesh;
+import com.avogine.render.data.*;
 
 /**
  * A 3D {@link Scene} implementation that contains a map of all meshes and entities currently
@@ -95,6 +91,12 @@ public class DefaultScene3D extends Scene {
 		if (skybox != null) {
 			skybox.cleanup();
 		}
+	}
+
+	@Override
+	public void onUpdate(float delta) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

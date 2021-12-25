@@ -32,4 +32,10 @@ public class TestScene extends ECSScene {
 		// Not implemented
 	}
 
+	@Override
+	public void onUpdate(float delta) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
