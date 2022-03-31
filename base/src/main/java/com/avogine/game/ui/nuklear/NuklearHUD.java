@@ -20,14 +20,13 @@ import org.lwjgl.nuklear.*;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
-import com.avogine.game.*;
 import com.avogine.io.*;
 import com.avogine.util.resource.*;
 
 /**
  *
  */
-public class NuklearHUD implements Updateable {
+public class NuklearHUD {
 
 	private static final int BUFFER_INITIAL_SIZE = 4 * 1024;
 
@@ -427,8 +426,11 @@ public class NuklearHUD implements Updateable {
 		nk_style_set_font(context, default_font);
 	}
 
-	@Override
-	public void onUpdate(float interval) {
+	/**
+	 * 
+	 * @param shots
+	 */
+	public void update(int shots) {
 //		nk_input_begin(context);
 //
 //		NkMouse mouse = context.input().mouse();
@@ -457,7 +459,7 @@ public class NuklearHUD implements Updateable {
 			float rowHeight = 50;
 			int itemsPerRow = 1;
 			nk_layout_row_dynamic(context, rowHeight, itemsPerRow);
-			nk_text(context, "Shots: " + 0, NK_TEXT_LEFT);
+			nk_text(context, "Shots: " + shots, NK_TEXT_LEFT);
 		}
 		nk_end(context);
 	}
@@ -466,10 +468,10 @@ public class NuklearHUD implements Updateable {
 	 * 
 	 */
 	public void render() {
-		render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
+		renderInternal(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
 	}
 
-	private void render(int AA, int max_vertex_buffer, int max_element_buffer) {
+	private void renderInternal(int AA, int max_vertex_buffer, int max_element_buffer) {
 		try (MemoryStack stack = stackPush()) {
 			// setup global state
 			glEnable(GL_BLEND);

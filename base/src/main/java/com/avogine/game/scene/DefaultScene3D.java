@@ -94,7 +94,7 @@ public class DefaultScene3D extends Scene {
 	}
 
 	@Override
-	public void onUpdate(float delta) {
+	public void update(float delta) {
 		// TODO Auto-generated method stub
 		
 	}

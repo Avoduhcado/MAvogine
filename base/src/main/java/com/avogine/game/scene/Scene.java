@@ -2,7 +2,6 @@ package com.avogine.game.scene;
 
 import org.joml.*;
 
-import com.avogine.game.*;
 import com.avogine.game.camera.*;
 import com.avogine.io.*;
 
@@ -32,12 +31,10 @@ public abstract class Scene {
 	
 	/**
 	 * An update method that runs once per game update.
-	 * </p>
-	 * Register this method on your {@link Game} object to handle
-	 * automatically running Scene related updates.
-	 * @param delta
+	 * TODO Specify time unit
+	 * @param delta the time between frames of the game update loop
 	 */
-	public abstract void onUpdate(float delta);
+	public abstract void update(float delta);
 	
 	/**
 	 * @return the projection
