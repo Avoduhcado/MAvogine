@@ -1,6 +1,7 @@
 package com.avogine.ecs;
 
-import com.avogine.game.camera.*;
+import org.joml.*;
+
 import com.avogine.game.scene.*;
 import com.avogine.io.*;
 
@@ -16,10 +17,9 @@ public class TestScene extends ECSScene {
 
 	/**
 	 * @param projection
-	 * @param camera
 	 */
 	protected TestScene() {
-		super(null, new Camera());
+		super(null);
 	}
 
 	@Override
@@ -27,6 +27,17 @@ public class TestScene extends ECSScene {
 		// Not implemented
 	}
 
+	@Override
+	public void update(float delta) {
+		// Not implemented
+		
+	}
+
+	@Override
+	public Matrix4f getView() {
+		return null;
+	}
+	
 	@Override
 	public void cleanup() {
 		// Not implemented
