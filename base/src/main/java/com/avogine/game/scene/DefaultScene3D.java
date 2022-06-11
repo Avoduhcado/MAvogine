@@ -17,13 +17,16 @@ public class DefaultScene3D extends Scene {
 
 	private Map<Mesh, Set<Entity>> meshMap = new HashMap<>();
 	
+	private Camera camera;
+	
 	private Mesh skybox;
 
 	/**
 	 * 
 	 */
 	public DefaultScene3D() {
-		super(new Matrix4f(), new Camera());
+		super(new Matrix4f());
+		camera = new Camera();
 	}
 	
 	@Override
@@ -31,7 +34,13 @@ public class DefaultScene3D extends Scene {
 		// TODO Auto-generated method stub
 		
 	}
-	
+
+	@Override
+	public void update(float delta) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	/**
 	 * @param entity
 	 */
@@ -81,6 +90,11 @@ public class DefaultScene3D extends Scene {
 	public void setSkybox(Mesh skybox) {
 		this.skybox = skybox;
 	}
+
+	@Override
+	public Matrix4f getView() {
+		return camera.getView();
+	}
 	
 	/**
 	 * 
@@ -92,11 +106,4 @@ public class DefaultScene3D extends Scene {
 			skybox.cleanup();
 		}
 	}
-
-	@Override
-	public void update(float delta) {
-		// TODO Auto-generated method stub
-		
-	}
-
 }
