@@ -1,23 +1,21 @@
 package com.avogine.render.data;
 
-import java.lang.invoke.MethodHandles;
-import java.nio.*;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.*;
-
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL31.*;
 import static org.lwjgl.opengl.GL33.*;
 
-import org.joml.*;
-import org.lwjgl.system.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.nio.*;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
 
-import com.avogine.util.*;
+import org.lwjgl.system.*;
+import org.slf4j.*;
+
+import com.avogine.logging.*;
 
 /**
  * TODO Potentially include multiple VBOs for instanced meshes, one for static data, and one for dynamic data that is streamed in as the scene updates and meshes transform themselves
@@ -25,7 +23,7 @@ import com.avogine.util.*;
  */
 public class InstancedMesh implements Renderable {
 
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogUtil.requestLogger();
 
 	private int vao;
 	private int vbo;

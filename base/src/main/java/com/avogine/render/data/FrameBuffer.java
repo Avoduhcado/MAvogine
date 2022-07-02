@@ -1,15 +1,16 @@
 package com.avogine.render.data;
 
-import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.*;
+
+import java.nio.*;
 import java.util.function.*;
 
-import static org.lwjgl.opengl.GL33.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
 import com.avogine.experimental.annotation.*;
-import com.avogine.io.Window;
+import com.avogine.io.*;
+import com.avogine.logging.*;
 
 /**
  * @author Dominus
@@ -18,7 +19,7 @@ import com.avogine.io.Window;
 @MemoryManaged
 public class FrameBuffer {
 
-	protected static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	protected static final Logger logger = LogUtil.requestLogger();
 
 	protected final int fbo;
 	

@@ -1,25 +1,18 @@
 package com.avogine.util.resource;
 
 import java.io.*;
-import java.lang.invoke.MethodHandles;
 import java.net.*;
-import java.nio.ByteBuffer;
+import java.nio.*;
 import java.nio.channels.*;
+import java.nio.file.*;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.stream.*;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.system.MemoryUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.lwjgl.*;
+import org.slf4j.*;
+
+import com.avogine.logging.*;
 
 /**
  * Static utility for reading resource files.
@@ -28,11 +21,17 @@ import org.slf4j.LoggerFactory;
  */
 public class ResourceFileReader {
 	
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogUtil.requestLogger();
+	
+	private static final String FILE_READ_ERROR = "Could not read file! {}";
+	
+	private ResourceFileReader() {
+		
+	}
 
 	/**
 	 * Read a resource file as plain text and return a {@link StringBuilder} of the file contents.
-	 * @param filePath the file name starting from {@code src/main/resources/}
+	 * @param filePath the file name starting from the base {@code resources} directory.
 	 * @return A {@code StringBuilder} containing the contents of the file.
 	 */
 	public static StringBuilder readTextFile(String filePath) {
@@ -44,7 +43,7 @@ public class ResourceFileReader {
 				fileContents.append(line).append("\n");
 			}
 		} catch (IOException e) {
-			logger.error("Could not read file! {}", filePath, e);
+			logger.error(FILE_READ_ERROR, filePath, e);
 			System.exit(1);
 		}
 
@@ -52,35 +51,41 @@ public class ResourceFileReader {
 	}
 	
 	/**
-	 * 
-	 * @param resourceDirectory
-	 * @return
+	 * Get a list of file names for every file contained in the given directory.
+	 * @param resourceDirectory the directory to scan for files.
+	 * @return a list of file names for every file contained in the given directory.
 	 */
-	public static Set<Path> listResourcePaths(String resourceDirectory) {
-		Set<Path> filePaths = new HashSet<>();
+	public static Set<String> listFileNames(String resourceDirectory) {
 		try {
 			URI uri = ResourceFileReader.class.getResource(resourceDirectory).toURI();
 			Path myPath = null;
 			if (uri.getScheme().equals("jar")) {
-				// XXX Unclear if this needs explicitly closed, putting it in a try-with-resources here causes a Closed exception
-				FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
-				myPath = fileSystem.getPath(resourceDirectory);
+				try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap())) {
+					myPath = fileSystem.getPath(resourceDirectory);
+				}
 			} else {
 				myPath = Paths.get(uri);
 			}
-			try (Stream<Path> paths = Files.walk(myPath, 1)) {
-				filePaths = paths
-						.filter(Files::isRegularFile)
-						.collect(Collectors.toSet());
-			} catch (IOException e) {
-				throw new RuntimeException("Cannot walk resource path: " + resourceDirectory);
-			}
+			Set<Path> filePaths = walkFilePaths(myPath, resourceDirectory);
+			return filePaths.stream()
+					.map(Path::getFileName)
+					.map(Path::toString)
+					.collect(Collectors.toSet());
 		} catch (URISyntaxException e) {
 			throw new UnsupportedOperationException("Cannot read URI for resource: " + resourceDirectory);
 		} catch (IOException e) {
 			throw new RuntimeException("Could not open FileSystem for resource: " + resourceDirectory);
 		}
-		return filePaths;
+	}
+	
+	private static Set<Path> walkFilePaths(Path path, String resourceDirectory) {
+		try (Stream<Path> paths = Files.walk(path, 1)) {
+			return paths
+					.filter(Files::isRegularFile)
+					.collect(Collectors.toSet());
+		} catch (IOException e) {
+			throw new RuntimeException("Cannot walk resource path: " + resourceDirectory);
+		}
 	}
 	
 	/**
@@ -90,43 +95,52 @@ public class ResourceFileReader {
 	 * @return
 	 */
 	public static ByteBuffer ioResourceToByteBuffer(String resource, int bufferSize) {
-		logger.info("Reading: {}", resource);
-		ByteBuffer buffer = null;
-
+		logger.debug("Reading: {}", resource);
+		
 		Path path = Paths.get(resource);
 		if (Files.isReadable(path)) {
-			try (SeekableByteChannel fc = Files.newByteChannel(path)) {
-				buffer = BufferUtils.createByteBuffer((int) fc.size() + 1);
-				while (fc.read(buffer) != -1) {
-					
-				}
-				buffer.flip();
-			} catch (IOException e) {
-				logger.error("Could not read file! {}", path, e);
-				System.exit(1);
-			}
+			return readResourceAsPath(path);
 		} else {
-			try (InputStream in = ResourceFileReader.class.getResourceAsStream(resource);
-					ReadableByteChannel rbc = Channels.newChannel(in)) {
-				buffer = BufferUtils.createByteBuffer(bufferSize);
-				
-				while (true) {
-					int bytes = rbc.read(buffer);
-					if (bytes == -1) {
-						break;
-					}
-					if (buffer.remaining() < bytes) {
-						buffer = resizeBuffer(buffer, Math.max(buffer.capacity() * 2, buffer.capacity() - buffer.remaining() + bytes));
-					}
-				}
-				buffer.flip();
-			} catch (IOException e) {
-				logger.error("Could not read file! {}", path, e);
-				System.exit(1);
-			}
+			return readResourceAsInputStream(resource, bufferSize);
 		}
-
-		return buffer;
+	}
+	
+	private static ByteBuffer readResourceAsPath(Path path) {
+		try (SeekableByteChannel fc = Files.newByteChannel(path)) {
+			ByteBuffer buffer = BufferUtils.createByteBuffer((int) fc.size() + 1);
+			while (true) {
+				if (fc.read(buffer) == -1) {
+					break;
+				}
+			}
+			return buffer.flip();
+		} catch (IOException e) {
+			logger.error(FILE_READ_ERROR, path, e);
+			System.exit(1);
+		}
+		return null;
+	}
+	
+	private static ByteBuffer readResourceAsInputStream(String resource, int bufferSize) {
+		try (InputStream in = ResourceFileReader.class.getResourceAsStream(resource);
+				ReadableByteChannel rbc = Channels.newChannel(in)) {
+			ByteBuffer buffer = BufferUtils.createByteBuffer(bufferSize);
+			
+			while (true) {
+				int bytes = rbc.read(buffer);
+				if (bytes == -1) {
+					break;
+				}
+				if (buffer.remaining() < bytes) {
+					buffer = resizeBuffer(buffer, Math.max(buffer.capacity() * 2, buffer.capacity() - buffer.remaining() + bytes));
+				}
+			}
+			return buffer.flip();
+		} catch (IOException e) {
+			logger.error(FILE_READ_ERROR, resource, e);
+			System.exit(1);
+		}
+		return null;
 	}
 	
 	private static ByteBuffer resizeBuffer(ByteBuffer buffer, int newCapacity) {

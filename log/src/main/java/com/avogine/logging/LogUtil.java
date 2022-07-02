@@ -3,8 +3,9 @@
  */
 package com.avogine.logging;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.lang.StackWalker.Option.*;
+
+import org.slf4j.*;
 
 /**
  * Simple utility class for retrieving a {@link Logger}.
@@ -23,8 +24,18 @@ public class LogUtil {
 	 * @param className The class name to get a {@code Logger} for
 	 * @return a {@code Logger} from {@code LoggerFactory} for the given class name.
 	 */
-	public static Logger requestLogger(String className) {
+	public static Logger requestExplicitLogger(String className) {
 		return LoggerFactory.getLogger(className);
+	}
+	
+	/**
+	 * Retrieve a {@link Logger} from {@link LoggerFactory} for the calling class.
+	 * @return a {@link Logger} from {@link LoggerFactory} for the calling class.
+	 */
+	public static Logger requestLogger() {
+		StackWalker walker = StackWalker.getInstance(RETAIN_CLASS_REFERENCE);
+		Class<?> clazz = walker.getCallerClass();
+		return LoggerFactory.getLogger(clazz);
 	}
 	
 }

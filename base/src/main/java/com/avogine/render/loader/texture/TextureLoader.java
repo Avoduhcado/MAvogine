@@ -1,26 +1,16 @@
 package com.avogine.render.loader.texture;
 
-import java.io.File;
-import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import java.io.*;
+import java.nio.*;
 
-import org.lwjgl.opengl.EXTTextureFilterAnisotropic;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryStack;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.lwjgl.opengl.*;
+import org.lwjgl.stb.*;
+import org.lwjgl.system.*;
+import org.slf4j.*;
 
-import com.avogine.render.data.Cubemap;
-import com.avogine.render.data.FrameBuffer;
-import com.avogine.render.data.TextureAtlas;
-import com.avogine.util.resource.ResourceConstants;
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.logging.*;
+import com.avogine.render.data.*;
+import com.avogine.util.resource.*;
 
 /**
  * TODO Add some default textures if anything fails to load
@@ -34,7 +24,7 @@ import com.avogine.util.resource.ResourceFileReader;
  */
 public class TextureLoader {
 
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogUtil.requestLogger();
 
 	private TextureLoader() {
 		
