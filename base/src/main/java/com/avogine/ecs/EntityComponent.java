@@ -12,7 +12,7 @@ public abstract class EntityComponent {
 	 * <p>
 	 * This will only be executed if the subclass does not define any constructors of its own.
 	 */
-	public EntityComponent() {
+	protected EntityComponent() {
 		
 	}
 	

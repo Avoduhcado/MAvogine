@@ -1,12 +1,12 @@
 package com.avogine;
 
-import java.lang.invoke.*;
 import java.util.concurrent.*;
 
 import org.slf4j.*;
 
 import com.avogine.game.*;
 import com.avogine.io.*;
+import com.avogine.logging.*;
 
 /**
  * This is the primary entry point into running a game.
@@ -18,7 +18,7 @@ import com.avogine.io.*;
  */
 public class Avogine implements Runnable {
 
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogUtil.requestLogger();
 
 	/**
 	 * TODO This needs to be customizable/read from a property.

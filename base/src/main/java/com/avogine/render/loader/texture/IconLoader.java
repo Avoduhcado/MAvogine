@@ -1,18 +1,14 @@
 package com.avogine.render.loader.texture;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.nio.file.Path;
-import java.util.Set;
+import java.nio.*;
+import java.util.*;
 
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWImage;
+import org.lwjgl.glfw.*;
 import org.lwjgl.glfw.GLFWImage.Buffer;
-import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.stb.*;
+import org.lwjgl.system.*;
 
-import com.avogine.util.resource.ResourceConstants;
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.util.resource.*;
 
 /**
  * TODO Move this into a more suitable module? It not only deals with loading, which is necessary to have {@code STB}, but also handles setting the actual icons to avoid memory cleanup issues.
@@ -58,7 +54,8 @@ public class IconLoader {
 	 * @param directoryName
 	 */
 	public static void loadAndSetIcons(long window, String directoryName) {
-		Set<Path> files = ResourceFileReader.listResourcePaths(ResourceConstants.TEXTURE_PATH + directoryName);
+		//Set<Path> files = ResourceFileReader.listResourcePaths(ResourceConstants.TEXTURE_PATH + directoryName);
+		Set<String> files = ResourceFileReader.listFileNames(ResourceConstants.TEXTURE_PATH + directoryName);
 		if (files == null || files.isEmpty()) {
 			return;
 		}
@@ -68,8 +65,8 @@ public class IconLoader {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			iconBuffer = GLFWImage.mallocStack(files.size(), stack);
 			// TODO Add file filter for image files only
-			for (Path filePath : files) {
-				iconBuffer.put(loadIcon(directoryName + "/" + filePath.getFileName(), stack));
+			for (String filePath : files) {
+				iconBuffer.put(loadIcon(directoryName + "/" + filePath, stack));
 			}
 			
 			iconBuffer.flip();

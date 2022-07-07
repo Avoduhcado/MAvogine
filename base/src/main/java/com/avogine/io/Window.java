@@ -1,6 +1,5 @@
 package com.avogine.io;
 
-import java.lang.invoke.*;
 import java.nio.*;
 import java.util.*;
 
@@ -12,6 +11,7 @@ import org.slf4j.*;
 
 import com.avogine.*;
 import com.avogine.experimental.annotation.*;
+import com.avogine.logging.*;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.
@@ -25,7 +25,7 @@ import com.avogine.experimental.annotation.*;
  */
 public class Window {
 
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogUtil.requestLogger();
 
 	private long id;
 	
@@ -58,6 +58,7 @@ public class Window {
 	}
 	
 	/**
+	 * @param input 
 	 * 
 	 */
 	@InDev
@@ -282,6 +283,7 @@ public class Window {
 	}
 	
 	/**
+	 * TODO Convert to record
 	 * Assorted options to be set prior to window creation to control optional parameters.
 	 */
 	public static class WindowOptions {

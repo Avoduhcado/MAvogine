@@ -1,18 +1,22 @@
 package com.avogine.render.data;
 
-import java.lang.invoke.MethodHandles;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
+
 import java.nio.*;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.*;
 import java.util.stream.*;
 
-import static org.lwjgl.opengl.GL33.*;
-
+import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
 import com.avogine.experimental.annotation.*;
+import com.avogine.logging.*;
 
 /**
  * TODO Refactor into taking in raw Vertex data, indices, and Texture IDs followed by a setup method that locally converts all of the data into buffers to feed into openGL
@@ -20,7 +24,7 @@ import com.avogine.experimental.annotation.*;
 @MemoryManaged
 public class Mesh implements Renderable {
 	
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogUtil.requestLogger();
 
 	private int vao;
 	private int vbo;

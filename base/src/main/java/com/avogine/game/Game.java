@@ -6,7 +6,7 @@ import com.avogine.io.*;
  *
  */
 public interface Game {
-
+	
 	/**
 	 * Initialize all relevant game logic to start the game loop.
 	 * @param window

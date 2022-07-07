@@ -11,11 +11,6 @@ import com.avogine.io.*;
 public class TestScene extends ECSScene {
 
 	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-
-	/**
 	 * @param projection
 	 */
 	protected TestScene() {

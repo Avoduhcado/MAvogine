@@ -106,5 +106,4 @@ public class DefaultScene3D extends Scene {
 			skybox.cleanup();
 		}
 	}
-
 }

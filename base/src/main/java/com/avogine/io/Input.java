@@ -21,7 +21,7 @@ public class Input {
 
 	private Window registeredWindow;
 	private long windowID;
-	
+		
 	private final Set<InputListener> listeners;
 	// True if the key at index is currently pressed
 	private final boolean[] keys;
@@ -89,6 +89,7 @@ public class Input {
 		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
 			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
 				if (!keys[i]) {
+					fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_RELEASE, i, windowID));
 					fireKeyboardEvent(new KeyboardEvent(KeyboardEvent.KEY_TYPED, i, windowID));
 				}
 				keys[i] = true;
@@ -140,15 +141,9 @@ public class Input {
 		getListenersOfType(KeyboardListener.class)
 			.forEach(kl -> {
 				switch (event.type()) {
-				case GLFW.GLFW_PRESS:
-					kl.keyPressed(event);
-					break;
-				case GLFW.GLFW_RELEASE:
-					kl.keyReleased(event);
-					break;
-				case KeyboardEvent.KEY_TYPED:
-					kl.keyTyped(event);
-					break;
+				case GLFW.GLFW_PRESS -> kl.keyPressed(event);
+				case GLFW.GLFW_RELEASE -> kl.keyReleased(event);
+				case KeyboardEvent.KEY_TYPED -> kl.keyTyped(event);
 				}
 			});
 	}

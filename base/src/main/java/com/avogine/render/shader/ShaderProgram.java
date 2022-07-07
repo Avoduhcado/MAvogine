@@ -1,24 +1,24 @@
 package com.avogine.render.shader;
 
-import java.lang.invoke.*;
+import static org.lwjgl.opengl.GL20.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import static org.lwjgl.opengl.GL33.*;
 import org.slf4j.*;
 
-import com.avogine.render.shader.uniform.Uniform;
-import com.avogine.util.resource.ResourceConstants;
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.logging.*;
+import com.avogine.render.shader.uniform.*;
+import com.avogine.util.resource.*;
 
 /**
  * TODO The System.exit(-1) calls should likely just be throwing exceptions instead
  */
 public abstract class ShaderProgram {
 
-	private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger log = LogUtil.requestLogger();
 	
 	private final int programId;
 	

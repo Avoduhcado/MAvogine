@@ -1,28 +1,26 @@
 package com.avogine.render.loader.assimp;
 
 import java.lang.Math;
-import java.lang.invoke.MethodHandles;
 import java.nio.*;
 import java.util.*;
 
 import org.joml.*;
-import org.lwjgl.PointerBuffer;
+import org.lwjgl.*;
 import org.lwjgl.assimp.*;
-import org.lwjgl.system.MemoryUtil;
-import org.slf4j.Logger;
+import org.lwjgl.system.*;
+import org.slf4j.*;
 
-import com.avogine.logging.LogUtil;
+import com.avogine.logging.*;
 import com.avogine.render.data.*;
 import com.avogine.render.loader.texture.*;
-import com.avogine.util.resource.ResourceConstants;
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.util.resource.*;
 
 /**
  *
  */
 public class StaticMeshesLoader {
 
-	private static final Logger logger = LogUtil.requestLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger logger = LogUtil.requestLogger();
 	
 	/**
 	 * A custom {@link AIFileIO} implementation to support loading from jar files.
