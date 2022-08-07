@@ -7,7 +7,6 @@ import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
-import org.slf4j.*;
 
 import com.avogine.*;
 import com.avogine.experimental.annotation.*;
@@ -24,8 +23,6 @@ import com.avogine.logging.*;
  * TODO WindowOptions
  */
 public class Window {
-
-	private static final Logger logger = LogUtil.requestLogger();
 
 	private long id;
 	
@@ -161,7 +158,7 @@ public class Window {
 		});
 		
 		GLFW.glfwSetWindowPosCallback(id, (window, x, y) -> {
-			logger.debug("x: {} y: {}", x, y);
+			AvoLog.log().debug("x: {} y: {}", x, y);
 		});
 		
 		if (GLFW.glfwRawMouseMotionSupported()) {

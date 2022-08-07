@@ -13,17 +13,12 @@ import java.util.function.*;
 import java.util.stream.*;
 
 import org.lwjgl.system.*;
-import org.slf4j.*;
-
-import com.avogine.logging.*;
 
 /**
  * TODO Potentially include multiple VBOs for instanced meshes, one for static data, and one for dynamic data that is streamed in as the scene updates and meshes transform themselves
  * Cleanup all this code, presently this is pretty hardcoded just for rendering 2D sprites with a texture atlas
  */
 public class InstancedMesh implements Renderable {
-
-	private static final Logger logger = LogUtil.requestLogger();
 
 	private int vao;
 	private int vbo;

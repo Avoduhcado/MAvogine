@@ -13,10 +13,8 @@ import java.util.stream.*;
 
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
-import org.slf4j.*;
 
 import com.avogine.experimental.annotation.*;
-import com.avogine.logging.*;
 
 /**
  * TODO Refactor into taking in raw Vertex data, indices, and Texture IDs followed by a setup method that locally converts all of the data into buffers to feed into openGL
@@ -24,8 +22,6 @@ import com.avogine.logging.*;
 @MemoryManaged
 public class Mesh implements Renderable {
 	
-	private static final Logger logger = LogUtil.requestLogger();
-
 	private int vao;
 	private int vbo;
 	private int ebo;

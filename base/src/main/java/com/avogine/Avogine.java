@@ -2,8 +2,6 @@ package com.avogine;
 
 import java.util.concurrent.*;
 
-import org.slf4j.*;
-
 import com.avogine.game.*;
 import com.avogine.io.*;
 import com.avogine.logging.*;
@@ -17,8 +15,6 @@ import com.avogine.logging.*;
  *
  */
 public class Avogine implements Runnable {
-
-	private static final Logger logger = LogUtil.requestLogger();
 
 	/**
 	 * TODO This needs to be customizable/read from a property.
@@ -66,7 +62,7 @@ public class Avogine implements Runnable {
 		String osName = System.getProperty("os.name");
 		if (osName.contains("Mac")) {
 			System.setProperty("java.awt.headless", "true");
-			logger.info("Setting java.awt.headless to true");
+			AvoLog.log().info("Setting java.awt.headless to true");
 			gameLoopThread.run();
 		} else {
 			gameLoopThread.start();
@@ -79,7 +75,7 @@ public class Avogine implements Runnable {
 			init();
 			loop();
 		} catch (Exception e) {
-			logger.error("An error occurred.", e);
+			AvoLog.log().error("An error occurred.", e);
 		} finally {
 			cleanup();
 		}
@@ -189,7 +185,7 @@ public class Avogine implements Runnable {
 			try {
 				Thread.sleep(1);
 			} catch (InterruptedException e) {
-				logger.warn("Sync operation was interrupted?", e);
+				AvoLog.log().warn("Sync operation was interrupted?", e);
 				Thread.currentThread().interrupt();
 			}
 		}

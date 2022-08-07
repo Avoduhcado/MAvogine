@@ -10,7 +10,6 @@ import java.util.*;
 import java.util.stream.*;
 
 import org.lwjgl.*;
-import org.slf4j.*;
 
 import com.avogine.logging.*;
 
@@ -20,9 +19,7 @@ import com.avogine.logging.*;
  *
  */
 public class ResourceFileReader {
-	
-	private static final Logger logger = LogUtil.requestLogger();
-	
+		
 	private static final String FILE_READ_ERROR = "Could not read file! {}";
 	
 	private ResourceFileReader() {
@@ -43,7 +40,7 @@ public class ResourceFileReader {
 				fileContents.append(line).append("\n");
 			}
 		} catch (IOException e) {
-			logger.error(FILE_READ_ERROR, filePath, e);
+			AvoLog.log().error(FILE_READ_ERROR, filePath, e);
 			System.exit(1);
 		}
 
@@ -95,7 +92,7 @@ public class ResourceFileReader {
 	 * @return
 	 */
 	public static ByteBuffer ioResourceToByteBuffer(String resource, int bufferSize) {
-		logger.debug("Reading: {}", resource);
+		AvoLog.log().debug("Reading: {}", resource);
 		
 		Path path = Paths.get(resource);
 		if (Files.isReadable(path)) {
@@ -115,7 +112,7 @@ public class ResourceFileReader {
 			}
 			return buffer.flip();
 		} catch (IOException e) {
-			logger.error(FILE_READ_ERROR, path, e);
+			AvoLog.log().error(FILE_READ_ERROR, path, e);
 			System.exit(1);
 		}
 		return null;
@@ -137,7 +134,7 @@ public class ResourceFileReader {
 			}
 			return buffer.flip();
 		} catch (IOException e) {
-			logger.error(FILE_READ_ERROR, resource, e);
+			AvoLog.log().error(FILE_READ_ERROR, resource, e);
 			System.exit(1);
 		}
 		return null;

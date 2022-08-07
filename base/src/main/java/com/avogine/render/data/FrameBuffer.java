@@ -6,8 +6,6 @@ import static org.lwjgl.opengl.GL30.*;
 import java.nio.*;
 import java.util.function.*;
 
-import org.slf4j.*;
-
 import com.avogine.experimental.annotation.*;
 import com.avogine.io.*;
 import com.avogine.logging.*;
@@ -18,8 +16,6 @@ import com.avogine.logging.*;
  */
 @MemoryManaged
 public class FrameBuffer {
-
-	protected static final Logger logger = LogUtil.requestLogger();
 
 	protected final int fbo;
 	
@@ -91,7 +87,7 @@ public class FrameBuffer {
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 		
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			logger.error("Framebuffer is not complete!");
+			AvoLog.log().error("Framebuffer is not complete!");
 		}
 		unbind();
 	}

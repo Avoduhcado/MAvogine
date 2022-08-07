@@ -6,7 +6,6 @@ import java.nio.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
-import org.slf4j.*;
 
 import com.avogine.logging.*;
 import com.avogine.render.data.*;
@@ -23,8 +22,6 @@ import com.avogine.util.resource.*;
  *
  */
 public class TextureLoader {
-
-	private static final Logger logger = LogUtil.requestLogger();
 
 	private TextureLoader() {
 		
@@ -79,7 +76,7 @@ public class TextureLoader {
 				}
 				STBImage.stbi_image_free(imageData);
 			} else {
-				logger.error("Texture failed to load at path: {}", filePath);
+				AvoLog.log().error("Texture failed to load at path: {}", filePath);
 				return null;
 			}
 		}
@@ -136,7 +133,7 @@ public class TextureLoader {
 				}
 				STBImage.stbi_image_free(imageData);
 			} else {
-				logger.error("Texture failed to load at path: {}", filePath);
+				AvoLog.log().error("Texture failed to load at path: {}", filePath);
 				return null;
 			}
 		}
@@ -183,7 +180,7 @@ public class TextureLoader {
 					GL11.glTexParameterf(GL11.GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
 				}
 			} else {
-				logger.error("Texture failed to load at path: {}", filePath);
+				AvoLog.log().error("Texture failed to load at path: {}", filePath);
 				return null;
 			}
 			STBImage.stbi_image_free(imageData);
@@ -221,7 +218,7 @@ public class TextureLoader {
 					GL11.glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL11.GL_RGBA8, width.get(), height.get(), 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, imageData);
 					STBImage.stbi_image_free(imageData);
 				} else {
-					logger.error("Cubemap texture failed to load at path: {}", filePath);
+					AvoLog.log().error("Cubemap texture failed to load at path: {}", filePath);
 				}
 			}
 		}
