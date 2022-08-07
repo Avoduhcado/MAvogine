@@ -7,8 +7,6 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import org.slf4j.*;
-
 import com.avogine.logging.*;
 import com.avogine.render.shader.uniform.*;
 import com.avogine.util.resource.*;
@@ -17,8 +15,6 @@ import com.avogine.util.resource.*;
  * TODO The System.exit(-1) calls should likely just be throwing exceptions instead
  */
 public abstract class ShaderProgram {
-
-	private static final Logger log = LogUtil.requestLogger();
 	
 	private final int programId;
 	
@@ -58,7 +54,7 @@ public abstract class ShaderProgram {
 					try {
 						return field.get(this);
 					} catch (IllegalArgumentException | IllegalAccessException e) {
-						log.error("Failed to reflectively access class variable!", e);
+						AvoLog.log().error("Failed to reflectively access class variable!", e);
 					}
 					return null;
 				}, Function.identity()));
@@ -92,15 +88,15 @@ public abstract class ShaderProgram {
 		
 		int shaderId = glCreateShader(shaderType);
 		if (shaderId == 0) {
-			log.error("Error creating shader. Type: {}", shaderType);
+			AvoLog.log().error("Error creating shader. Type: {}", shaderType);
 			System.exit(-1);
 		}
 		
 		glShaderSource(shaderId, shaderCode);
 		glCompileShader(shaderId);
 		if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {
-			if (log.isErrorEnabled()) {
-				log.error("Error compiling shader: {}\n{}", shaderFile, glGetShaderInfoLog(shaderId, 500));
+			if (AvoLog.log().isErrorEnabled()) {
+				AvoLog.log().error("Error compiling shader: {}\n{}", shaderFile, glGetShaderInfoLog(shaderId, 500));
 			}
 			System.exit(-1);
 		}
@@ -113,15 +109,15 @@ public abstract class ShaderProgram {
 	protected void link() {
 		glLinkProgram(programId);
 		if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
-			if (log.isErrorEnabled()) {
-				log.error("Error linking shader code: {}", glGetProgramInfoLog(programId));
+			if (AvoLog.log().isErrorEnabled()) {
+				AvoLog.log().error("Error linking shader code: {}", glGetProgramInfoLog(programId));
 			}
 			System.exit(-1);
 		}
 		
 		glValidateProgram(programId);
-		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0 && log.isWarnEnabled()) {
-			log.warn("Warning validating shader code: {}", glGetProgramInfoLog(programId));
+		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0 && AvoLog.log().isWarnEnabled()) {
+			AvoLog.log().warn("Warning validating shader code: {}", glGetProgramInfoLog(programId));
 		}
 		
 		// Detaching shaders will delete the source code of the shader itself, which may make debugging difficult for minimal performance gain

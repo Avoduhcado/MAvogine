@@ -8,7 +8,6 @@ import org.joml.*;
 import org.lwjgl.*;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.*;
-import org.slf4j.*;
 
 import com.avogine.logging.*;
 import com.avogine.render.data.*;
@@ -19,8 +18,6 @@ import com.avogine.util.resource.*;
  *
  */
 public class StaticMeshesLoader {
-
-	private static final Logger logger = LogUtil.requestLogger();
 	
 	/**
 	 * A custom {@link AIFileIO} implementation to support loading from jar files.
@@ -85,7 +82,7 @@ public class StaticMeshesLoader {
 	}
 
 	public static Mesh[] load(String resourcePath, String texturesDir, int flags, int numberOfInstances) {
-		logger.debug("Now loading: {}", resourcePath);
+		AvoLog.log().debug("Now loading: {}", resourcePath);
 		AIScene aiScene = Assimp.aiImportFileEx(ResourceConstants.MODEL_PATH + resourcePath, flags, fileIo);
 		if (aiScene == null) {
 			throw new RuntimeException("Error loading model: " + resourcePath);
