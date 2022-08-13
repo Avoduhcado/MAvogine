@@ -1,5 +1,6 @@
 package com.avogine.io;
 
+import java.io.*;
 import java.nio.*;
 import java.util.*;
 
@@ -11,6 +12,7 @@ import org.lwjgl.system.*;
 import com.avogine.*;
 import com.avogine.experimental.annotation.*;
 import com.avogine.logging.*;
+import com.avogine.util.*;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.
@@ -20,7 +22,7 @@ import com.avogine.logging.*;
  * {@code Window}s can also optionally be registered with an {@link Input} for custom input handling as
  * any system events like key presses or mouse motions are captured from the window context.
  * <p>
- * TODO WindowOptions
+ * TODO WindowProperties
  */
 public class Window {
 
@@ -32,7 +34,7 @@ public class Window {
 	
 	private int fps;
 	
-	private WindowOptions options;
+	private WindowProperties properties;
 	
 	public static boolean debugMode;
 		
@@ -44,14 +46,11 @@ public class Window {
 	 * @param width The width in pixels for this window
 	 * @param height The height in pixels for this window
 	 * @param title The window title
-	 * @param options window specific settings for configuring OpenGL
 	 */
-	public Window(int width, int height, String title, WindowOptions options) {
+	public Window(int width, int height, String title) {
 		this.width = width;
 		this.height = height;
 		this.title = title;
-		
-		this.options = options;
 	}
 	
 	/**
@@ -80,13 +79,15 @@ public class Window {
 			throw new RuntimeException("Failed to create window!");
 		}
 		
+		initProperties();
+		
 		long monitor = GLFW.glfwGetPrimaryMonitor();
 		PointerBuffer monitorBuffer = GLFW.glfwGetMonitors();
 		while (monitorBuffer.hasRemaining()) {
 			long monitorID = monitorBuffer.get();
 			monitorList.add(monitorID);
 		}
-		monitor = monitorList.get(options.monitorIndex);
+		monitor = monitorList.get(properties.monitorIndex);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -106,7 +107,7 @@ public class Window {
 		
 		GLFW.glfwMakeContextCurrent(id);
 		
-		if (options.vsync) {
+		if (properties.vsync) {
 			GLFW.glfwSwapInterval(1);
 		} else {
 			GLFW.glfwSwapInterval(0);
@@ -121,24 +122,24 @@ public class Window {
 		GL.createCapabilities();
 		
 		// All of this should be handled through settings in WindowOptions
-		GL11.glClearColor(options.clearColor[0], options.clearColor[1], options.clearColor[2], options.clearColor[3]);
+		GL11.glClearColor(properties.clearColor[0], properties.clearColor[1], properties.clearColor[2], properties.clearColor[3]);
 		
-		if (options.depthTest) {
+		if (properties.depthTest) {
 			GL11.glEnable(GL11.GL_DEPTH_TEST);
 		}
 
-		if (options.blend) {
+		if (properties.blend) {
 			GL11.glEnable(GL11.GL_BLEND);
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		}
 		
-		if (options.cullFaces) {
+		if (properties.cullFaces) {
 			GL11.glEnable(GL11.GL_CULL_FACE);
 			// TODO Fetch which face to cull from options as well
 			GL11.glCullFace(GL11.GL_BACK);
 		}
 
-		if (options.multisample) {
+		if (properties.multisample) {
 			GL11.glEnable(GL13.GL_MULTISAMPLE);
 		}
 		
@@ -179,6 +180,24 @@ public class Window {
 		
 		this.input = input;
 		input.init(this);
+	}
+
+	private void initProperties() {
+		Properties prop = new Properties();
+		try (var inputStream = getClass().getClassLoader().getResourceAsStream("window.properties")) {
+			prop.load(inputStream);
+		} catch (IOException e) {
+			AvoLog.log().error("Error loading window properties", e);
+		}
+		properties = new WindowProperties(
+				PropertiesUtil.getBoolean(prop, "fullscreen", false),
+				PropertiesUtil.getBoolean(prop, "vsync", false),
+				PropertiesUtil.getInteger(prop, "monitorIndex", 0),
+				PropertiesUtil.getFloatArray(prop, "clearColor", new Float[] {100f / 255f, 149f / 255f, 237f / 255f, 1f}),
+				PropertiesUtil.getBoolean(prop, "depthTest", true),
+				PropertiesUtil.getBoolean(prop, "cullFaces", false),
+				PropertiesUtil.getBoolean(prop, "blend", true),
+				PropertiesUtil.getBoolean(prop, "multisample", true));
 	}
 	
 	/**
@@ -280,35 +299,47 @@ public class Window {
 	}
 	
 	/**
-	 * TODO Convert to record
-	 * Assorted options to be set prior to window creation to control optional parameters.
+	 * A configurable set of parameters you can change to customize assorted OpenGL features.
+	 * @param fullscreen Initialize the window in full screen mode.
+	 * @param vsync Sync the window's refresh rate with the monitor's to avoid screen tearing.
+	 * @param monitorIndex The default monitor that the window should be placed on.
+	 * @param clearColor 4 float values determining the color to use when calling {@code glClear()}. <b>Probably shouldn't be in here</b>
+	 * @param depthTest Enable depth testing when rendering to the screen. <b>Probably shouldn't be in here</b>
+	 * @param cullFaces Perform face culling when rendering 3D objects. <b>Probably shouldn't be in here</b>
+	 * @param blend Perform basic alpha blending when rendering. <b>Probably shouldn't be in here</b>
+	 * @param multisample Perform multi-sample anti aliasing (MSAA) when rendering the screen.
 	 */
-	public static class WindowOptions {
-		
-		/**
-		 * Initialize the window in full screen mode.
-		 */
-		public boolean fullScreen;
-		
-		/**
-		 * Sync the window's refresh rate with the monitor's to avoid screen tearing.
-		 */
-		public boolean vsync;
-		
-		/**
-		 * The default monitor that the window should be placed on.
-		 */
-		public int monitorIndex = 0;
-		
-		public float[] clearColor = new float[] {100f / 255f, 149f / 255f, 237f / 255f, 1f};
+	public static record WindowProperties(boolean fullscreen, boolean vsync, int monitorIndex, Float[] clearColor, boolean depthTest, boolean cullFaces, boolean blend, boolean multisample) {
+		@Override
+		public String toString() {
+			return "WindowProperties [fullscreen=" + fullscreen + ", vsync=" + vsync + ", monitorIndex=" + monitorIndex
+					+ ", clearColor=" + Arrays.toString(clearColor) + ", depthTest=" + depthTest + ", cullFaces="
+					+ cullFaces + ", blend=" + blend + ", multisample=" + multisample + "]";
+		}
 
-		public boolean depthTest;
-		
-		public boolean cullFaces;
-		
-		public boolean blend;
-		
-		public boolean multisample;
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + Arrays.hashCode(clearColor);
+			result = prime * result
+					+ Objects.hash(blend, cullFaces, depthTest, fullscreen, monitorIndex, multisample, vsync);
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			WindowProperties other = (WindowProperties) obj;
+			return blend == other.blend && Arrays.equals(clearColor, other.clearColor) && cullFaces == other.cullFaces
+					&& depthTest == other.depthTest && fullscreen == other.fullscreen
+					&& monitorIndex == other.monitorIndex && multisample == other.multisample && vsync == other.vsync;
+		}
 		
 	}
 	
