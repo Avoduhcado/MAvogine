@@ -27,13 +27,12 @@ import com.avogine.util.resource.*;
  */
 public class AvoNuklear {
 
-	private static final NkAllocator ALLOCATOR;
-
-	static {
-		ALLOCATOR = NkAllocator.create()
-				.alloc((handle, old, size) -> nmemAllocChecked(size))
-				.mfree((handle, ptr) -> nmemFree(ptr));
-	}
+	/**
+	 * Nuklear Allocator struct for managing all Nuklear related memory allocations.
+	 */
+	public static final NkAllocator ALLOCATOR = NkAllocator.create()
+			.alloc((handle, old, size) -> nmemAllocChecked(size))
+			.mfree((handle, ptr) -> nmemFree(ptr));
 	
 	// Storage for font data
 	private final ByteBuffer ttf;
