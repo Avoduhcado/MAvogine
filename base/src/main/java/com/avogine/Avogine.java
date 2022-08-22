@@ -16,12 +16,6 @@ import com.avogine.logging.*;
 public class Avogine implements Runnable {
 
 	/**
-	 * TODO This needs to be customizable/read from a property.
-	 * Target frames per second. Controls how often the screen is rendered in a single second.
-	 */
-	public static final int TARGET_FPS = 144;
-
-	/**
 	 * Target updates per second. Controls how often game logic is run in a single second.
 	 */
 	public static final int TARGET_UPS = 60;
@@ -85,7 +79,6 @@ public class Avogine implements Runnable {
 	}
 	
 	private void loop() {
-		double renderInterval = 1.0 / TARGET_FPS;
 		double updateInterval = 1.0 / TARGET_UPS;
 		
 		double previousFrameTime = timer.getTime();
@@ -109,7 +102,7 @@ public class Avogine implements Runnable {
 			previousFrameTime = frameStartTime;
 			// Get the time it took to actually process the entire frame (this should be counted as a segment of our overall time dictated by renderInterval)
 			double frameProcessTimeNanos = timer.getTime() - frameStartTime;
-			long sleepTime = (long) (Math.max(renderInterval - frameProcessTimeNanos, 0) * 1_000_000_000); // Convert to nanoseconds
+			long sleepTime = (long) (Math.max(window.getTargetFps() - frameProcessTimeNanos, 0) * 1_000_000_000); // Convert to nanoseconds
 			
 			try {
 				sleepNanos(sleepTime);

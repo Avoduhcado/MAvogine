@@ -26,12 +26,16 @@ import com.avogine.util.*;
  */
 public class Window {
 
+	private static final int TARGET_FPS_FOCUS = 144;
+	private static final int TARGET_FPS_BACKGROUND = 30;
+	
 	private long id;
 	
 	private int width;
 	private int height;
 	private String title;
 	
+	private double targetFPS;
 	private int fps;
 	
 	private WindowProperties properties;
@@ -70,6 +74,7 @@ public class Window {
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
 		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, 4);
+		GLFW.glfwWindowHint(GLFW.GLFW_FOCUS_ON_SHOW, GLFW.GLFW_TRUE);
 //		GLFW.glfwWindowHint(GLFW.GLFW_DECORATED, GLFW.GLFW_FALSE);
 //		GLFW.glfwWindowHint(GLFW.GLFW_FLOATING, GLFW.GLFW_TRUE);
 //		GLFW.glfwWindowHint(GLFW.GLFW_TRANSPARENT_FRAMEBUFFER, GLFW.GLFW_TRUE);
@@ -116,6 +121,9 @@ public class Window {
 		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
 			GLFW.glfwSetWindowOpacity(id, 0.5f);
 		}
+		
+		targetFPS = 1.0 / TARGET_FPS_FOCUS;
+		GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFPS = 1.0 / (focused ? TARGET_FPS_FOCUS : TARGET_FPS_BACKGROUND));
 		
 		GLFW.glfwShowWindow(id);
 
@@ -262,6 +270,16 @@ public class Window {
 	 */
 	public Input getInput() {
 		return input;
+	}
+	
+	/**
+	 * Return target frames per second. Controls how often the screen is rendered in a single second.
+	 * </p>
+	 * TODO This needs to be customizable/read from a property.
+	 * @return target frames per second. Controls how often the screen is rendered in a single second.
+	 */
+	public double getTargetFps() {
+		return targetFPS;
 	}
 	
 	public int getFps() {
