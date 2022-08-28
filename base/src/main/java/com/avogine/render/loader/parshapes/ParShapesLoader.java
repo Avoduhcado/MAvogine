@@ -1,7 +1,6 @@
 package com.avogine.render.loader.parshapes;
 
-import org.lwjgl.util.par.ParShapes;
-import org.lwjgl.util.par.ParShapesMesh;
+import org.lwjgl.util.par.*;
 
 import com.avogine.render.data.*;
 
@@ -99,7 +98,7 @@ public class ParShapesLoader {
 	            "     rx -1.2" +
 	            "     shape connect" +
 	            "     call llimb";
-		ParShapesMesh parMesh = ParShapes.par_shapes_create_lsystem(program, 5, 60);
+		ParShapesMesh parMesh = ParShapes.par_shapes_create_lsystem(program, 5, 60, null, 0);
 		
 		RawMesh mesh = new RawMesh(parMesh.points(parMesh.npoints() * 3));
 		mesh.addIndexAttribute(parMesh.triangles(parMesh.ntriangles() * 3), parMesh.ntriangles() * 3);
