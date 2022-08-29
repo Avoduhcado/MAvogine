@@ -39,7 +39,7 @@ public class IconLoader {
 		ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 1024);
 		ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 4);
 		if (imageData != null) {
-			icon = GLFWImage.mallocStack(stack);
+			icon = GLFWImage.malloc(stack);
 			icon.set(width.get(), height.get(), imageData);
 		} else {
 			System.err.println("Icon failed to load: " + filePath);
@@ -63,7 +63,7 @@ public class IconLoader {
 		Buffer iconBuffer = null;
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
-			iconBuffer = GLFWImage.mallocStack(files.size(), stack);
+			iconBuffer = GLFWImage.malloc(files.size(), stack);
 			// TODO Add file filter for image files only
 			for (String filePath : files) {
 				iconBuffer.put(loadIcon(directoryName + "/" + filePath, stack));

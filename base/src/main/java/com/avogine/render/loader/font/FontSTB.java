@@ -1,19 +1,13 @@
 package com.avogine.render.loader.font;
 
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.*;
+import java.util.*;
 
-import org.lwjgl.stb.STBTTAlignedQuad;
-import org.lwjgl.stb.STBTTBakedChar;
-import org.lwjgl.stb.STBTTFontinfo;
-import org.lwjgl.stb.STBTruetype;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.stb.*;
+import org.lwjgl.system.*;
 
 import com.avogine.render.data.*;
-import com.avogine.util.ArrayUtils;
+import com.avogine.util.*;
 
 public class FontSTB {
 
@@ -41,36 +35,34 @@ public class FontSTB {
 			FloatBuffer xpos = stack.floats(1);
 			FloatBuffer ypos = stack.floats(1);
 			
-			STBTTAlignedQuad q = STBTTAlignedQuad.mallocStack(stack);
+			STBTTAlignedQuad q = STBTTAlignedQuad.malloc(stack);
 			
 			int baseline = getLineGap();
-			float height = baseline;
+			float lineHeight = baseline;
 			
 			for (char c : text.toCharArray()) {
-				// If the character is a newline, increment the ypos
 				if (c == '\n') {
-					ypos.put(0, ypos.get(0) + height);
+					// If the character is a newline, increment the ypos
+					ypos.put(0, ypos.get(0) + lineHeight);
 					xpos.put(0, 0);
-					continue;
-					// If it's outside of the character set, skip it
 				} else if (c < 32 || 128 <= c) {
-					continue;
+					// If it's outside of the character set, skip it
+				} else {
+					STBTruetype.stbtt_GetBakedQuad(cdata, 512, 512, c - 32, xpos, ypos, q, true);
+					
+					//System.out.println("(" + q.x0() + ", " + q.y0() + "), (" + q.x1() + ", " + q.y1() + ")");
+					//System.out.println("(" + q.s0() + ", " + q.t0() + "), (" + q.s1() + ", " + q.t1() + ")");
+					vertices.addAll(Arrays.asList(q.x0(), baseline + q.y0(), 0.0f));
+					vertices.addAll(Arrays.asList(q.x1(), baseline + q.y0(), 0.0f));
+					vertices.addAll(Arrays.asList(q.x1(), baseline + q.y1(), 0.0f));
+					vertices.addAll(Arrays.asList(q.x0(), baseline + q.y1(), 0.0f));
+					textureCoords.addAll(Arrays.asList(q.s0(), q.t0()));
+					textureCoords.addAll(Arrays.asList(q.s1(), q.t0()));
+					textureCoords.addAll(Arrays.asList(q.s1(), q.t1()));
+					textureCoords.addAll(Arrays.asList(q.s0(), q.t1()));
+					indices.addAll(Arrays.asList(index, index + 1, index + 3, index + 3, index + 1, index + 2));
+					index += 4;
 				}
-
-				STBTruetype.stbtt_GetBakedQuad(cdata, 512, 512, c - 32, xpos, ypos, q, true);
-
-				//System.out.println("(" + q.x0() + ", " + q.y0() + "), (" + q.x1() + ", " + q.y1() + ")");
-				//System.out.println("(" + q.s0() + ", " + q.t0() + "), (" + q.s1() + ", " + q.t1() + ")");
-				vertices.addAll(Arrays.asList(q.x0(), baseline + q.y0(), 0.0f));
-				vertices.addAll(Arrays.asList(q.x1(), baseline + q.y0(), 0.0f));
-				vertices.addAll(Arrays.asList(q.x1(), baseline + q.y1(), 0.0f));
-				vertices.addAll(Arrays.asList(q.x0(), baseline + q.y1(), 0.0f));
-				textureCoords.addAll(Arrays.asList(q.s0(), q.t0()));
-				textureCoords.addAll(Arrays.asList(q.s1(), q.t0()));
-				textureCoords.addAll(Arrays.asList(q.s1(), q.t1()));
-				textureCoords.addAll(Arrays.asList(q.s0(), q.t1()));
-				indices.addAll(Arrays.asList(index, index + 1, index + 3, index + 3, index + 1, index + 2));
-				index += 4;
 			}
 		}
 		

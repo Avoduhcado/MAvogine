@@ -1,9 +1,5 @@
 package com.avogine.render.shader.uniform;
 
-import java.util.*;
-
-import com.avogine.render.shader.uniform.light.*;
-
 public class UniformFloatArray extends Uniform {
 
 	private UniformFloat[] floatUniforms;

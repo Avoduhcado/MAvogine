@@ -223,7 +223,7 @@ public class AvoNuklear {
 		@Override
 		public void mouseScrolled(MouseScrollEvent event) {
 			try (MemoryStack stack = stackPush()) {
-				NkVec2 scroll = NkVec2.mallocStack(stack)
+				NkVec2 scroll = NkVec2.malloc(stack)
 						.x(event.xOffset())
 						.y(event.yOffset());
 				nk_input_scroll(context, scroll);
@@ -258,11 +258,13 @@ public class AvoNuklear {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private void configureKeyUnicode(long windowID) {
 		// TODO Configure a char handler in Input
 		glfwSetCharCallback(windowID, (w, codepoint) -> nk_input_unicode(context, codepoint));
 	}
 	
+	@SuppressWarnings("unused")
 	private void configureCopyPaste(long windowID) {
 		context.clip()
 		.copy((handle, text, len) -> {
