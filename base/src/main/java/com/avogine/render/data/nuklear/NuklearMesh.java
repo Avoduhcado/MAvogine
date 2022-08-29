@@ -125,7 +125,7 @@ public class NuklearMesh {
 		ByteBuffer elements = Objects.requireNonNull(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY, MAX_ELEMENT_BUFFER, null));
 		try (MemoryStack stack = stackPush()) {
 			// fill convert configuration
-			NkConvertConfig config = NkConvertConfig.callocStack(stack)
+			NkConvertConfig config = NkConvertConfig.calloc(stack)
 					.vertex_layout(VERTEX_LAYOUT)
 					.vertex_size(20)
 					.vertex_alignment(4)
@@ -138,8 +138,8 @@ public class NuklearMesh {
 					.line_AA(NK_ANTI_ALIASING_ON);
 
 			// setup buffers to load vertices and elements
-			NkBuffer vbuf = NkBuffer.mallocStack(stack);
-			NkBuffer ebuf = NkBuffer.mallocStack(stack);
+			NkBuffer vbuf = NkBuffer.malloc(stack);
+			NkBuffer ebuf = NkBuffer.malloc(stack);
 
 			nk_buffer_init_fixed(vbuf, vertices/*, max_vertex_buffer*/);
 			nk_buffer_init_fixed(ebuf, elements/*, max_element_buffer*/);

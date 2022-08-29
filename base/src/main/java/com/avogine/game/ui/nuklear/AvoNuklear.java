@@ -86,7 +86,7 @@ public class AvoNuklear {
 
 			ByteBuffer bitmap = memAlloc(BITMAP_W * BITMAP_H);
 
-			STBTTPackContext pc = STBTTPackContext.mallocStack(stack);
+			STBTTPackContext pc = STBTTPackContext.malloc(stack);
 			stbtt_PackBegin(pc, bitmap, BITMAP_W, BITMAP_H, 0, 1, NULL);
 			stbtt_PackSetOversampling(pc, 4, 4);
 			stbtt_PackFontRange(pc, ttf, 0, FONT_HEIGHT, 32, cdata);
@@ -144,7 +144,7 @@ public class AvoNuklear {
 				FloatBuffer x = stack.floats(0.0f);
 				FloatBuffer y = stack.floats(0.0f);
 
-				STBTTAlignedQuad quad = STBTTAlignedQuad.mallocStack(stack);
+				STBTTAlignedQuad quad = STBTTAlignedQuad.malloc(stack);
 				IntBuffer advance = stack.mallocInt(1);
 
 				stbtt_GetPackedQuad(cdata, BITMAP_W, BITMAP_H, codepoint - 32, x, y, quad, false);

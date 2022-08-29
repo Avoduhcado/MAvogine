@@ -26,6 +26,7 @@ import com.avogine.util.*;
  */
 public class Window {
 
+	// TODO Perform a max call when reading these from prefs, background FPS should be capped at FOCUS, FOCUS capped at...1000?
 	private static final int TARGET_FPS_FOCUS = 144;
 	private static final int TARGET_FPS_BACKGROUND = 30;
 	
@@ -59,29 +60,13 @@ public class Window {
 	
 	/**
 	 * @param input 
-	 * 
 	 */
 	@InDev
 	public void init(Input input) {
-		GLFWErrorCallback.createPrint(System.err).set();
+		GLFWErrorCallback.createPrint().set();
 		
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Could not initialize GLFW!");
-		}
-
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
-		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
-		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
-		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, 4);
-		GLFW.glfwWindowHint(GLFW.GLFW_FOCUS_ON_SHOW, GLFW.GLFW_TRUE);
-//		GLFW.glfwWindowHint(GLFW.GLFW_DECORATED, GLFW.GLFW_FALSE);
-//		GLFW.glfwWindowHint(GLFW.GLFW_FLOATING, GLFW.GLFW_TRUE);
-//		GLFW.glfwWindowHint(GLFW.GLFW_TRANSPARENT_FRAMEBUFFER, GLFW.GLFW_TRUE);
-		
-		id = GLFW.glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
-		if (id == MemoryUtil.NULL) {
-			throw new RuntimeException("Failed to create window!");
 		}
 		
 		initProperties();
@@ -93,6 +78,21 @@ public class Window {
 			monitorList.add(monitorID);
 		}
 		monitor = monitorList.get(properties.monitorIndex);
+		
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
+		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
+		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
+		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, 4);
+		GLFW.glfwWindowHint(GLFW.GLFW_FOCUS_ON_SHOW, GLFW.GLFW_TRUE);
+//		GLFW.glfwWindowHint(GLFW.GLFW_DECORATED, GLFW.GLFW_FALSE);
+//		GLFW.glfwWindowHint(GLFW.GLFW_FLOATING, GLFW.GLFW_TRUE);
+//		GLFW.glfwWindowHint(GLFW.GLFW_TRANSPARENT_FRAMEBUFFER, GLFW.GLFW_TRUE);
+		
+		id = GLFW.glfwCreateWindow(width, height, title, properties.fullscreen ? monitor : MemoryUtil.NULL, MemoryUtil.NULL);
+		if (id == MemoryUtil.NULL) {
+			throw new RuntimeException("Failed to create window!");
+		}
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
