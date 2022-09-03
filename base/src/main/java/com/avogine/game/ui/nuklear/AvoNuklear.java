@@ -165,6 +165,15 @@ public class AvoNuklear {
 		nk_style_set_font(context, defaultFont);
 	}
 
+	// TODO Call this prior to processing events, then call inputEnd() directly after
+	public void inputBegin() {
+		nk_input_begin(context);
+	}
+	
+	public void inputEnd() {
+		nk_input_end(context);
+	}
+	
 	private class NuklearKeyboardHandler implements KeyboardListener {
 		@Override
 		public void keyTyped(KeyboardEvent event) {
