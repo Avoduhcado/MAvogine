@@ -11,6 +11,7 @@ import org.lwjgl.system.*;
 
 import com.avogine.*;
 import com.avogine.experimental.annotation.*;
+import com.avogine.game.ui.nuklear.*;
 import com.avogine.logging.*;
 import com.avogine.util.*;
 
@@ -46,6 +47,7 @@ public class Window {
 	private List<Long> monitorList = new ArrayList<>();
 	
 	private Input input;
+	private AvoNuklear gui;
 	
 	/**
 	 * @param width The width in pixels for this window
@@ -60,9 +62,10 @@ public class Window {
 	
 	/**
 	 * @param input 
+	 * @param gui
 	 */
 	@InDev
-	public void init(Input input) {
+	public void init(Input input, AvoNuklear gui) {
 		GLFWErrorCallback.createPrint().set();
 		
 		if (!GLFW.glfwInit()) {
@@ -187,7 +190,10 @@ public class Window {
 //		}
 		
 		this.input = input;
-		input.init(this);
+		this.input.init(this);
+		
+		this.gui = gui;
+		this.gui.init(this);
 	}
 
 	private void initProperties() {
@@ -214,13 +220,24 @@ public class Window {
 	 * Callers should not need to handle setting the OpenGL context before rendering as this method will automatically check
 	 * and, if needed, set this window context to be current.
 	 */
-	public void update() {
+	public void swapBuffers() {
 		if (GLFW.glfwGetCurrentContext() != id) {
 			GLFW.glfwMakeContextCurrent(id);
 		}
 		
 		GLFW.glfwSwapBuffers(id);
+	}
+	
+	/**
+	 * TODO
+	 */
+	public void pollEvents() {
+		gui.inputBegin();
+		
 		GLFW.glfwPollEvents();
+		input.update();
+		
+		gui.inputEnd();
 	}
 	
 	public void restoreState() {
@@ -270,6 +287,13 @@ public class Window {
 	 */
 	public Input getInput() {
 		return input;
+	}
+	
+	/**
+	 * @return the gui
+	 */
+	public AvoNuklear getGui() {
+		return gui;
 	}
 	
 	/**

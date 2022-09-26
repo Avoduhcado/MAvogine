@@ -3,6 +3,7 @@ package com.avogine;
 import java.util.concurrent.*;
 
 import com.avogine.game.*;
+import com.avogine.game.ui.nuklear.*;
 import com.avogine.io.*;
 import com.avogine.logging.*;
 
@@ -28,6 +29,7 @@ public class Avogine implements Runnable {
 	private final Game game;
 	
 	private final Input input;
+	private final AvoNuklear gui;
 	private final Timer timer;
 	
 	/**
@@ -40,6 +42,7 @@ public class Avogine implements Runnable {
 		this.game = game;
 		// TODO Add an additional constructor for custom Input implementations as well, maybe even Timer? But idc right now.
 		input = new Input();
+		gui = new AvoNuklear();
 		timer = new Timer();
 	}
 	
@@ -73,7 +76,7 @@ public class Avogine implements Runnable {
 	}
 	
 	private void init() {
-		window.init(input);
+		window.init(input, gui);
 		game.init(window);
 		timer.init();
 	}
@@ -114,7 +117,7 @@ public class Avogine implements Runnable {
 	}
 	
 	private void input() {
-		input.update();
+		window.pollEvents();
 	}
 
 	private void update(float interval) {
@@ -124,7 +127,7 @@ public class Avogine implements Runnable {
 	
 	private void render() {
 		game.render();
-		window.update();
+		window.swapBuffers();
 	}
 	
 	/**
