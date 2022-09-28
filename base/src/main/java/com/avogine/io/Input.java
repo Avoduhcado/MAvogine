@@ -57,6 +57,9 @@ public class Input {
 		}
 		
 		GLFW.glfwSetKeyCallback(windowID, (window, key, scancode, action, mods) -> {
+			if (action == GLFW.GLFW_REPEAT) {
+				return;
+			}
 			fireKeyboardEvent(new KeyboardEvent(action, key, window));
 			// XXX Hmm, this seems like a terrible way to handle this
 			if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE) {
