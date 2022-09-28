@@ -45,6 +45,7 @@ public class Material {
 	
 	public Material(Vector3f color, TextureAtlas texture, float shininess) {
 		this(color, color, color, shininess);
+		this.diffuse = texture;
 	}
 
 	public Material(TextureAtlas texture, float shininess) {
