@@ -5,7 +5,9 @@ import java.util.*;
 import org.joml.*;
 
 import com.avogine.entity.*;
+import com.avogine.game.*;
 import com.avogine.game.camera.*;
+import com.avogine.game.util.*;
 import com.avogine.io.*;
 import com.avogine.render.data.*;
 
@@ -13,7 +15,7 @@ import com.avogine.render.data.*;
  * A 3D {@link Scene} implementation that contains a map of all meshes and entities currently
  * existing in the game world. This implementation also provides a {@link Mesh} for a skybox as well.
  */
-public class DefaultScene3D extends Scene {
+public class DefaultScene3D extends Scene implements Cleanupable {
 
 	private Map<Mesh, Set<Entity>> meshMap = new HashMap<>();
 	
@@ -30,17 +32,10 @@ public class DefaultScene3D extends Scene {
 	}
 	
 	@Override
-	public void init(Window window) {
-		// TODO Auto-generated method stub
-		
+	public void init(Game game, Window window) {
+		register(game);
 	}
-
-	@Override
-	public void update(float delta) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	
 	/**
 	 * @param entity
 	 */
@@ -100,7 +95,7 @@ public class DefaultScene3D extends Scene {
 	 * 
 	 */
 	@Override
-	public void cleanup() {
+	public void onCleanup() {
 		meshMap.keySet().forEach(Mesh::cleanup);
 		if (skybox != null) {
 			skybox.cleanup();

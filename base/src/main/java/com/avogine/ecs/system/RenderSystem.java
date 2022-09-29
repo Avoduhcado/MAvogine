@@ -1,19 +1,23 @@
 package com.avogine.ecs.system;
 
+import static org.lwjgl.opengl.GL11.*;
+
 import org.joml.*;
 
 import com.avogine.ecs.*;
 import com.avogine.ecs.addons.*;
 import com.avogine.ecs.components.*;
+import com.avogine.game.*;
 import com.avogine.game.scene.*;
+import com.avogine.game.util.*;
 import com.avogine.io.*;
 import com.avogine.render.shader.*;
 
 /**
  *
  */
-public class RenderSystem extends EntitySystem {
-
+public class RenderSystem extends EntitySystem implements Renderable, Cleanupable {
+	
 	private EntityComponentQuery renderQuery;
 	
 	private BasicShader basicShader;
@@ -29,15 +33,26 @@ public class RenderSystem extends EntitySystem {
 	}
 	
 	@Override
-	public void init(Window window) {
+	public void init(Game game, Window window) {
+		if (initialized) {
+			return;
+		}
 		basicShader = new BasicShader("basicVertex.glsl", "basicFragment.glsl");
+		
+		register(game);
+		initialized = true;
 	}
 	
-	/**
-	 * @param scene 
-	 * 
-	 */
-	public void process(ECSScene scene) {
+	@Override
+	public void onRender(SceneState sceneState) {
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		if (sceneState.scene() instanceof ECSScene ecsScene) {
+			renderScene(ecsScene);
+		}
+	}
+	
+	private void renderScene(ECSScene scene) {
 		renderQuery.fetch(scene.getEntityWorld());
 
 		basicShader.bind();
@@ -65,8 +80,14 @@ public class RenderSystem extends EntitySystem {
 	}
 
 	@Override
-	public void cleanup() {
-		// Not implemented
+	public void onCleanup() {
+		basicShader.cleanup();
+	}
+	
+	@Override
+	public void register(Game game) {
+		Renderable.super.register(game);
+		Cleanupable.super.register(game);
 	}
 
 }

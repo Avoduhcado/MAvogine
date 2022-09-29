@@ -2,6 +2,7 @@ package com.avogine.ecs;
 
 import org.joml.*;
 
+import com.avogine.game.*;
 import com.avogine.game.scene.*;
 import com.avogine.io.*;
 
@@ -18,14 +19,8 @@ public class TestScene extends ECSScene {
 	}
 
 	@Override
-	public void init(Window window) {
+	public void init(Game game, Window window) {
 		// Not implemented
-	}
-
-	@Override
-	public void update(float delta) {
-		// Not implemented
-		
 	}
 
 	@Override
@@ -33,9 +28,4 @@ public class TestScene extends ECSScene {
 		return null;
 	}
 	
-	@Override
-	public void cleanup() {
-		// Not implemented
-	}
-
 }

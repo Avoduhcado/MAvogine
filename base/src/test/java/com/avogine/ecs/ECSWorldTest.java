@@ -16,20 +16,24 @@ import com.fasterxml.jackson.core.*;
  */
 class ECSWorldTest {
 	
+	private TestGame game;
 	private TestScene scene;
 	private EntityWorld world;
 	
 	@BeforeEach
 	void setup() {
+		game = new TestGame();
+		game.init(null);
+		
 		scene = new TestScene();
-		scene.init(null);
+		scene.init(game, null);
 		
 		world = scene.getEntityWorld();
 	}
 	
 	@AfterEach
 	void teardown() {
-		scene.cleanup();
+		game.cleanup();
 	}
 	
 	@Test
