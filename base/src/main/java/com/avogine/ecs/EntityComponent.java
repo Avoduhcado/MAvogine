@@ -8,7 +8,7 @@ package com.avogine.ecs;
 public abstract class EntityComponent {
 	
 	/**
-	 * Zero-arg constructor for use in creating instances of a given component through reflection.
+	 * Zero-argument constructor for use in creating instances of a given component through reflection.
 	 * <p>
 	 * This will only be executed if the subclass does not define any constructors of its own.
 	 */

@@ -1,6 +1,7 @@
 package com.avogine.game.util;
 
 import com.avogine.game.*;
+import com.avogine.game.scene.*;
 
 /**
  *
@@ -8,7 +9,8 @@ import com.avogine.game.*;
 public interface Renderable {
 
 	/**
-	 * @param sceneState
+	 * This will be called once per frame refresh and should handle rendering the current state of the {@link Scene}.
+	 * @param sceneState A snapshot of the relevant data from the current {@code Scene}.
 	 */
 	public void onRender(SceneState sceneState);
 	
