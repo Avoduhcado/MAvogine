@@ -10,7 +10,7 @@ public interface Renderable {
 
 	/**
 	 * This will be called once per frame refresh and should handle rendering the current state of the {@link Scene}.
-	 * @param sceneState A snapshot of the relevant data from the current {@code Scene}.
+	 * @param sceneState A snapshot of the relevant data from the current game loop.
 	 */
 	public void onRender(SceneState sceneState);
 	

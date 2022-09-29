@@ -12,9 +12,9 @@ public interface Updateable {
 
 	/**
 	 * This will be called once per game loop and should be where any recurring logic is performed.
-	 * @param frameState A snapshot of relevant data for the current frame.
+	 * @param gameState A snapshot of relevant data for the current game loop.
 	 */
-	public void onUpdate(FrameState frameState);
+	public void onUpdate(GameState gameState);
 	
 	/**
 	 * Register this {@link Updateable} with the given {@link Game}.

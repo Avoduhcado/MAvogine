@@ -38,8 +38,8 @@ public abstract class Game {
 	 * @param interval The time elapsed between updates in seconds
 	 */
 	public void update(float interval) {
-		var frameState = new FrameState(interval);
-		updateables.forEach(update -> update.onUpdate(frameState));
+		var gameState = new GameState(getCurrentScene(), interval);
+		updateables.forEach(update -> update.onUpdate(gameState));
 	}
 	
 	/**
@@ -68,7 +68,7 @@ public abstract class Game {
 	/**
 	 * Add a new {@link Updateable} object to this {@link Game}.
 	 * <p>
-	 * {@code Updateable}s linked to this Game will have their {@link Updateable#onUpdate(FrameState)} method called once per frame.
+	 * {@code Updateable}s linked to this Game will have their {@link Updateable#onUpdate(GameState)} method called once per frame.
 	 * @param updateable The {@code Updateable} to add.
 	 */
 	public void addUpdateable(Updateable updateable) {
