@@ -21,7 +21,7 @@ public class MeshCache implements EntitySystemAddon {
 	
 	/**
 	 * @param mesh
-	 * @return
+	 * @return the index of the newly added mesh.
 	 */
 	public int addMesh(Mesh mesh) {
 		cache.add(mesh);

@@ -1,7 +1,5 @@
 package com.avogine.ecs.system;
 
-import static org.lwjgl.opengl.GL11.*;
-
 import org.joml.*;
 
 import com.avogine.ecs.*;
@@ -45,8 +43,6 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	
 	@Override
 	public void onRender(SceneState sceneState) {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
 		if (sceneState.scene() instanceof ECSScene ecsScene) {
 			renderScene(ecsScene);
 		}

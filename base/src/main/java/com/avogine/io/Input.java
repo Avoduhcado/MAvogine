@@ -92,11 +92,11 @@ public class Input {
 		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
 			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
 				if (!keys[i]) {
-					fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_RELEASE, i, windowID));
 					fireKeyboardEvent(new KeyboardEvent(KeyboardEvent.KEY_TYPED, i, windowID));
+				} else {
+					fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_PRESS, i, windowID));
 				}
 				keys[i] = true;
-				fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_PRESS, i, windowID));
 			} else {
 				keys[i] = false;
 			}
