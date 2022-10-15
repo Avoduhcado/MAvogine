@@ -48,6 +48,15 @@ public class ParShapesBuilder {
 	}
 	
 	/**
+	 * {@link ParShapes#par_shapes_create_rock(int, int)}
+	 * @return
+	 */
+	public ParShapesBuilder createRock(int seed, int subdivisions) {
+		parMesh = ParShapes.par_shapes_create_rock(seed, subdivisions);
+		return this;
+	}
+	
+	/**
 	 * TODO Better clarify params
 	 * @param width 
 	 * @param height

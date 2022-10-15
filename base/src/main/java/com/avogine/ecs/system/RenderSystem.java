@@ -68,6 +68,11 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 			basicShader.model.loadMatrix(model);
 			
 			for (int i : render.getMeshes()) {
+				var mesh = meshCache.getCache().get(i);
+				basicShader.isTextured.loadBoolean(mesh.getMaterial().isTextured());
+				if (!mesh.getMaterial().isTextured()) {
+					basicShader.color.loadVec3(mesh.getMaterial().getDiffuseColor());
+				}
 				meshCache.getCache().get(i).render();
 			}
 		});
