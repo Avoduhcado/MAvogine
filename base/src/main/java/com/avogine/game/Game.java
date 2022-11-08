@@ -2,9 +2,9 @@ package com.avogine.game;
 
 import java.util.*;
 
-import com.avogine.game.scene.*;
+import com.avogine.game.scene.Scene;
 import com.avogine.game.util.*;
-import com.avogine.io.*;
+import com.avogine.io.Window;
 
 /**
  *
@@ -15,10 +15,13 @@ public abstract class Game {
 	private final List<Renderable> renderables;
 	private final List<Cleanupable> cleanupables;
 	
+	private final Queue<Registerable> registrationQueue;
+	
 	protected Game() {
 		updateables = new ArrayList<>();
 		renderables = new ArrayList<>();
 		cleanupables = new ArrayList<>();
+		registrationQueue = new LinkedList<>();
 	}
 
 	/**
@@ -66,20 +69,49 @@ public abstract class Game {
 	}
 	
 	/**
+	 * Add a {@link Registerable} to the registration queue to be added later.
+	 * @param registerable
+	 */
+	public void addToRegisterQueue(Registerable registerable) {
+		this.registrationQueue.add(registerable);
+	}
+	
+	/**
+	 * 
+	 */
+	public void drainRegistrationQueue() {
+		while (registrationQueue.size() > 0) {
+			// I would like to use some sealed interfaces here and a pattern matching switch, but many registerables will implement multiple subtypes
+			// and thus cause the switch to skip over things. Resorting to an if block until a better solution presents itself.
+			var registerable = registrationQueue.poll();
+			if (registerable instanceof Updateable u) {
+				addUpdateable(u);
+			}
+			if (registerable instanceof Renderable r) {
+				addRenderable(r);
+			}
+			if (registerable instanceof Cleanupable c) {
+				addCleanupable(c);
+			}
+		}
+	}
+	
+	/**
 	 * Add a new {@link Updateable} object to this {@link Game}.
 	 * <p>
 	 * {@code Updateable}s linked to this Game will have their {@link Updateable#onUpdate(GameState)} method called once per frame.
 	 * @param updateable The {@code Updateable} to add.
 	 */
-	public void addUpdateable(Updateable updateable) {
+	protected void addUpdateable(Updateable updateable) {
 		this.updateables.add(updateable);
+		updateable.onRegister();
 	}
 	
 	/**
 	 * Remove an {@link Updateable} from this {@link Game}.
 	 * @param updateable The {@code Updateable} to remove.
 	 */
-	public void removeUpdateable(Updateable updateable) {
+	protected void removeUpdateable(Updateable updateable) {
 		this.updateables.remove(updateable);
 	}
 	
@@ -89,15 +121,16 @@ public abstract class Game {
 	 * {@code Renderable}s linked to this Game will have their {@link Renderable#onRender(SceneState)} method called once per frame.
 	 * @param renderable The {@code Renderable} to add.
 	 */
-	public void addRenderable(Renderable renderable) {
+	protected void addRenderable(Renderable renderable) {
 		this.renderables.add(renderable);
+		renderable.onRegister();
 	}
 	
 	/**
 	 * Remove a {@link Renderable} from this {@link Game}.
 	 * @param renderable The {@code Renderable} to remove.
 	 */
-	public void removeRenderable(Renderable renderable) {
+	protected void removeRenderable(Renderable renderable) {
 		this.renderables.remove(renderable);
 	}
 	
@@ -107,15 +140,16 @@ public abstract class Game {
 	 * {@code Cleanupable}s linked to this Game will have their {@link Cleanupable#onCleanup()} method called once when the game is terminated.
 	 * @param cleanupable The {@code Cleanupable} to add.
 	 */
-	public void addCleanupable(Cleanupable cleanupable) {
+	protected void addCleanupable(Cleanupable cleanupable) {
 		this.cleanupables.add(cleanupable);
+		cleanupable.onRegister();
 	}
 	
 	/**
 	 * Remove a {@link Cleanupable} from this {@link Game}.
 	 * @param cleanupable The {@code Cleanupable} to remove.
 	 */
-	public void removeCleanupable(Cleanupable cleanupable) {
+	protected void removeCleanupable(Cleanupable cleanupable) {
 		this.cleanupables.remove(cleanupable);
 	}
 	

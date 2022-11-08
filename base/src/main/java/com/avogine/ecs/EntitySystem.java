@@ -1,20 +1,15 @@
 package com.avogine.ecs;
 
-import com.avogine.game.*;
-import com.avogine.io.*;
+import com.avogine.game.Game;
+import com.avogine.game.util.Registerable;
 
 /**
- *
+ * 
  */
-public abstract class EntitySystem {
+public abstract class EntitySystem implements Registerable {
 
-	protected boolean initialized;
-	
-	/**
-	 * Initialize any relevant parts of this system.
-	 * @param game 
-	 * @param window
-	 */
-	public abstract void init(Game game, Window window);
+	protected EntitySystem(Game game) {
+		game.addToRegisterQueue(this);
+	}
 	
 }
