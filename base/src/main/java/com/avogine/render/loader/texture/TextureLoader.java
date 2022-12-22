@@ -86,16 +86,14 @@ public class TextureLoader {
 	
 	/**
 	 * XXX TODO Refactor this garbage
+	 * This entire method should probably be wrapped in the try/catch and have some sort of error handling for when the texture fails to load.
 	 * @param filename
 	 * @return
 	 */
-	public static com.avogine.render.data.mesh.Texture loadTexturePro(String filename) {
+	public static int loadTexturePro(String filename) {
 		int textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
 		
-		int width;
-		int height;
-		int channels;
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer widthBuffer = stack.mallocInt(1);
 			IntBuffer heightBuffer = stack.mallocInt(1);
@@ -106,9 +104,9 @@ public class TextureLoader {
 			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
 //			STBImage.stbi_set_flip_vertically_on_load(true);
 			if (imageData != null) {
-				width = widthBuffer.get();
-				height = heightBuffer.get();
-				channels = nrChannels.get();
+				int width = widthBuffer.get();
+				int height = heightBuffer.get();
+				int channels = nrChannels.get();
 				int format = 0;
 				if (channels == 1) {
 					format = GL11.GL_RED;
@@ -134,11 +132,11 @@ public class TextureLoader {
 				STBImage.stbi_image_free(imageData);
 			} else {
 				AvoLog.log().error("Texture failed to load at path: {}", filePath);
-				return null;
+				return -1;
 			}
 		}
 		
-		return new com.avogine.render.data.mesh.Texture(textureID);
+		return textureID;
 	}
 	
 	/**

@@ -1,11 +1,13 @@
 package com.avogine.render.loader.parshapes;
 
 import java.nio.*;
+import java.util.List;
 
-import org.lwjgl.system.*;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.par.*;
 
-import com.avogine.render.data.*;
+import com.avogine.render.data.InstancedMesh;
+import com.avogine.render.data.mesh.Mesh;
 
 /**
  * TODO Implement a scaleAroundCenter method, which will likely require the ParShapesBuilder instance to store current transform values to pass along for context.
@@ -121,61 +123,32 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * Construct a new {@link Mesh} from {@link #parMesh} with all transformations applied.
+	 * Construct a new {@link Mesh} from the internal {@code parMesh} with all transformations applied.
 	 * @return a new {@code Mesh}
 	 */
 	public Mesh build() {
-		// TODO Convert magic numbers into vertex data size constant
-		FloatBuffer vertexData = null;
-		try {
-			vertexData = MemoryUtil.memAllocFloat(parMesh.npoints() * (3 + 3 + 2));
-	
-			FloatBuffer positions = parMesh.points(parMesh.npoints() * 3);
-			FloatBuffer normals = null;
-			if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
-				normals = parMesh.normals(parMesh.npoints() * 3);
+		FloatBuffer positions = parMesh.points(parMesh.npoints() * 3);
+		FloatBuffer normals = !parMesh.isNull(ParShapesMesh.NORMALS) ? parMesh.normals(parMesh.npoints() * 3) : null;
+		FloatBuffer textureCoordinates = !parMesh.isNull(ParShapesMesh.TCOORDS) ? textureCoordinates = parMesh.tcoords(parMesh.npoints() * 2) : null;
+
+		FloatBuffer vertexBuffer = MemoryUtil.memCallocFloat(parMesh.npoints() * 8);
+		for (int i = 0; i < parMesh.npoints(); i++) {
+			vertexBuffer.put(i * 8, positions, i * 3, 3);
+			if (normals != null) {
+				vertexBuffer.put((i * 8) + 3, normals, i * 3, 3);
 			}
-			FloatBuffer textureCoordinates = null;
-			if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
-				textureCoordinates = parMesh.tcoords(parMesh.npoints() * 2);
-			}
-	
-			for (int i = 0; i < parMesh.npoints(); i++) {
-				// Vertex positions
-				vertexData.put(positions.get());
-				vertexData.put(positions.get());
-				vertexData.put(positions.get());
-	
-				// Vertex normals
-				if (normals != null) {
-					vertexData.put(normals.get());
-					vertexData.put(normals.get());
-					vertexData.put(normals.get());
-				} else {
-					vertexData.put(0.0f);
-					vertexData.put(0.0f);
-					vertexData.put(0.0f);
-				}
-	
-				// Vertex texture coordinates
-				if (textureCoordinates != null) {
-					vertexData.put(textureCoordinates.get());
-					vertexData.put(textureCoordinates.get());
-				} else {
-					vertexData.put(0.0f);
-					vertexData.put(0.0f);
-				}
-			}
-			vertexData.flip();
-			IntBuffer indices = parMesh.triangles(parMesh.ntriangles() * 3);
-	
-			return new Mesh(vertexData, indices);
-		} finally {
-			parMesh.free();
-			if (vertexData != null) {
-				MemoryUtil.memFree(vertexData);
+			if (textureCoordinates != null) {
+				vertexBuffer.put((i * 8) + 6, textureCoordinates, i * 2, 2);
 			}
 		}
+
+		IntBuffer indexBuffer = parMesh.triangles(parMesh.ntriangles() * 3);
+
+		var mesh = new Mesh(vertexBuffer, indexBuffer, List.of(), 0);
+
+		parMesh.free();
+		MemoryUtil.memFree(vertexBuffer);
+		return mesh;
 	}
 	
 	/**

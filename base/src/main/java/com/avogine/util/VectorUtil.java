@@ -1,8 +1,8 @@
 package com.avogine.util;
 
-import java.text.*;
+import java.text.DecimalFormat;
 
-import org.joml.*;
+import org.joml.Vector3f;
 
 /**
  * Static utility methods for operating on Vectors from the JOML library.
@@ -41,6 +41,14 @@ public class VectorUtil {
 		
 		value.absolute().sub(other.absolute());
 		value.max(ZERO).mul(tempNormal.div(tempNormal.absolute(new Vector3f())));
+		
+		return value;
+	}
+	
+	public static Vector3f clampDirection(Vector3f value, Vector3f other) {
+		value.x = value.x > 0 ? MathUtil.clamp(value.x + other.x, 0, value.x) : MathUtil.clamp(value.x + other.x, value.x, 0);
+		value.y = value.y > 0 ? MathUtil.clamp(value.y + other.y, 0, value.y) : MathUtil.clamp(value.y + other.y, value.y, 0);
+		value.z = value.z > 0 ? MathUtil.clamp(value.z + other.z, 0, value.z) : MathUtil.clamp(value.z + other.z, value.z, 0);
 		
 		return value;
 	}

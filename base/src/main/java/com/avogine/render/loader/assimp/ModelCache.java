@@ -2,7 +2,7 @@ package com.avogine.render.loader.assimp;
 
 import java.util.*;
 
-import com.avogine.render.data.mesh.*;
+import com.avogine.render.data.mesh.Model;
 
 /**
  *
@@ -37,6 +37,23 @@ public class ModelCache {
 	 */
 	public Model getModel(String modelFile, String texturePath) {
 		return modelMap.computeIfAbsent(modelFile, v -> StaticModelLoader.load(modelFile, texturePath));
+	}
+	
+	/**
+	 * @param modelName
+	 * @param model
+	 * @return
+	 */
+	public Model putModel(String modelName, Model model) {
+		return modelMap.put(modelName, model);
+	}
+	
+	/**
+	 * @param model
+	 * @return
+	 */
+	public Model putModel(Model model) {
+		return putModel(model.getName(), model);
 	}
 	
 }

@@ -2,7 +2,8 @@ package com.avogine.render.loader.parshapes;
 
 import org.lwjgl.util.par.*;
 
-import com.avogine.render.data.*;
+import com.avogine.render.data.RawMesh;
+import com.avogine.render.data.mesh.Mesh;
 
 /**
  * TODO Add param objects to pass to each method for shape customization

@@ -1,19 +1,19 @@
 package com.avogine.io;
 
-import java.io.*;
-import java.nio.*;
+import java.io.IOException;
+import java.nio.IntBuffer;
 import java.util.*;
 
-import org.lwjgl.*;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
-import com.avogine.*;
-import com.avogine.experimental.annotation.*;
-import com.avogine.game.ui.nuklear.*;
-import com.avogine.logging.*;
-import com.avogine.util.*;
+import com.avogine.Avogine;
+import com.avogine.experimental.annotation.InDev;
+import com.avogine.game.ui.nuklear.AvoNuklear;
+import com.avogine.logging.AvoLog;
+import com.avogine.util.PropertiesUtil;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.

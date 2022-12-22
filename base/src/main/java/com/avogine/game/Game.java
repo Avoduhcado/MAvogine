@@ -72,7 +72,7 @@ public abstract class Game {
 	 * Add a {@link Registerable} to the registration queue to be added later.
 	 * @param registerable
 	 */
-	public void addToRegisterQueue(Registerable registerable) {
+	public void register(Registerable registerable) {
 		this.registrationQueue.add(registerable);
 	}
 	

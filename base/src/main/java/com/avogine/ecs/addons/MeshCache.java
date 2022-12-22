@@ -3,7 +3,7 @@ package com.avogine.ecs.addons;
 import java.util.*;
 
 import com.avogine.ecs.*;
-import com.avogine.render.data.*;
+import com.avogine.render.data.mesh.*;
 
 /**
  *

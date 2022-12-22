@@ -5,7 +5,6 @@ import org.joml.*;
 import com.avogine.ecs.*;
 import com.avogine.ecs.addons.MeshCache;
 import com.avogine.ecs.components.*;
-import com.avogine.game.Game;
 import com.avogine.game.scene.ECSScene;
 import com.avogine.game.util.*;
 import com.avogine.render.loader.assimp.ModelCache;
@@ -24,11 +23,9 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	private final Matrix4f model;
 	
 	/**
-	 * @param game 
 	 * 
 	 */
-	public RenderSystem(Game game) {
-		super(game);
+	public RenderSystem() {
 		renderQuery = new EntityComponentQuery(EntityArchetype.of(TransformComponent.class, MeshComponent.class));
 		modelRenderQuery = new EntityComponentQuery(EntityArchetype.of(TransformComponent.class, ModelComponent.class));
 		model = new Matrix4f();
