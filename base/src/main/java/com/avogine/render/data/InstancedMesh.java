@@ -4,15 +4,17 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL31.*;
-import static org.lwjgl.opengl.GL33.*;
+import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
+import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 import java.nio.*;
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
+import java.util.Collection;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.lwjgl.system.*;
+
+import com.avogine.render.data.material.Material;
 
 /**
  * TODO Potentially include multiple VBOs for instanced meshes, one for static data, and one for dynamic data that is streamed in as the scene updates and meshes transform themselves

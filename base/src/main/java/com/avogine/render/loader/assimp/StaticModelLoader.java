@@ -8,7 +8,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.render.data.Material;
+import com.avogine.render.data.material.*;
 import com.avogine.render.data.mesh.*;
 import com.avogine.render.loader.texture.TextureLoader;
 import com.avogine.util.resource.*;
@@ -110,7 +110,7 @@ public class StaticModelLoader {
 
 		Assimp.aiReleaseImport(aiScene);
 
-		var model = new Model(resourcePath, meshes, materials);
+		var model = new Model(meshes, materials);
 
 		return model;
 	}
@@ -141,7 +141,7 @@ public class StaticModelLoader {
 		//		}
 		//		mesh.material = material;
 
-		Mesh mesh = new Mesh(vertexData, indexData, textures, materialIdx);
+		Mesh mesh = new Mesh(vertexData, indexData, materialIdx);
 
 		MemoryUtil.memFree(vertexData);
 		MemoryUtil.memFree(indexData);
@@ -204,7 +204,7 @@ public class StaticModelLoader {
 			specular = new Vector3f(color.r(), color.g(), color.b());
 		}
 
-		Material material = new Material(ambient, diffuse, specular, 32f);
+		var material = new PBRMaterial(ambient, diffuse, specular, 32f, 1.0f);
 		materials.add(material);
 	}
 

@@ -17,6 +17,8 @@ public abstract class Game {
 	
 	private final Queue<Registerable> registrationQueue;
 	
+	private Window window;
+	
 	protected Game() {
 		updateables = new ArrayList<>();
 		renderables = new ArrayList<>();
@@ -28,7 +30,9 @@ public abstract class Game {
 	 * Initialize all relevant game logic to start the game loop.
 	 * @param window
 	 */
-	public abstract void init(Window window);
+	public void init(Window window) {
+		this.window = window;
+	}
 	
 	/**
 	 * Return the {@link Scene} that is currently being displayed.
@@ -104,7 +108,7 @@ public abstract class Game {
 	 */
 	protected void addUpdateable(Updateable updateable) {
 		this.updateables.add(updateable);
-		updateable.onRegister();
+		updateable.onRegister(this);
 	}
 	
 	/**
@@ -123,7 +127,7 @@ public abstract class Game {
 	 */
 	protected void addRenderable(Renderable renderable) {
 		this.renderables.add(renderable);
-		renderable.onRegister();
+		renderable.onRegister(this);
 	}
 	
 	/**
@@ -142,7 +146,7 @@ public abstract class Game {
 	 */
 	protected void addCleanupable(Cleanupable cleanupable) {
 		this.cleanupables.add(cleanupable);
-		cleanupable.onRegister();
+		cleanupable.onRegister(this);
 	}
 	
 	/**
@@ -151,6 +155,20 @@ public abstract class Game {
 	 */
 	protected void removeCleanupable(Cleanupable cleanupable) {
 		this.cleanupables.remove(cleanupable);
+	}
+	
+	/**
+	 * @return the window
+	 */
+	public Window getWindow() {
+		return window;
+	}
+	
+	/**
+	 * @param window the window to set
+	 */
+	public void setWindow(Window window) {
+		this.window = window;
 	}
 	
 }

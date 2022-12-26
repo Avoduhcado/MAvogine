@@ -1,7 +1,6 @@
 package com.avogine.render.loader.parshapes;
 
 import java.nio.*;
-import java.util.List;
 
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.par.*;
@@ -144,7 +143,7 @@ public class ParShapesBuilder {
 
 		IntBuffer indexBuffer = parMesh.triangles(parMesh.ntriangles() * 3);
 
-		var mesh = new Mesh(vertexBuffer, indexBuffer, List.of(), 0);
+		var mesh = new Mesh(vertexBuffer, indexBuffer, 0);
 
 		parMesh.free();
 		MemoryUtil.memFree(vertexBuffer);

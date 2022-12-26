@@ -1,20 +1,18 @@
 package com.avogine.render.data.mesh;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.*;
-import java.util.List;
+
+import org.lwjgl.opengl.GL11;
 
 /**
  * Used by {@link Model}.
  */
 public class Mesh {
-
-	private List<Texture> textures;
 	
 	private int vao;
 	private int vbo;
@@ -28,12 +26,10 @@ public class Mesh {
 	/**
 	 * @param vertexBuffer 
 	 * @param indexBuffer 
-	 * @param textures
 	 * @param materialIndex 
 	 */
-	public Mesh(FloatBuffer vertexBuffer, IntBuffer indexBuffer, List<Texture> textures, int materialIndex) {
+	public Mesh(FloatBuffer vertexBuffer, IntBuffer indexBuffer, int materialIndex) {
 		this.indexSize = indexBuffer.limit();
-		this.textures = textures;
 		this.materialIndex = materialIndex;
 		
 		setupMesh(vertexBuffer, indexBuffer);
@@ -66,27 +62,11 @@ public class Mesh {
 	 * 
 	 */
 	public void render() {
-		int diffuseN = 0;
-		int specularN = 0;
-		for (int i = 0; i < textures.size(); i++) {
-			Texture texture = textures.get(i);
-			
-			TextureType type = texture.type();
-			if (type == TextureType.DIFFUSE) {
-				glActiveTexture(GL_TEXTURE0 + diffuseN++);
-			} else if (type == TextureType.SPECULAR) {
-				glActiveTexture(GL_TEXTURE4 + specularN++);
-			}
-			
-			glBindTexture(GL_TEXTURE_2D, texture.id());
-		}
-		
 		glBindVertexArray(vao);
 		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
-		
-		// Resetting texture to default. Does this handle unbinding? Will the next render use leftover diffuse/specular textures?
-		glActiveTexture(GL_TEXTURE0);
+
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 	}
 	
 	/**
@@ -112,20 +92,12 @@ public class Mesh {
 	}
 	
 	/**
-	 * @return the textures
-	 */
-	public List<Texture> getTextures() {
-		return textures;
-	}
-	
-	/**
 	 * Free all GPU memory.
 	 */
 	public void cleanup() {
 		glDeleteBuffers(vbo);
 		glDeleteBuffers(ebo);
 		glDeleteVertexArrays(vao);
-		// TODO Somehow handle freeing up textures?
 	}
 	
 }

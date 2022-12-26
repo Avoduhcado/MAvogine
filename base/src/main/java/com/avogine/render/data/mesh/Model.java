@@ -3,28 +3,30 @@ package com.avogine.render.data.mesh;
 import java.util.List;
 import java.util.function.Consumer;
 
-import com.avogine.render.data.Material;
-import com.avogine.render.loader.assimp.ModelCache;
+import com.avogine.render.data.material.Material;
 
 /**
- * XXX Should Model contain its own name for proper cache indexing?
+ *
  */
 public class Model {
 
-	private final String name;
-	
 	private List<Mesh> meshes;
 	private List<Material> materials;
 	
 	/**
-	 * @param name 
 	 * @param meshes
 	 * @param materials 
 	 */
-	public Model(String name, List<Mesh> meshes, List<Material> materials) {
-		this.name = name;
+	public Model(List<Mesh> meshes, List<Material> materials) {
 		this.meshes = meshes;
 		this.materials = materials;
+	}
+	
+	/**
+	 * 
+	 */
+	public void render() {
+		render(c -> {});
 	}
 	
 	/**
@@ -34,19 +36,22 @@ public class Model {
 	public void render(Consumer<Mesh> consumer) {
 		meshes.forEach(mesh -> {
 			consumer.accept(mesh);
+			
+			bindMaterial(mesh);
 			mesh.render();
+			unbindMaterial(mesh);
 		});
 	}
 	
-	/**
-	 * The name of the model.
-	 * </p>
-	 * This should be a unique identifier if you intend to retrieve it from the {@link ModelCache}, but the system will
-	 * make no efforts to enforce that the name is unique.
-	 * @return the name of the model.
-	 */
-	public String getName() {
-		return name;
+	private void bindMaterial(Mesh mesh) {
+		var material = materials.get(mesh.getMaterialIndex());
+		if (material != null) {
+			material.bind();
+		}
+	}
+	
+	private void unbindMaterial(Mesh mesh) {
+		
 	}
 	
 	/**

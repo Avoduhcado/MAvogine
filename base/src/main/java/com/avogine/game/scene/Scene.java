@@ -1,25 +1,30 @@
 package com.avogine.game.scene;
 
-import org.joml.*;
+import org.joml.Matrix4f;
 
-import com.avogine.game.*;
-import com.avogine.io.*;
+import com.avogine.game.Game;
+import com.avogine.io.Window;
 
 /**
  * 
  */
 public abstract class Scene {
 
-	protected Matrix4f projection;
+	protected final Matrix4f projection;
+	
+	protected final Matrix4f view;
 	
 	/**
 	 * 
 	 */
 	protected Scene() {
+		projection = new Matrix4f();
+		view = new Matrix4f();
 	}
 	
-	protected Scene(Matrix4f projection) {
+	protected Scene(Matrix4f projection, Matrix4f view) {
 		this.projection = projection;
+		this.view = view;
 	}
 	
 	/**
@@ -38,6 +43,8 @@ public abstract class Scene {
 	/**
 	 * @return the view matrix
 	 */
-	public abstract Matrix4f getView();
+	public Matrix4f getView() {
+		return view;
+	}
 	
 }
