@@ -18,6 +18,7 @@ public abstract class Game {
 	private final Queue<Registerable> registrationQueue;
 	
 	private Window window;
+	private Scene scene;
 	
 	protected Game() {
 		updateables = new ArrayList<>();
@@ -32,13 +33,25 @@ public abstract class Game {
 	 */
 	public void init(Window window) {
 		this.window = window;
+		if (scene != null) {
+			scene.init(this, window);
+		}
+	}
+	
+	/**
+	 * @param scene
+	 */
+	public void loadScene(Scene scene) {
+		this.scene = scene;
 	}
 	
 	/**
 	 * Return the {@link Scene} that is currently being displayed.
 	 * @return The {@code Scene} that is currently being displayed.
 	 */
-	public abstract Scene getCurrentScene();
+	public Scene getCurrentScene() {
+		return scene;
+	}
 	
 	/**
 	 * Update any relevant entities or systems at a fixed time step determined by {@code interval}.
@@ -58,6 +71,8 @@ public abstract class Game {
 	 * particularly care about abstract rendering methods at the moment.</b>
 	 */
 	public void render() {
+		scene.prepareRender();
+		
 		var sceneState = new SceneState(getCurrentScene());
 		renderables.forEach(render -> render.onRender(sceneState));
 	}

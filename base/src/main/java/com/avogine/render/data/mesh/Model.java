@@ -23,6 +23,14 @@ public class Model {
 	}
 	
 	/**
+	 * @param mesh
+	 * @param material
+	 */
+	public Model(Mesh mesh, Material material) {
+		this(List.of(mesh), List.of(material));
+	}
+	
+	/**
 	 * 
 	 */
 	public void render() {

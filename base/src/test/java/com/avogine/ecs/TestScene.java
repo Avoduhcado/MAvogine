@@ -20,5 +20,10 @@ public class TestScene extends ECSScene {
 	public void init(Game game, Window window) {
 		// Not implemented
 	}
+
+	@Override
+	public void prepareRender() {
+		// Not implemented
+	}
 	
 }

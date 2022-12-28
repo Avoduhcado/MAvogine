@@ -1,7 +1,6 @@
 package com.avogine.render.loader.font;
 
 import java.nio.*;
-import java.util.List;
 
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
@@ -88,7 +87,7 @@ public class FontSTB {
 		var material = new TexturedMaterial(bitmapTexture);
 		Mesh textMesh = new Mesh(vertexBuffer, indices, 0);
 		
-		return new Model(List.of(textMesh), List.of(material));
+		return new Model(textMesh, material);
 	}
 	
 	public int getLineGap() {

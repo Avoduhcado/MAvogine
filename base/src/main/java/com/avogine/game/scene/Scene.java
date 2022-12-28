@@ -18,8 +18,7 @@ public abstract class Scene {
 	 * 
 	 */
 	protected Scene() {
-		projection = new Matrix4f();
-		view = new Matrix4f();
+		this(new Matrix4f(), new Matrix4f());
 	}
 	
 	protected Scene(Matrix4f projection, Matrix4f view) {
@@ -32,6 +31,11 @@ public abstract class Scene {
 	 * @param window
 	 */
 	public abstract void init(Game game, Window window);
+	
+	/**
+	 * 
+	 */
+	public abstract void prepareRender();
 	
 	/**
 	 * @return the projection matrix

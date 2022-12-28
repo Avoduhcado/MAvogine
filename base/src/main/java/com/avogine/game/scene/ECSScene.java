@@ -12,8 +12,7 @@ public abstract class ECSScene extends Scene {
 	protected final EntityWorld entityWorld;
 	
 	protected ECSScene() {
-		super();
-		entityWorld = new EntityWorld();
+		this(new Matrix4f(), new Matrix4f());
 	}
 	
 	protected ECSScene(Matrix4f projection, Matrix4f view) {
