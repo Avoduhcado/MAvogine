@@ -17,8 +17,9 @@ public abstract class Game {
 	
 	private final Queue<Registerable> registrationQueue;
 	
-	private Window window;
+	protected Window window;
 	private Scene scene;
+	private Scene nextScene;
 	
 	protected Game() {
 		updateables = new ArrayList<>();
@@ -33,15 +34,12 @@ public abstract class Game {
 	 */
 	public void init(Window window) {
 		this.window = window;
-		if (scene != null) {
-			scene.init(this, window);
-		}
 	}
 	
 	/**
-	 * @param scene
+	 * @param scene the scene to set
 	 */
-	public void loadScene(Scene scene) {
+	public void setScene(Scene scene) {
 		this.scene = scene;
 	}
 	
@@ -51,6 +49,13 @@ public abstract class Game {
 	 */
 	public Scene getCurrentScene() {
 		return scene;
+	}
+
+	/**
+	 * @param scene
+	 */
+	public void queueSceneSwap(Scene scene) {
+		this.nextScene = scene;
 	}
 	
 	/**
@@ -99,6 +104,18 @@ public abstract class Game {
 	 * 
 	 */
 	public void drainRegistrationQueue() {
+		if (nextScene != null) {
+			scene = nextScene;
+			nextScene = null;
+			
+			this.updateables.clear();
+			this.renderables.clear();
+			this.cleanupables.clear();
+			
+			registrationQueue.clear();
+			scene.init(this, window);
+		}
+		
 		while (registrationQueue.size() > 0) {
 			// I would like to use some sealed interfaces here and a pattern matching switch, but many registerables will implement multiple subtypes
 			// and thus cause the switch to skip over things. Resorting to an if block until a better solution presents itself.
