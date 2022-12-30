@@ -40,6 +40,16 @@ public class ParShapesBuilder {
 	}
 	
 	/**
+	 * {@link ParShapes#par_shapes_create_subdivided_sphere(int)}
+	 * @param subdivisions
+	 * @return
+	 */
+	public ParShapesBuilder createSphere(int subdivisions) {
+		parMesh = ParShapes.par_shapes_create_subdivided_sphere(subdivisions);
+		return this;
+	}
+	
+	/**
 	 * {@link ParShapes#par_shapes_create_cube()}
 	 * @return
 	 */

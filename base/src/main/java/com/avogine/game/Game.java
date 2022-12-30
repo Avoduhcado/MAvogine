@@ -5,6 +5,7 @@ import java.util.*;
 import com.avogine.game.scene.Scene;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
+import com.avogine.io.listener.InputListener;
 
 /**
  *
@@ -17,6 +18,8 @@ public abstract class Game {
 	
 	private final Queue<Registerable> registrationQueue;
 	
+	private final List<InputListener> inputListeners;
+	
 	protected Window window;
 	private Scene scene;
 	private Scene nextScene;
@@ -26,6 +29,7 @@ public abstract class Game {
 		renderables = new ArrayList<>();
 		cleanupables = new ArrayList<>();
 		registrationQueue = new LinkedList<>();
+		inputListeners = new ArrayList<>();
 	}
 
 	/**
@@ -112,6 +116,8 @@ public abstract class Game {
 			this.renderables.clear();
 			this.cleanupables.clear();
 			
+//			window.getInput().removeAllListeners();
+			removeSceneInputListeners();
 			registrationQueue.clear();
 			scene.init(this, window);
 		}
@@ -187,6 +193,27 @@ public abstract class Game {
 	 */
 	protected void removeCleanupable(Cleanupable cleanupable) {
 		this.cleanupables.remove(cleanupable);
+	}
+	
+	/**
+	 * Register an {@link InputListener} to the current {@link Window} and store
+	 * a reference to it for potential de-registering later.
+	 * @param l The {@code InputListener} to add.
+	 */
+	public void addInputListener(InputListener l) {
+		inputListeners.add(window.getInput().add(l));
+	}
+	
+	/**
+	 * Removes all {@link InputListener}s from the current {@link Window} that were attached
+	 * by the current {@link Scene}.
+	 * </p>
+	 * TODO Change {@link Game#inputListeners} into a map of {@code Scene -> List<InputListener>}
+	 */
+	private void removeSceneInputListeners() {
+		for (InputListener l : inputListeners) {
+			window.getInput().removeListener(l);
+		}
 	}
 	
 	/**

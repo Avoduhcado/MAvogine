@@ -1,11 +1,11 @@
 package com.avogine.io;
 
-import java.nio.*;
+import java.nio.DoubleBuffer;
 import java.util.*;
-import java.util.stream.*;
+import java.util.stream.Stream;
 
-import org.lwjgl.glfw.*;
-import org.lwjgl.system.*;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
 
 import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
@@ -128,7 +128,7 @@ public class Input {
 		listeners.remove(listener);
 		return listener;
 	}
-
+	
 	/**
 	 * @param <T>
 	 * @param clazz

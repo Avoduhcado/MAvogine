@@ -1,13 +1,13 @@
 package com.avogine.render.loader.texture;
 
-import java.io.*;
+import java.io.File;
 import java.nio.*;
 
 import org.lwjgl.opengl.*;
-import org.lwjgl.stb.*;
-import org.lwjgl.system.*;
+import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryStack;
 
-import com.avogine.logging.*;
+import com.avogine.logging.AvoLog;
 import com.avogine.render.data.*;
 import com.avogine.util.resource.*;
 
