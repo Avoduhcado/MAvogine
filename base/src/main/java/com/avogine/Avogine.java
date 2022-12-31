@@ -3,9 +3,9 @@ package com.avogine;
 import java.util.concurrent.*;
 
 import com.avogine.game.*;
-import com.avogine.game.ui.nuklear.*;
+import com.avogine.game.ui.nuklear.AvoNuklear;
 import com.avogine.io.*;
-import com.avogine.logging.*;
+import com.avogine.logging.AvoLog;
 
 /**
  * This is the primary entry point into running a game.
@@ -92,6 +92,8 @@ public class Avogine implements Runnable {
 			double elapsedTime = (frameStartTime - previousFrameTime);
 			window.setFps((int) (1 / elapsedTime));
 			accumulator += elapsedTime;
+			
+			game.drainRegistrationQueue();
 			
 			input();
 			

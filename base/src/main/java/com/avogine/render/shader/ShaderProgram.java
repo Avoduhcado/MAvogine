@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import org.lwjgl.opengl.*;
+
 import com.avogine.logging.*;
 import com.avogine.render.shader.uniform.*;
 import com.avogine.util.resource.*;
@@ -18,18 +20,35 @@ public abstract class ShaderProgram {
 	
 	private final int programId;
 	
-	private int vertexShaderId;
-	private int fragmentShaderId;
-	
 	/**
 	 * @param vertexShaderFile
 	 * @param fragmentShaderFile
 	 */
-	protected ShaderProgram(String vertexShaderFile, String fragmentShaderFile) {
+	public ShaderProgram(String vertexShaderFile, String fragmentShaderFile) {
 		programId = glCreateProgram();
-		vertexShaderId = createShader(vertexShaderFile, GL_VERTEX_SHADER);
-		fragmentShaderId = createShader(fragmentShaderFile, GL_FRAGMENT_SHADER);
+		int vertexShaderId = createShader(vertexShaderFile, GL_VERTEX_SHADER);
+		int fragmentShaderId = createShader(fragmentShaderFile, GL_FRAGMENT_SHADER);
 		link();
+		
+		glDeleteShader(vertexShaderId);
+		glDeleteShader(fragmentShaderId);
+	}
+	
+	/**
+	 * Create a ShaderProgram from an arbitrary set of shader files.
+	 * <p>
+	 * <b>Note:</b> This makes no assertion that the supplied files constitute a complete shader. 
+	 * @param files A list of {@link ShaderFileType}s to construct the ShaderProgram from.
+	 */
+	public ShaderProgram(ShaderFileType...files) {
+		programId = glCreateProgram();
+		int[] shaderIds = new int[files.length];
+		for (int i = 0; i < files.length; i++) {
+			shaderIds[i] = createShader(files[i].fileName(), files[i].shaderType());
+		}
+		link();
+		
+		Arrays.stream(shaderIds).forEach(GL20::glDeleteShader);
 	}
 	
 	/**
@@ -127,8 +146,6 @@ public abstract class ShaderProgram {
 //		if (fragmentShaderId != 0) {
 //			GL20.glDetachShader(programId, fragmentShaderId);
 //		}
-		glDeleteShader(vertexShaderId);
-		glDeleteShader(fragmentShaderId);
 	}
 	
 	/**

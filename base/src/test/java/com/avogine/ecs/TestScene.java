@@ -1,9 +1,8 @@
 package com.avogine.ecs;
 
-import org.joml.*;
-
-import com.avogine.game.scene.*;
-import com.avogine.io.*;
+import com.avogine.game.Game;
+import com.avogine.game.scene.ECSScene;
+import com.avogine.io.Window;
 
 /**
  *
@@ -14,28 +13,17 @@ public class TestScene extends ECSScene {
 	 * @param projection
 	 */
 	protected TestScene() {
-		super(null);
+		super();
 	}
 
 	@Override
-	public void init(Window window) {
+	public void init(Game game, Window window) {
 		// Not implemented
 	}
 
 	@Override
-	public void update(float delta) {
+	public void prepareRender() {
 		// Not implemented
-		
-	}
-
-	@Override
-	public Matrix4f getView() {
-		return null;
 	}
 	
-	@Override
-	public void cleanup() {
-		// Not implemented
-	}
-
 }

@@ -1,11 +1,11 @@
 package com.avogine.io;
 
-import java.nio.*;
+import java.nio.DoubleBuffer;
 import java.util.*;
-import java.util.stream.*;
+import java.util.stream.Stream;
 
-import org.lwjgl.glfw.*;
-import org.lwjgl.system.*;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
 
 import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
@@ -57,6 +57,9 @@ public class Input {
 		}
 		
 		GLFW.glfwSetKeyCallback(windowID, (window, key, scancode, action, mods) -> {
+			if (action == GLFW.GLFW_REPEAT) {
+				return;
+			}
 			fireKeyboardEvent(new KeyboardEvent(action, key, window));
 			// XXX Hmm, this seems like a terrible way to handle this
 			if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE) {
@@ -89,11 +92,11 @@ public class Input {
 		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
 			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
 				if (!keys[i]) {
-					fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_RELEASE, i, windowID));
 					fireKeyboardEvent(new KeyboardEvent(KeyboardEvent.KEY_TYPED, i, windowID));
+				} else {
+					fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_PRESS, i, windowID));
 				}
 				keys[i] = true;
-				fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_PRESS, i, windowID));
 			} else {
 				keys[i] = false;
 			}
@@ -125,7 +128,7 @@ public class Input {
 		listeners.remove(listener);
 		return listener;
 	}
-
+	
 	/**
 	 * @param <T>
 	 * @param clazz

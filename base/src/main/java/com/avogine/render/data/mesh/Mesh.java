@@ -1,122 +1,72 @@
 package com.avogine.render.data.mesh;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.*;
-import java.util.*;
 
-import org.lwjgl.system.*;
-
-import com.avogine.render.data.mesh.Texture.*;
+import org.lwjgl.opengl.GL11;
 
 /**
  * Used by {@link Model}.
  */
 public class Mesh {
-
-	private List<Vertex> vertices;
-	private List<Integer> indices;
-	private List<Texture> textures;
 	
 	private int vao;
 	private int vbo;
 	private int ebo;
 	
+	private int indexSize;
+	
 	// TODO Implement this better
 	private int materialIndex;
 	
 	/**
-	 * @param vertices
-	 * @param indices
-	 * @param textures
+	 * @param vertexBuffer 
+	 * @param indexBuffer 
 	 * @param materialIndex 
 	 */
-	public Mesh(List<Vertex> vertices, List<Integer> indices, List<Texture> textures, int materialIndex) {
-		this.vertices = vertices;
-		this.indices = indices;
-		this.textures = textures;
+	public Mesh(FloatBuffer vertexBuffer, IntBuffer indexBuffer, int materialIndex) {
+		this.indexSize = indexBuffer.limit();
 		this.materialIndex = materialIndex;
 		
-		setupMesh();
+		setupMesh(vertexBuffer, indexBuffer);
 	}
 	
-	private void setupMesh() {
+	private void setupMesh(FloatBuffer vertexBuffer, IntBuffer indexBuffer) {
 		vao = glGenVertexArrays();
 		vbo = glGenBuffers();
 		ebo = glGenBuffers();
-		
-		FloatBuffer vertexData = allocateVertexData();
-		
+
 		glBindVertexArray(vao);
-		
+
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertexData, GL_STATIC_DRAW);
-		MemoryUtil.memFree(vertexData);
-		
-		IntBuffer indexData = allocateIndexData();
+		glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData, GL_STATIC_DRAW);
-		MemoryUtil.memFree(indexData);
-		
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3L * Float.BYTES);
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6L * Float.BYTES);
-		
+
 		glBindVertexArray(0);
-	}
-	
-	private FloatBuffer allocateVertexData() {
-		FloatBuffer vertexData = MemoryUtil.memAllocFloat(vertices.size() * Vertex.ATTRIBUTE_SIZE);
-		float[] attributeArray = new float[Vertex.ATTRIBUTE_SIZE];
-		
-		vertices.forEach(vertex -> vertexData.put(vertex.getAttributes(attributeArray), 0, Vertex.ATTRIBUTE_SIZE));
-		
-		vertexData.flip();
-		
-		return vertexData;
-	}
-	
-	private IntBuffer allocateIndexData() {
-		IntBuffer indexData = MemoryUtil.memAllocInt(indices.size());
-		indices.forEach(indexData::put);
-		indexData.flip();
-		
-		return indexData;
 	}
 	
 	/**
 	 * 
 	 */
 	public void render() {
-		int diffuseN = 0;
-		int specularN = 0;
-		for (int i = 0; i < textures.size(); i++) {
-			Texture texture = textures.get(i);
-			
-			TextureType type = texture.getType();
-			if (type == TextureType.DIFFUSE) {
-				glActiveTexture(GL_TEXTURE0 + diffuseN++);
-			} else if (type == TextureType.SPECULAR) {
-				glActiveTexture(GL_TEXTURE4 + specularN++);
-			}
-			
-			glBindTexture(GL_TEXTURE_2D, texture.getId());
-		}
-		
 		glBindVertexArray(vao);
 		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
-		
-		// Resetting texture to default. Does this handle unbinding? Will the next render use leftover diffuse/specular textures?
-		glActiveTexture(GL_TEXTURE0);
+
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 	}
 	
 	/**
@@ -124,7 +74,7 @@ public class Mesh {
 	 * @return the number of vertices to render in a single draw call
 	 */
 	private int getVertexCount() {
-		return indices.size();
+		return indexSize;
 	}
 	
 	/**
@@ -135,13 +85,19 @@ public class Mesh {
 	}
 	
 	/**
+	 * @param materialIndex the materialIndex to set
+	 */
+	public void setMaterialIndex(int materialIndex) {
+		this.materialIndex = materialIndex;
+	}
+	
+	/**
 	 * Free all GPU memory.
 	 */
 	public void cleanup() {
-		glDeleteVertexArrays(vao);
 		glDeleteBuffers(vbo);
 		glDeleteBuffers(ebo);
-		// TODO Somehow handle freeing up textures?
+		glDeleteVertexArrays(vao);
 	}
 	
 }

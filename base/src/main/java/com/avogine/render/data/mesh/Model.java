@@ -1,12 +1,12 @@
 package com.avogine.render.data.mesh;
 
-import java.util.*;
+import java.util.List;
+import java.util.function.Consumer;
 
-import com.avogine.render.data.*;
-import com.avogine.render.shader.uniform.*;
+import com.avogine.render.data.material.Material;
 
 /**
- * XXX Should Model contain its own name for proper cache indexing?
+ *
  */
 public class Model {
 
@@ -23,15 +23,43 @@ public class Model {
 	}
 	
 	/**
-	 * TODO I don't know how to feel about passing the uniform in here, kinda uggo
-	 * @param material 
+	 * @param mesh
+	 * @param material
+	 */
+	public Model(Mesh mesh, Material material) {
+		this(List.of(mesh), List.of(material));
+	}
+	
+	/**
 	 * 
 	 */
-	public void render(UniformMaterial material) {
+	public void render() {
+		render(c -> {});
+	}
+	
+	/**
+	 * @param consumer a Consumer function to process additional per mesh operations during rendering like applying materials.
+	 * 
+	 */
+	public void render(Consumer<Mesh> consumer) {
 		meshes.forEach(mesh -> {
-			material.loadMaterial(materials.get(mesh.getMaterialIndex()));
+			consumer.accept(mesh);
+			
+			bindMaterial(mesh);
 			mesh.render();
+			unbindMaterial(mesh);
 		});
+	}
+	
+	private void bindMaterial(Mesh mesh) {
+		var material = materials.get(mesh.getMaterialIndex());
+		if (material != null) {
+			material.bind();
+		}
+	}
+	
+	private void unbindMaterial(Mesh mesh) {
+		
 	}
 	
 	/**
@@ -39,6 +67,21 @@ public class Model {
 	 */
 	public List<Mesh> getMeshes() {
 		return meshes;
+	}
+	
+	/**
+	 * @return the materials
+	 */
+	public List<Material> getMaterials() {
+		return materials;
+	}
+	
+	/**
+	 * @param index
+	 * @return the material at index
+	 */
+	public Material getMaterial(int index) {
+		return materials.get(index);
 	}
 	
 }

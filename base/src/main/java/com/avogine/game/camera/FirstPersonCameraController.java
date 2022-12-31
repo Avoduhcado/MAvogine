@@ -5,6 +5,7 @@ import java.nio.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.system.*;
 
+import com.avogine.io.*;
 import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
 
@@ -22,10 +23,21 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 	
 	/**
 	 * @param camera 
+	 * @param window 
 	 * 
 	 */
-	public FirstPersonCameraController(Camera camera) {
+	public FirstPersonCameraController(Camera camera, Window window) {
 		this.camera = camera;
+		
+		GLFW.glfwSetInputMode(window.getId(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			DoubleBuffer xPos = stack.mallocDouble(1);
+			DoubleBuffer yPos = stack.mallocDouble(1);
+
+			GLFW.glfwGetCursorPos(window.getId(), xPos, yPos);
+			lastX = (float) xPos.get();
+			lastY = (float) yPos.get();
+		}
 	}
 	
 	@Override
@@ -36,14 +48,8 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 		
 		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_1) {
 			GLFW.glfwSetInputMode(event.window(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
-			try (MemoryStack stack = MemoryStack.stackPush()) {
-				DoubleBuffer xPos = stack.mallocDouble(1);
-				DoubleBuffer yPos = stack.mallocDouble(1);
-
-				GLFW.glfwGetCursorPos(event.window(), xPos, yPos);
-				lastX = (float) xPos.get();
-				lastY = (float) yPos.get();
-			}
+			lastX = event.mouseX();
+			lastY = event.mouseY();
 		} else if (event.button() == GLFW.GLFW_MOUSE_BUTTON_2) {
 			GLFW.glfwSetInputMode(event.window(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
 		}

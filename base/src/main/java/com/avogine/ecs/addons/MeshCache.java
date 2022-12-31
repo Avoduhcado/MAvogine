@@ -3,7 +3,7 @@ package com.avogine.ecs.addons;
 import java.util.*;
 
 import com.avogine.ecs.*;
-import com.avogine.render.data.*;
+import com.avogine.render.data.mesh.*;
 
 /**
  *
@@ -21,7 +21,7 @@ public class MeshCache implements EntitySystemAddon {
 	
 	/**
 	 * @param mesh
-	 * @return
+	 * @return the index of the newly added mesh.
 	 */
 	public int addMesh(Mesh mesh) {
 		cache.add(mesh);

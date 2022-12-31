@@ -1,7 +1,6 @@
 package com.avogine.ecs;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -60,6 +59,16 @@ public class EntityComponentQuery {
 	 */
 	public Set<EntityComponentMap> getResultMap() {
 		return resultMap;
+	}
+	
+	/**
+	 * @return The first result in the query set, or null if the set is empty.
+	 */
+	public EntityComponentMap getFirstResult() {
+		if (!resultMap.isEmpty()) {
+			return resultMap.iterator().next();
+		}
+		return null;
 	}
 	
 }

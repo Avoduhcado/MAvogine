@@ -1,37 +1,41 @@
 package com.avogine.game.scene;
 
-import org.joml.*;
+import org.joml.Matrix4f;
 
-import com.avogine.io.*;
+import com.avogine.game.Game;
+import com.avogine.io.Window;
 
 /**
- *
+ * 
  */
 public abstract class Scene {
 
-	protected Matrix4f projection;
+	protected final Matrix4f projection;
+	
+	protected final Matrix4f view;
 	
 	/**
 	 * 
 	 */
 	protected Scene() {
+		this(new Matrix4f(), new Matrix4f());
 	}
 	
-	protected Scene(Matrix4f projection) {
+	protected Scene(Matrix4f projection, Matrix4f view) {
 		this.projection = projection;
+		this.view = view;
 	}
 	
 	/**
+	 * @param game
 	 * @param window
 	 */
-	public abstract void init(Window window);
+	public abstract void init(Game game, Window window);
 	
 	/**
-	 * An update method that runs once per game update.
-	 * TODO Specify time unit
-	 * @param delta the time between frames of the game update loop
+	 * 
 	 */
-	public abstract void update(float delta);
+	public abstract void prepareRender();
 	
 	/**
 	 * @return the projection matrix
@@ -43,11 +47,8 @@ public abstract class Scene {
 	/**
 	 * @return the view matrix
 	 */
-	public abstract Matrix4f getView();
-	
-	/**
-	 * 
-	 */
-	public abstract void cleanup();
+	public Matrix4f getView() {
+		return view;
+	}
 	
 }

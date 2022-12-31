@@ -1,13 +1,13 @@
 package com.avogine.render.loader.font;
 
 import java.nio.*;
-import java.util.*;
 
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
-import com.avogine.render.data.*;
-import com.avogine.util.*;
+import com.avogine.render.data.TextureAtlas;
+import com.avogine.render.data.material.TexturedMaterial;
+import com.avogine.render.data.mesh.*;
 
 public class FontSTB {
 
@@ -24,10 +24,9 @@ public class FontSTB {
 		this.bitmapTexture = texture;
 	}
 	
-	public RawMesh buildTextMesh(String text) {
-		List<Float> vertices = new ArrayList<>();
-		List<Float> textureCoords = new ArrayList<>();
-		List<Integer> indices = new ArrayList<>();
+	public Model buildTextMesh(String text) {
+		FloatBuffer vertexBuffer = MemoryUtil.memAllocFloat(text.length() * 4 * 8);
+		IntBuffer indices = MemoryUtil.memAllocInt(text.length() * 6);
 
 		int index = 0;
 		try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -52,26 +51,43 @@ public class FontSTB {
 					
 					//System.out.println("(" + q.x0() + ", " + q.y0() + "), (" + q.x1() + ", " + q.y1() + ")");
 					//System.out.println("(" + q.s0() + ", " + q.t0() + "), (" + q.s1() + ", " + q.t1() + ")");
-					vertices.addAll(Arrays.asList(q.x0(), baseline + q.y0(), 0.0f));
-					vertices.addAll(Arrays.asList(q.x1(), baseline + q.y0(), 0.0f));
-					vertices.addAll(Arrays.asList(q.x1(), baseline + q.y1(), 0.0f));
-					vertices.addAll(Arrays.asList(q.x0(), baseline + q.y1(), 0.0f));
-					textureCoords.addAll(Arrays.asList(q.s0(), q.t0()));
-					textureCoords.addAll(Arrays.asList(q.s1(), q.t0()));
-					textureCoords.addAll(Arrays.asList(q.s1(), q.t1()));
-					textureCoords.addAll(Arrays.asList(q.s0(), q.t1()));
-					indices.addAll(Arrays.asList(index, index + 1, index + 3, index + 3, index + 1, index + 2));
+					// Positions XYZ ordering
+					vertexBuffer.put(q.x0());
+					vertexBuffer.put(baseline + q.y0());
+					vertexBuffer.put(0.0f);
+					vertexBuffer.put(q.x1());
+					vertexBuffer.put(baseline + q.y0());
+					vertexBuffer.put(0.0f);
+					vertexBuffer.put(q.x1());
+					vertexBuffer.put(baseline + q.y1());
+					vertexBuffer.put(0.0f);
+					vertexBuffer.put(q.x0());
+					vertexBuffer.put(baseline + q.y1());
+					vertexBuffer.put(0.0f);
+					
+					// Texture Coordinates UV ordering
+					vertexBuffer.put(q.s0());
+					vertexBuffer.put(q.t0());
+					vertexBuffer.put(q.s1());
+					vertexBuffer.put(q.t0());
+					vertexBuffer.put(q.s1());
+					vertexBuffer.put(q.t1());
+					vertexBuffer.put(q.s0());
+					vertexBuffer.put(q.t1());
+					
+					// Empty Normals
+					vertexBuffer.put(new float[12]);
+					
+					indices.put(new int[] {index, index + 1, index + 3, index + 3, index + 1, index + 2});
 					index += 4;
 				}
 			}
 		}
 		
-		RawMesh textMesh = new RawMesh(ArrayUtils.toPrimitive(vertices.toArray(Float[]::new)));
-		textMesh.addAttribute(1, ArrayUtils.toPrimitive(textureCoords.toArray(Float[]::new)), 2);
-		textMesh.addIndexAttribute(indices.stream().mapToInt(Integer::intValue).toArray());
-		textMesh.setMaterial(new Material(bitmapTexture));
+		var material = new TexturedMaterial(bitmapTexture);
+		Mesh textMesh = new Mesh(vertexBuffer, indices, 0);
 		
-		return textMesh;
+		return new Model(textMesh, material);
 	}
 	
 	public int getLineGap() {
