@@ -1,12 +1,12 @@
 package com.avogine.render.data.material;
 
-import com.avogine.render.data.TextureAtlas;
+import com.avogine.render.data.texture.Texture;
 
 /**
  * @param diffuse 
  *
  */
-public record TexturedMaterial(TextureAtlas diffuse) implements Material {
+public record TexturedMaterial(Texture diffuse) implements Material {
 
 	@Override
 	public void bind() {

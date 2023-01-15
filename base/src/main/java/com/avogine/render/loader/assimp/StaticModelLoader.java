@@ -8,17 +8,17 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
 
+import com.avogine.logging.AvoLog;
 import com.avogine.render.data.material.*;
 import com.avogine.render.data.mesh.*;
-import com.avogine.render.loader.texture.TextureLoader;
+import com.avogine.render.data.texture.Texture;
+import com.avogine.render.loader.texture.TextureCache;
 import com.avogine.util.resource.*;
 
 /**
  *
  */
 public class StaticModelLoader {
-	
-	private static final Map<String, Texture> textureCache = new HashMap<>();
 	
 	/**
 	 * Maximum number of diffuse textures to load from a model.
@@ -131,7 +131,8 @@ public class StaticModelLoader {
 	protected static Mesh processMesh(AIMesh aiMesh, AIScene scene, List<Material> materials, String texturesDir) {
 		FloatBuffer vertexData = processVertices(aiMesh);
 		IntBuffer indexData = processIndices(aiMesh);
-		List<Texture> textures = processTextures(aiMesh, scene, texturesDir);
+		List<TexturedMaterial> textures = processTextures(aiMesh, scene, texturesDir);
+		materials.addAll(textures);
 
 		//		Material material = new Material();
 		int materialIdx = aiMesh.mMaterialIndex();
@@ -148,23 +149,23 @@ public class StaticModelLoader {
 		return mesh;
 	}
 	
-	protected static List<Texture> processTextures(AIMesh mesh, AIScene scene, String texturesDir) {
+	protected static List<TexturedMaterial> processTextures(AIMesh mesh, AIScene scene, String texturesDir) {
 		AIMaterial aiMaterial = AIMaterial.create(scene.mMaterials().get(mesh.mMaterialIndex()));
-		List<Texture> textures = new ArrayList<>();
+		List<TexturedMaterial> textures = new ArrayList<>();
 		
 		int diffuseCount = Assimp.aiGetMaterialTextureCount(aiMaterial, Assimp.aiTextureType_DIFFUSE);
 		for (int i = 0; i < Math.min(diffuseCount, MAX_DIFFUSE_TEXTURES); i++) {
-			textures.add(processTexture(aiMaterial, texturesDir, TextureType.DIFFUSE, Assimp.aiTextureType_DIFFUSE, i));
+			textures.add(processTexture(aiMaterial, texturesDir, Assimp.aiTextureType_DIFFUSE, i));
 		}
 		int specularCount = Assimp.aiGetMaterialTextureCount(aiMaterial, Assimp.aiTextureType_SPECULAR);
 		for (int i = 0; i < Math.min(specularCount, MAX_SPECULAR_TEXTURES); i++) {
-			textures.add(processTexture(aiMaterial, texturesDir, TextureType.SPECULAR, Assimp.aiTextureType_SPECULAR, i));
+			textures.add(processTexture(aiMaterial, texturesDir, Assimp.aiTextureType_SPECULAR, i));
 		}
 		
 		return textures;
 	}
 
-	protected static Texture processTexture(AIMaterial aiMaterial, String texturesDir, TextureType textureType, int assimpTextureType, int index) {
+	protected static TexturedMaterial processTexture(AIMaterial aiMaterial, String texturesDir, int assimpTextureType, int index) {
 		AIString path = AIString.calloc();
 		Assimp.aiGetMaterialTexture(aiMaterial, assimpTextureType, index, path, (IntBuffer) null, null, null, null, null, null);
 		String textPath = path.dataString();
@@ -177,35 +178,72 @@ public class StaticModelLoader {
 			}
 			textureFile += textPath;
 			textureFile = textureFile.replace("//", "/");
+			texture = TextureCache.getInstance().getTexture(textureFile);
 			// TODO Reimplement texture cache with "new" Texture class
-			texture = textureCache.computeIfAbsent(textureFile, filePath -> new Texture(TextureLoader.loadTexturePro(filePath), textureType));
+//			texture = textureCache.computeIfAbsent(textureFile, filePath -> new Texture(TextureLoader.loadTexturePro(filePath), textureType));
 		}
-		return texture;
+		return new TexturedMaterial(texture);
 	}
 	
 	protected static void processMaterial(AIMaterial aiMaterial, List<Material> materials) {
-		AIColor4D color = AIColor4D.create();
-		
-		Vector3f ambient = Material.DEFAULT_COLOR;
-		int result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_AMBIENT, Assimp.aiTextureType_NONE, 0, color);
-		if (result == 0) {
-			ambient = new Vector3f(color.r(), color.g(), color.b());
+		if (Assimp.aiGetMaterialTextureCount(aiMaterial, Assimp.aiTextureType_DIFFUSE) > 0) {
+			AIString path = AIString.calloc();
+			var mappingBuffer = MemoryUtil.memAllocInt(1);
+			Assimp.aiGetMaterialTexture(aiMaterial, Assimp.aiTextureType_DIFFUSE, 0, path, mappingBuffer, null, null, null, null, null);
+			AIUVTransform uvTransform = AIUVTransform.calloc();
+			if (Assimp.aiGetMaterialUVTransform(aiMaterial, Assimp._AI_MATKEY_UVTRANSFORM_BASE, Assimp.aiTextureType_DIFFUSE, 0, uvTransform) == Assimp.aiReturn_SUCCESS) {
+				AvoLog.log().debug("uv scaling: {} {} {} {} {}", uvTransform.mTranslation().x(), uvTransform.mTranslation().y(), uvTransform.mRotation(), uvTransform.mScaling().x(), uvTransform.mScaling().y());
+			}
+			PointerBuffer properties = aiMaterial.mProperties(); // array of pointers to AIMaterialProperty structs
+			for ( int j = 0; j < properties.remaining(); j++ ) {
+				AIMaterialProperty prop = AIMaterialProperty.create(properties.get(j));
+				AvoLog.log().debug("Prop: {} {}", prop.mKey().dataString(), prop.mType());
+				if (prop.mKey().dataString().equals(Assimp._AI_MATKEY_UVTRANSFORM_BASE) && prop.mType() == Assimp.aiPTI_Float) {
+					FloatBuffer data = prop.mData().asFloatBuffer();
+					for (int i = 0; i < prop.mDataLength() / 4; i++) {
+						AvoLog.log().debug("{}", data.get());
+					}
+				}
+			}
+			String textPath = path.dataString();
+			Texture texture = null;
+			
+			if (textPath != null && !textPath.isBlank()) {
+				String textureFile = "";
+//				if (texturesDir != null && !texturesDir.isBlank()) {
+//					textureFile += texturesDir + "/";
+//				}
+				textureFile += textPath;
+				textureFile = textureFile.replace("//", "/");
+				texture = TextureCache.getInstance().getTexture(textureFile);
+				// TODO Reimplement texture cache with "new" Texture class
+//				texture = textureCache.computeIfAbsent(textureFile, filePath -> new Texture(TextureLoader.loadTexturePro(filePath), textureType));
+			}
+			materials.add(new TexturedMaterialPro(texture, uvTransform.mScaling().x(), uvTransform.mScaling().y()));
+		} else {
+			AIColor4D color = AIColor4D.create();
+			
+			Vector3f ambient = Material.DEFAULT_COLOR;
+			int result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_AMBIENT, Assimp.aiTextureType_NONE, 0, color);
+			if (result == 0) {
+				ambient = new Vector3f(color.r(), color.g(), color.b());
+			}
+			
+			Vector3f diffuse = Material.DEFAULT_COLOR;
+			result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_DIFFUSE, Assimp.aiTextureType_NONE, 0, color);
+			if (result == 0) {
+				diffuse = new Vector3f(color.r(), color.g(), color.b());
+			}
+	
+			Vector3f specular = Material.DEFAULT_COLOR;
+			result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_SPECULAR, Assimp.aiTextureType_NONE, 0, color);
+			if (result == 0) {
+				specular = new Vector3f(color.r(), color.g(), color.b());
+			}
+			
+			var material = new PBRMaterial(ambient, diffuse, specular, 32f, 1.0f);
+			materials.add(material);
 		}
-		
-		Vector3f diffuse = Material.DEFAULT_COLOR;
-		result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_DIFFUSE, Assimp.aiTextureType_NONE, 0, color);
-		if (result == 0) {
-			diffuse = new Vector3f(color.r(), color.g(), color.b());
-		}
-
-		Vector3f specular = Material.DEFAULT_COLOR;
-		result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_SPECULAR, Assimp.aiTextureType_NONE, 0, color);
-		if (result == 0) {
-			specular = new Vector3f(color.r(), color.g(), color.b());
-		}
-
-		var material = new PBRMaterial(ambient, diffuse, specular, 32f, 1.0f);
-		materials.add(material);
 	}
 
 	private static FloatBuffer processVertices(AIMesh aiMesh) {

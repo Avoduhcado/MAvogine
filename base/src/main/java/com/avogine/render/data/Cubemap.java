@@ -1,22 +1,25 @@
 package com.avogine.render.data;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
+
+import com.avogine.render.data.texture.Texture;
 
 /**
- * A {@link TextureAtlas} wrapper that overrides specific texture binding operations to use cubemapping.
- * @author Dominus
+ * A {@link Texture} implementation that overrides specific texture binding operations to use cubemapping.
+ * @param id The ID of the texture in OpenGL.
  *
  */
-public class Cubemap extends TextureAtlas {
+public record Cubemap(int id) implements Texture {
 
-	public Cubemap(int id) {
-		super(id);
-	}
-	
 	@Override
 	public void bind() {
-		GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, id);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+	}
+
+	@Override
+	public void cleanup() {
+		glDeleteTextures(id);
 	}
 
 }

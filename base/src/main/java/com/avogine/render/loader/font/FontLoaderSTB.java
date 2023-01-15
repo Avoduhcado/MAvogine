@@ -1,25 +1,18 @@
 package com.avogine.render.loader.font;
 
 import java.awt.Point;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.Raster;
-import java.io.File;
-import java.io.IOException;
+import java.awt.image.*;
+import java.io.*;
 import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.stb.STBTTBakedChar;
-import org.lwjgl.stb.STBTTFontinfo;
-import org.lwjgl.stb.STBTruetype;
+import org.lwjgl.opengl.*;
+import org.lwjgl.stb.*;
 
-import com.avogine.render.data.TextureAtlas;
-import com.avogine.util.resource.ResourceConstants;
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.render.data.texture.*;
+import com.avogine.util.resource.*;
 
 /**
  * TODO Customizable font sizes, scalable bitmap sizes to match, customizable character sets (may require multiple textures and some sort of texture sheet indexing to fit everything)
@@ -70,7 +63,7 @@ public class FontLoaderSTB {
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
 		
-		TextureAtlas bitmapTexture = new TextureAtlas(bTex);
+		Texture bitmapTexture = new TextureAtlas(bTex);
 		
 		return new FontSTB(fontSize, info, cdata, bitmapTexture);
 	}

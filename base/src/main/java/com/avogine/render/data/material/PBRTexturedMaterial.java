@@ -1,6 +1,6 @@
 package com.avogine.render.data.material;
 
-import com.avogine.render.data.TextureAtlas;
+import com.avogine.render.data.texture.Texture;
 
 /**
  * @param diffuse 
@@ -10,7 +10,7 @@ import com.avogine.render.data.TextureAtlas;
  * @param reflectance 
  *
  */
-public record PBRTexturedMaterial(TextureAtlas diffuse, TextureAtlas specular, TextureAtlas ambient, float shininess, float reflectance) implements Material {
+public record PBRTexturedMaterial(Texture diffuse, Texture specular, Texture ambient, float shininess, float reflectance) implements Material {
 
 	@Override
 	public void bind() {

@@ -5,9 +5,9 @@ import java.nio.*;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
-import com.avogine.render.data.TextureAtlas;
 import com.avogine.render.data.material.TexturedMaterial;
 import com.avogine.render.data.mesh.*;
+import com.avogine.render.data.texture.Texture;
 
 public class FontSTB {
 
@@ -15,9 +15,9 @@ public class FontSTB {
 	private STBTTFontinfo info;
 	private STBTTBakedChar.Buffer cdata;
 	
-	private TextureAtlas bitmapTexture;
+	private Texture bitmapTexture;
 	
-	public FontSTB(int height, STBTTFontinfo info, STBTTBakedChar.Buffer charData, TextureAtlas texture) {
+	public FontSTB(int height, STBTTFontinfo info, STBTTBakedChar.Buffer charData, Texture texture) {
 		this.height = height;
 		this.info = info;
 		this.cdata = charData;

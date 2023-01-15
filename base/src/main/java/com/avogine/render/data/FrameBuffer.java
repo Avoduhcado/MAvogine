@@ -3,12 +3,13 @@ package com.avogine.render.data;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.*;
 
-import java.nio.*;
-import java.util.function.*;
+import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 
-import com.avogine.experimental.annotation.*;
-import com.avogine.io.*;
-import com.avogine.logging.*;
+import com.avogine.experimental.annotation.MemoryManaged;
+import com.avogine.io.Window;
+import com.avogine.logging.AvoLog;
+import com.avogine.render.data.texture.*;
 
 /**
  * @author Dominus
@@ -24,7 +25,7 @@ public class FrameBuffer {
 	
 	protected Window window;
 	
-	protected TextureAtlas colorTexture;
+	protected Texture colorTexture;
 	protected int colorAttachment;
 	protected int rbo;
 	
@@ -123,7 +124,7 @@ public class FrameBuffer {
 	/**
 	 * @return The texture containing the color buffer 
 	 */
-	public TextureAtlas getColorTexture() {
+	public Texture getColorTexture() {
 		return colorTexture;
 	}
 	
