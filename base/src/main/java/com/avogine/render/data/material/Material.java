@@ -17,9 +17,4 @@ public interface Material {
 	 */
 	public void bind();
 	
-	/**
-	 * TODO Is this necessary?
-	 */
-	public void unbind();
-	
 }

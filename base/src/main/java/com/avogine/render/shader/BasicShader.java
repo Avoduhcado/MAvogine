@@ -11,6 +11,8 @@ public class BasicShader extends ShaderProgram {
 	public final UniformMat4 view = new UniformMat4();
 	public final UniformMat4 model = new UniformMat4();
 	
+	public final UniformMat3 uvTransform = new UniformMat3();
+	
 	public final UniformSampler sampleTexture = new UniformSampler();
 	
 	/**
@@ -19,7 +21,7 @@ public class BasicShader extends ShaderProgram {
 	 */
 	public BasicShader(String vertexShaderFile, String fragmentShaderFile) {
 		super(vertexShaderFile, fragmentShaderFile);
-		storeAllUniformLocations(projection, view, model, sampleTexture);
+		storeAllUniformLocations(projection, view, model, uvTransform, sampleTexture);
 		linkTextureUnits();
 	}
 	

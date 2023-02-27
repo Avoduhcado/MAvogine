@@ -140,14 +140,14 @@ public class ParShapesBuilder {
 		FloatBuffer normals = !parMesh.isNull(ParShapesMesh.NORMALS) ? parMesh.normals(parMesh.npoints() * 3) : null;
 		FloatBuffer textureCoordinates = !parMesh.isNull(ParShapesMesh.TCOORDS) ? textureCoordinates = parMesh.tcoords(parMesh.npoints() * 2) : null;
 
-		FloatBuffer vertexBuffer = MemoryUtil.memCallocFloat(parMesh.npoints() * 8);
+		FloatBuffer vertexBuffer = MemoryUtil.memCallocFloat(parMesh.npoints() * Mesh.VERTEX_SIZE);
 		for (int i = 0; i < parMesh.npoints(); i++) {
-			vertexBuffer.put(i * 8, positions, i * 3, 3);
+			vertexBuffer.put(i * Mesh.VERTEX_SIZE, positions, i * 3, 3);
 			if (normals != null) {
-				vertexBuffer.put((i * 8) + 3, normals, i * 3, 3);
+				vertexBuffer.put((i * Mesh.VERTEX_SIZE) + 3, normals, i * 3, 3);
 			}
 			if (textureCoordinates != null) {
-				vertexBuffer.put((i * 8) + 6, textureCoordinates, i * 2, 2);
+				vertexBuffer.put((i * Mesh.VERTEX_SIZE) + 6, textureCoordinates, i * 2, 2);
 			}
 		}
 

@@ -1,7 +1,7 @@
 package com.avogine.render.data;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
+import static org.lwjgl.opengl.GL13.*;
 
 import com.avogine.render.data.texture.Texture;
 

@@ -14,6 +14,11 @@ import org.lwjgl.opengl.GL11;
  */
 public class Mesh {
 	
+	/**
+	 * Total number of values in single Vertex.
+	 */
+	public static final int VERTEX_SIZE = 8;
+	
 	private int vao;
 	private int vbo;
 	private int ebo;
@@ -49,11 +54,11 @@ public class Mesh {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 0); // Positions
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3L * Float.BYTES);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 3L * Float.BYTES); // Normals
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6L * Float.BYTES);
+		glVertexAttribPointer(2, 2, GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 6L * Float.BYTES); // UV Coordinates
 
 		glBindVertexArray(0);
 	}

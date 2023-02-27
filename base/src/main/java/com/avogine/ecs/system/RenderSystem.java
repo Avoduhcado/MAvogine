@@ -1,12 +1,13 @@
 package com.avogine.ecs.system;
 
-import org.joml.Matrix4f;
+import org.joml.*;
 
 import com.avogine.ecs.*;
 import com.avogine.ecs.components.*;
 import com.avogine.game.Game;
 import com.avogine.game.scene.ECSScene;
 import com.avogine.game.util.*;
+import com.avogine.render.data.material.PBRMaterial;
 import com.avogine.render.loader.assimp.ModelCache;
 import com.avogine.render.shader.BasicShader;
 
@@ -61,6 +62,11 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 			basicShader.model.loadMatrix(model);
 
 			var realModel = modelCache.getModel(modelC.getModel(), "");
+			if (realModel.getMaterial(0) instanceof PBRMaterial tex) {
+				basicShader.uvTransform.loadMatrix(tex.uvTransform());
+			} else {
+				basicShader.uvTransform.loadMatrix(new Matrix3f());
+			}
 			realModel.render();
 		});
 		

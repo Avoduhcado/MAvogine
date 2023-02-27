@@ -25,9 +25,4 @@ public record PBRTexturedMaterial(Texture diffuse, Texture specular, Texture amb
 		}
 	}
 
-	@Override
-	public void unbind() {
-		
-	}
-
 }
