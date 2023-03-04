@@ -100,6 +100,11 @@
 			<version>${joml.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.ode4j</groupId>
+			<artifactId>core</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<dependency>
 			<groupId>com.avogine</groupId>
 			<artifactId>log</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
