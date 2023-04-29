@@ -51,10 +51,11 @@ public class ModelCache implements EntitySystemAddon {
 	}
 
 	/**
-	 * @param manager
-	 * @return
+	 * Convenience method for registering a {@link ModelCache} in the instance that one has not already been allocated.
+	 * @param manager The {@link EntityManager} to register this {@link EntitySystemAddon} with.
+	 * @return A Supplier to typically be used in conjunction with an {@link Optional#orElseGet(Supplier)} call to produce a new {@link ModelCache}.
 	 */
-	public static Supplier<? extends ModelCache> registerModelCache(EntityManager manager) {
+	public static Supplier<ModelCache> registerModelCache(EntityManager manager) {
 		return () -> (ModelCache) manager.registerAddon(new ModelCache());
 	}
 	

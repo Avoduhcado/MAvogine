@@ -9,12 +9,7 @@ public class EntityComponentSet extends HashSet<Class<? extends EntityComponent>
 	private static final long serialVersionUID = 1L;
 	
 	private static final Map<Integer, EntityComponentSet> ARCHETYPE_MAP = new HashMap<>();
-
-	/**
-	 * Default Empty class archetype.
-	 */
-	public static final EntityComponentSet EMPTY_ARCHETYPE = new EntityComponentSet();
-		
+	
 	/**
 	 * @param classes 
 	 */
@@ -25,15 +20,6 @@ public class EntityComponentSet extends HashSet<Class<? extends EntityComponent>
 		}
 	}
 	
-	/**
-	 * @param components
-	 */
-	private EntityComponentSet(EntityComponent[] components) {
-		for (EntityComponent component : components) {
-			add(component.getClass());
-		}
-	}
-
 	/**
 	 * Get an {@link EntityComponentSet} that matches the given array of {@code Classes}.
 	 * <p>
