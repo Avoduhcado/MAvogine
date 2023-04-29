@@ -1,19 +1,18 @@
 package com.avogine.ecs.components;
 
-import com.avogine.ecs.*;
+import com.avogine.ecs.EntityComponent;
+import com.avogine.render.data.mesh.Mesh;
 
 /**
- *
+ * @param meshIndices an array of {@link Mesh} IDs used in rendering this component.
  */
-public class MeshComponent extends EntityComponent {
-
-	private int[] meshIndices;
+public record MeshComponent(int[] meshIndices) implements EntityComponent {
 	
 	/**
 	 * 
 	 */
 	public MeshComponent() {
-		meshIndices = new int[0];
+		this(new int[0]);
 	}
 	
 	/**
@@ -21,28 +20,6 @@ public class MeshComponent extends EntityComponent {
 	 * @param meshIndex
 	 */
 	public MeshComponent(int meshIndex) {
-		meshIndices = new int[] {meshIndex};
+		this(new int[] {meshIndex});
 	}
-	
-	/**
-	 * @param meshIndices
-	 */
-	public MeshComponent(int[] meshIndices) {
-		this.meshIndices = meshIndices;
-	}
-	
-	/**
-	 * @return the array of Meshes used by this component
-	 */
-	public int[] getMeshes() {
-		return meshIndices;
-	}
-	
-	/**
-	 * @param meshIndices the Meshes to set
-	 */
-	public void setMeshes(int[] meshIndices) {
-		this.meshIndices = meshIndices;
-	}
-	
 }

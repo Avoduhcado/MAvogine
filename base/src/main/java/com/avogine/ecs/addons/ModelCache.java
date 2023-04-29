@@ -1,12 +1,14 @@
-package com.avogine.render.loader.assimp;
+package com.avogine.ecs.addons;
 
 import java.util.*;
+import java.util.function.Supplier;
 
-import com.avogine.ecs.EntitySystemAddon;
+import com.avogine.ecs.*;
 import com.avogine.render.data.mesh.Model;
+import com.avogine.render.loader.assimp.StaticModelLoader;
 
 /**
- *
+ * TODO Should this be a singleton? Could be possible to support multiple model caches, but I'm not sure why.
  */
 public class ModelCache implements EntitySystemAddon {
 
@@ -46,6 +48,14 @@ public class ModelCache implements EntitySystemAddon {
 	 */
 	public Model putModel(String modelName, Model model) {
 		return modelMap.put(modelName, model);
+	}
+
+	/**
+	 * @param manager
+	 * @return
+	 */
+	public static Supplier<? extends ModelCache> registerModelCache(EntityManager manager) {
+		return () -> (ModelCache) manager.registerAddon(new ModelCache());
 	}
 	
 }

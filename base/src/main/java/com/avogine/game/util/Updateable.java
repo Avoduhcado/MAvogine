@@ -3,7 +3,7 @@ package com.avogine.game.util;
 /**
  * Interface for marking an object as something that should be updated once per game loop.
  */
-public non-sealed interface Updateable extends Registerable {
+public non-sealed interface Updateable extends GameListener {
 
 	/**
 	 * This will be called once per game loop and should be where any recurring logic is performed.

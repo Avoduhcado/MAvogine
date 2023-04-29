@@ -1,6 +1,7 @@
 package com.avogine.game;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import com.avogine.game.scene.Scene;
 import com.avogine.game.util.*;
@@ -8,15 +9,13 @@ import com.avogine.io.Window;
 import com.avogine.io.listener.InputListener;
 
 /**
- *
+ * TODO Add an ECSGame subclass or some type of configuration to denote this is an ECS capable Game
+ * to avoid the necessity to always cast scene to an ECSScene.
  */
 public abstract class Game {
 	
-	private final List<Updateable> updateables;
-	private final List<Renderable> renderables;
-	private final List<Cleanupable> cleanupables;
-	
-	private final Queue<Registerable> registrationQueue;
+	private final Queue<GameListener> registrationQueue;
+	private final List<GameListener> gameListeners;
 	
 	private final List<InputListener> inputListeners;
 	
@@ -25,10 +24,8 @@ public abstract class Game {
 	private Scene nextScene;
 	
 	protected Game() {
-		updateables = new ArrayList<>();
-		renderables = new ArrayList<>();
-		cleanupables = new ArrayList<>();
 		registrationQueue = new LinkedList<>();
+		gameListeners = new ArrayList<>();
 		inputListeners = new ArrayList<>();
 	}
 
@@ -68,7 +65,7 @@ public abstract class Game {
 	 */
 	public void update(float interval) {
 		var gameState = new GameState(getCurrentScene(), interval);
-		updateables.forEach(update -> update.onUpdate(gameState));
+		getListenersOfType(Updateable.class).forEach(update -> update.onUpdate(gameState));
 	}
 	
 	/**
@@ -83,7 +80,7 @@ public abstract class Game {
 		scene.prepareRender();
 		
 		var sceneState = new SceneState(getCurrentScene());
-		renderables.forEach(render -> render.onRender(sceneState));
+		getListenersOfType(Renderable.class).forEach(render -> render.onRender(sceneState));
 	}
 	
 	/**
@@ -93,14 +90,14 @@ public abstract class Game {
 	 * in the {@code init()} method like meshes, shaders, etc.
 	 */
 	public void cleanup() {
-		cleanupables.forEach(Cleanupable::onCleanup);
+		getListenersOfType(Cleanupable.class).forEach(Cleanupable::onCleanup);
 	}
 	
 	/**
-	 * Add a {@link Registerable} to the registration queue to be added later.
+	 * Add a {@link GameListener} to the registration queue to be added later.
 	 * @param registerable
 	 */
-	public void register(Registerable registerable) {
+	public void register(GameListener registerable) {
 		this.registrationQueue.add(registerable);
 	}
 	
@@ -112,9 +109,7 @@ public abstract class Game {
 			scene = nextScene;
 			nextScene = null;
 			
-			this.updateables.clear();
-			this.renderables.clear();
-			this.cleanupables.clear();
+			gameListeners.clear();
 			
 //			window.getInput().removeAllListeners();
 			removeSceneInputListeners();
@@ -122,77 +117,17 @@ public abstract class Game {
 			scene.init(this, window);
 		}
 		
-		while (registrationQueue.size() > 0) {
-			// I would like to use some sealed interfaces here and a pattern matching switch, but many registerables will implement multiple subtypes
-			// and thus cause the switch to skip over things. Resorting to an if block until a better solution presents itself.
+		while (!registrationQueue.isEmpty()) {
 			var registerable = registrationQueue.poll();
-			if (registerable instanceof Updateable u) {
-				addUpdateable(u);
-			}
-			if (registerable instanceof Renderable r) {
-				addRenderable(r);
-			}
-			if (registerable instanceof Cleanupable c) {
-				addCleanupable(c);
-			}
+			gameListeners.add(registerable);
+			registerable.onRegister(this);
 		}
 	}
 	
-	/**
-	 * Add a new {@link Updateable} object to this {@link Game}.
-	 * <p>
-	 * {@code Updateable}s linked to this Game will have their {@link Updateable#onUpdate(GameState)} method called once per frame.
-	 * @param updateable The {@code Updateable} to add.
-	 */
-	protected void addUpdateable(Updateable updateable) {
-		this.updateables.add(updateable);
-		updateable.onRegister(this);
-	}
-	
-	/**
-	 * Remove an {@link Updateable} from this {@link Game}.
-	 * @param updateable The {@code Updateable} to remove.
-	 */
-	protected void removeUpdateable(Updateable updateable) {
-		this.updateables.remove(updateable);
-	}
-	
-	/**
-	 * Add a new {@link Renderable} object to this {@link Game}.
-	 * <p>
-	 * {@code Renderable}s linked to this Game will have their {@link Renderable#onRender(SceneState)} method called once per frame.
-	 * @param renderable The {@code Renderable} to add.
-	 */
-	protected void addRenderable(Renderable renderable) {
-		this.renderables.add(renderable);
-		renderable.onRegister(this);
-	}
-	
-	/**
-	 * Remove a {@link Renderable} from this {@link Game}.
-	 * @param renderable The {@code Renderable} to remove.
-	 */
-	protected void removeRenderable(Renderable renderable) {
-		this.renderables.remove(renderable);
-	}
-	
-	/**
-	 * Add a new {@link Cleanupable} object to this {@link Game}.
-	 * <p>
-	 * {@code Cleanupable}s linked to this Game will have their {@link Cleanupable#onCleanup()} method called once when the game is terminated.
-	 * @param cleanupable The {@code Cleanupable} to add.
-	 */
-	protected void addCleanupable(Cleanupable cleanupable) {
-		this.cleanupables.add(cleanupable);
-		cleanupable.onRegister(this);
-	}
-	
-	/**
-	 * Remove a {@link Cleanupable} from this {@link Game}.
-	 * @param cleanupable The {@code Cleanupable} to remove.
-	 */
-	protected void removeCleanupable(Cleanupable cleanupable) {
-		this.cleanupables.remove(cleanupable);
+	protected <T extends GameListener> Stream<T> getListenersOfType(Class<T> clazz) {
+		return gameListeners.stream()
+				.filter(clazz::isInstance)
+				.map(clazz::cast);
 	}
 	
 	/**
