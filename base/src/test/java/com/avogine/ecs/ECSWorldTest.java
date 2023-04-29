@@ -2,14 +2,15 @@ package com.avogine.ecs;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.*;
+import java.io.IOException;
+import java.util.UUID;
 
-import org.joml.*;
+import org.joml.Vector3f;
 import org.junit.jupiter.api.*;
 
 import com.avogine.ecs.components.*;
-import com.avogine.io.serializer.*;
-import com.fasterxml.jackson.core.*;
+import com.avogine.io.serializer.SceneMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
  *
@@ -18,7 +19,7 @@ class ECSWorldTest {
 	
 	private TestGame game;
 	private TestScene scene;
-	private EntityWorld world;
+	private EntityManager world;
 	
 	@BeforeEach
 	void setup() {
@@ -28,7 +29,7 @@ class ECSWorldTest {
 		scene = new TestScene();
 		scene.init(game, null);
 		
-		world = scene.getEntityWorld();
+		world = scene.getEntityManager();
 	}
 	
 	@AfterEach
@@ -40,22 +41,22 @@ class ECSWorldTest {
 	void spawnUniqueEntities() {
 		// TODO Generate some entity IDs to store in the world and attach components to
 		// Verify that each ID generated is unique; store them in a Set and assert the length?
-		long entity1 = world.createEntity();
-		long entity2 = world.createEntity();
-		long entity3 = world.createEntity();
+		var entity1 = world.createEntity();
+		var entity2 = world.createEntity();
+		var entity3 = world.createEntity();
 		
 		assertNotEquals(entity1, entity2);
 		assertNotEquals(entity2, entity3);
 		
-		EntityArchetype arch1 = new EntityArchetype(TransformComponent.class, MeshComponent.class);
-		EntityArchetype arch2 = new EntityArchetype(TransformComponent.class, MeshComponent.class);
-		EntityArchetype arch3 = new EntityArchetype(TransformComponent.class);
+		EntityComponentSet arch1 = EntityComponentSet.of(TransformComponent.class, MeshComponent.class);
+		EntityComponentSet arch2 = EntityComponentSet.of(TransformComponent.class, MeshComponent.class);
+		EntityComponentSet arch3 = EntityComponentSet.of(TransformComponent.class);
 		
 		assertEquals(arch1, arch2);
 		assertNotEquals(arch2, arch3);
 		
-		world.createEntityWith(arch1);
-		world.createEntityWith(arch2);
+		world.createEntityWith(new TransformComponent(), new MeshComponent());
+		world.createEntityWith(new TransformComponent(), new MeshComponent());
 		
 		assertEquals(2, world.getChunks().size());
 		
@@ -83,25 +84,25 @@ class ECSWorldTest {
 	
 	@Test
 	void appendToEmptyEntity() {
-		long entity1 = world.createEntity();
+		var entity1 = world.createEntity();
 		assertEquals(1, world.getChunks().size());
 		
 		world.addComponent(entity1, new TransformComponent());
 		assertEquals(1, world.getChunks().size());
-		assertEquals(1, world.getEntity(entity1).size());
+		assertEquals(1, world.getEntity(entity1).orElseThrow().size());
 	}
 	
 	@Test
 	void appendToAddNewEntity() {
-		long unsafeEntityID = 1;
+		var unsafeEntityID = UUID.randomUUID();
 		world.addComponent(unsafeEntityID, new TransformComponent());
 		assertEquals(1, world.getChunks().size());
-		assertEquals(1, world.getEntity(unsafeEntityID).size());
+		assertEquals(1, world.getEntity(unsafeEntityID).orElseThrow().size());
 	}
 	
 	@Test
 	void removeEntity() {
-		long entity = world.createEntity();
+		var entity = world.createEntity();
 		assertEquals(1, world.getChunks().size());
 		
 		world.removeEntity(entity);
@@ -110,17 +111,17 @@ class ECSWorldTest {
 	
 	@Test
 	void removeComponent() {
-		long entity1 = world.createEntity();
+		var entity1 = world.createEntity();
 		assertEquals(1, world.getChunks().size());
 		
 		var entityTransform = new TransformComponent();
 		world.addComponent(entity1, entityTransform);
 		assertEquals(1, world.getChunks().size());
-		assertEquals(1, world.getEntity(entity1).size());
+		assertEquals(1, world.getEntity(entity1).orElseThrow().size());
 		
 		world.removeComponent(entity1, entityTransform);
 		assertEquals(1, world.getChunks().size());
-		assertEquals(0, world.getEntity(entity1).size());
+		assertEquals(0, world.getEntity(entity1).orElseThrow().size());
 	}
 	
 }

@@ -134,7 +134,7 @@ public class Input {
 	 * @param clazz
 	 * @return a {@code Stream} of {@link InputListener}s that are all the same type as {@code clazz}
 	 */
-	public <T extends InputListener> Stream<T> getListenersOfType(Class<T> clazz) {
+	private <T extends InputListener> Stream<T> getListenersOfType(Class<T> clazz) {
 		return listeners.stream()
 				.filter(clazz::isInstance)
 				.map(clazz::cast);

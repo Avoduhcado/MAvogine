@@ -2,14 +2,14 @@ package com.avogine.game.scene;
 
 import org.joml.Matrix4f;
 
-import com.avogine.ecs.EntityWorld;
+import com.avogine.ecs.EntityManager;
 
 /**
  *
  */
 public abstract class ECSScene extends Scene {
 
-	protected final EntityWorld entityWorld;
+	protected final EntityManager entityManager;
 	
 	protected ECSScene() {
 		this(new Matrix4f(), new Matrix4f());
@@ -17,14 +17,14 @@ public abstract class ECSScene extends Scene {
 	
 	protected ECSScene(Matrix4f projection, Matrix4f view) {
 		super(projection, view);
-		entityWorld = new EntityWorld();
+		entityManager = new EntityManager();
 	}
 	
 	/**
-	 * @return the entityWorld
+	 * @return the entityManager
 	 */
-	public EntityWorld getEntityWorld() {
-		return entityWorld;
+	public EntityManager getEntityManager() {
+		return entityManager;
 	}
 
 }
