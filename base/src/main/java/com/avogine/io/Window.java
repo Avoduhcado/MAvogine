@@ -1,6 +1,5 @@
 package com.avogine.io;
 
-import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.*;
 
@@ -10,10 +9,9 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
-import com.avogine.experimental.annotation.InDev;
 import com.avogine.game.ui.nuklear.AvoNuklear;
-import com.avogine.logging.AvoLog;
 import com.avogine.util.PropertiesUtil;
+import com.avogine.util.resource.ResourceFileReader;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.
@@ -64,7 +62,6 @@ public class Window {
 	 * @param input 
 	 * @param gui
 	 */
-	@InDev
 	public void init(Input input, AvoNuklear gui) {
 		GLFWErrorCallback.createPrint().set();
 		
@@ -122,7 +119,7 @@ public class Window {
 		}
 		
 		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
-			GLFW.glfwSetWindowOpacity(id, 0.5f);
+			GLFW.glfwSetWindowOpacity(id, 1.0f);
 		}
 		
 		targetFPS = 1.0 / TARGET_FPS_FOCUS;
@@ -133,7 +130,7 @@ public class Window {
 		GL.createCapabilities();
 		
 		// All of this should be handled through settings in WindowOptions
-		GL11.glClearColor(properties.clearColor[0], properties.clearColor[1], properties.clearColor[2], properties.clearColor[3]);
+		GL11.glClearColor(properties.clearColor[0], properties.clearColor[1], properties.clearColor[2], 0);
 		
 		if (properties.depthTest) {
 			GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -170,7 +167,7 @@ public class Window {
 		});
 		
 		GLFW.glfwSetWindowPosCallback(id, (window, x, y) -> {
-			AvoLog.log().debug("x: {} y: {}", x, y);
+//			AvoLog.log().debug("x: {} y: {}", x, y);
 		});
 		
 		if (GLFW.glfwRawMouseMotionSupported()) {
@@ -197,12 +194,7 @@ public class Window {
 	}
 
 	private void initProperties() {
-		Properties prop = new Properties();
-		try (var inputStream = getClass().getClassLoader().getResourceAsStream("window.properties")) {
-			prop.load(inputStream);
-		} catch (IOException e) {
-			AvoLog.log().error("Error loading window properties", e);
-		}
+		Properties prop = ResourceFileReader.readPropertiesFile("window");
 		properties = new WindowProperties(
 				PropertiesUtil.getBoolean(prop, "fullscreen", false),
 				PropertiesUtil.getBoolean(prop, "vsync", false),

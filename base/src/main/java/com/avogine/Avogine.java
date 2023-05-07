@@ -31,6 +31,7 @@ public class Avogine implements Runnable {
 	private final Input input;
 	private final AvoNuklear gui;
 	private final Timer timer;
+	private final Audio audio;
 	
 	/**
 	 * @param window The primary game {@link Window} to display to
@@ -44,6 +45,7 @@ public class Avogine implements Runnable {
 		input = new Input();
 		gui = new AvoNuklear();
 		timer = new Timer();
+		audio = new Audio();
 	}
 	
 	/**
@@ -79,6 +81,7 @@ public class Avogine implements Runnable {
 		window.init(input, gui);
 		game.init(window);
 		timer.init();
+		audio.init();
 	}
 	
 	private void loop() {

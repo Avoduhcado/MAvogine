@@ -1,8 +1,6 @@
 package com.avogine.render.loader.texture;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.avogine.render.data.TextureAtlas;
 
@@ -41,6 +39,7 @@ public class TextureCache {
 
 	public void cleanup() {
 		textureMap.values().forEach(TextureAtlas::cleanup);
+		textureMap.clear();
 	}
 	
 }

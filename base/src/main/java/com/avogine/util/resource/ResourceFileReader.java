@@ -2,16 +2,16 @@ package com.avogine.util.resource;
 
 import java.io.*;
 import java.net.*;
-import java.nio.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
 import java.util.stream.*;
 
-import org.lwjgl.*;
+import org.lwjgl.BufferUtils;
 
-import com.avogine.logging.*;
+import com.avogine.logging.AvoLog;
 
 /**
  * Static utility for reading resource files.
@@ -45,6 +45,23 @@ public class ResourceFileReader {
 		}
 
 		return fileContents;
+	}
+	
+	/**
+	 * Read a properties file and return the loaded {@link Properties} or an empty one if no file was found.
+	 * <p>
+	 * TODO Create file if no file is found
+	 * @param filePath The name of the file without an extension.
+	 * @return The loaded {@link Properties} or an empty one if no file was found.
+	 */
+	public static Properties readPropertiesFile(String filePath) {
+		Properties prop = new Properties();
+		try (var inputStream = ResourceFileReader.class.getResourceAsStream("/" + filePath + ".properties")) {
+			prop.load(inputStream);
+		} catch (IOException e) {
+			AvoLog.log().error("Error loading {} properties", filePath, e);
+		}
+		return prop;
 	}
 	
 	/**

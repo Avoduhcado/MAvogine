@@ -1,18 +1,13 @@
 package com.avogine.audio.loader;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
+import java.nio.*;
 
 import org.lwjgl.openal.AL10;
-import org.lwjgl.stb.STBVorbis;
-import org.lwjgl.stb.STBVorbisInfo;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.stb.*;
+import org.lwjgl.system.*;
 
 import com.avogine.audio.data.AudioBuffer;
-import com.avogine.util.resource.ResourceConstants;
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.util.resource.*;
 
 /**
  *
