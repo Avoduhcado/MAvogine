@@ -29,12 +29,6 @@ public class Audio {
 	private String defaultInitializedDevice;
 
 	/**
-	 * 
-	 */
-	public Audio() {
-	}
-	
-	/**
 	 * Initialize the OpenAL subsystem:
 	 * <ul>
 	 * <li>Open the default device.
@@ -127,7 +121,7 @@ public class Audio {
 				case SOFTEvents.AL_EVENT_TYPE_BUFFER_COMPLETED_SOFT ->
 					AvoLog.log().debug("Buffer completed?");
 				default ->
-					System.out.println("Event of type: " + eventType);
+					AvoLog.log().debug("Event of type: {}", eventType);
 				}
 			}, (ByteBuffer) null);
 			int[] eventTypes = new int[] { SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT };

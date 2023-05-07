@@ -12,7 +12,7 @@ import com.avogine.game.util.*;
 /**
  *
  */
-public class AudioSystem extends EntitySystem implements Updateable, Cleanupable {
+public class AudioSystem extends EntitySystem implements Updateable {
 
 	private static record SourceArchetype(UUID id, AudioSourceComponent audioSource, TransformComponent transform) implements EntityArchetype {}
 	private static record ListenerArchetype(UUID id, AudioListenerTag tag, TransformComponent transform) implements EntityArchetype {}
@@ -28,16 +28,17 @@ public class AudioSystem extends EntitySystem implements Updateable, Cleanupable
 	
 	@Override
 	public void onRegister(Game game) {
+		// Nothing to register
 	}
 
 	@Override
 	public void onUpdate(GameState gameState) {
 		if (gameState.scene() instanceof ECSScene scene) {
-			updateSources(scene.getEntityManager(), gameState.delta());
+			updateSources(scene.getEntityManager());
 		}
 	}
 	
-	private void updateSources(EntityManager manager, float delta) {
+	private void updateSources(EntityManager manager) {
 		manager.query(ListenerArchetype.class).findFirst().ifPresent(listener -> {
 			audioListener.setPosition(listener.transform.position());
 			audioListener.setOrientation(listener.transform.orientation());
@@ -50,11 +51,6 @@ public class AudioSystem extends EntitySystem implements Updateable, Cleanupable
 			
 			source.audioSource.source().setPosition(source.transform.position());
 		});
-	}
-
-	@Override
-	public void onCleanup() {
-		
 	}
 
 }

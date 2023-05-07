@@ -166,10 +166,6 @@ public class Window {
 //			}
 		});
 		
-		GLFW.glfwSetWindowPosCallback(id, (window, x, y) -> {
-//			AvoLog.log().debug("x: {} y: {}", x, y);
-		});
-		
 		if (GLFW.glfwRawMouseMotionSupported()) {
 			GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
 		}
