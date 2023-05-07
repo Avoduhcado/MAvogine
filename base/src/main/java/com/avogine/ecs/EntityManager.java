@@ -67,9 +67,9 @@ public class EntityManager {
 		chunks.stream()
 		.filter(chunk -> chunk.containsEntity(entityID))
 		.findFirst()
-		.ifPresent(chunk -> chunk.removeComponentMap(entityID));
+		.ifPresent(chunk -> chunk.removeComponentMap(entityID, true));
 		
-		cleanUpChunks();
+		removeEmptyChunks();
 	}
 	
 	/**
@@ -135,10 +135,10 @@ public class EntityManager {
 		})
 		.addComponentMap(entityID, componentMap);
 
-		cleanUpChunks();
+		removeEmptyChunks();
 	}
 	
-	private void cleanUpChunks() {
+	private void removeEmptyChunks() {
 		chunks.removeIf(chunk -> chunk.getComponentMaps().isEmpty());
 	}
 	

@@ -12,17 +12,15 @@ public class AudioSource {
 
 	/**
 	 * 
-	 * @param loop indicates if the sound to be played should be in loop mode or not
-	 * @param relative controls if the position of the source is relative to the listener or not
+	 * @param loop If the sound should restart playing when it ends.
+	 * @param relative If the position of the source is relative to the listener or not.
+	 * Note that 3D audio will only work with mono (single channel) sounds. Any stereo sounds will ignore all
+	 * source relative/distance fall-off settings.
 	 */
 	public AudioSource(boolean loop, boolean relative) {
 		this.sourceId = AL10.alGenSources();
-		if (loop) {
-			AL10.alSourcei(sourceId, AL10.AL_LOOPING, AL10.AL_TRUE);
-		}
-		if (relative) {
-			AL10.alSourcei(sourceId, AL10.AL_SOURCE_RELATIVE, AL10.AL_TRUE);
-		}
+		AL10.alSourcei(sourceId, AL10.AL_LOOPING, loop ? AL10.AL_TRUE : AL10.AL_FALSE);
+		AL10.alSourcei(sourceId, AL10.AL_SOURCE_RELATIVE, relative ? AL10.AL_TRUE : AL10.AL_FALSE);
 	}
 
 	public void setBuffer(int bufferId) {
@@ -34,24 +32,24 @@ public class AudioSource {
 		AL10.alSource3f(sourceId, AL10.AL_POSITION, position.x, position.y, position.z);
 	}
 
-	public void setSpeed(Vector3f speed) {
+	public void setVelocity(Vector3f speed) {
 		AL10.alSource3f(sourceId, AL10.AL_VELOCITY, speed.x, speed.y, speed.z);
 	}
 
 	public void setGain(float gain) {
 		AL10.alSourcef(sourceId, AL10.AL_GAIN, gain);
 	}
-
-	public void setProperty(int param, float value) {
-		AL10.alSourcef(sourceId, param, value);
+	
+	public boolean isInitial() {
+		return AL10.alGetSourcei(sourceId, AL10.AL_SOURCE_STATE) == AL10.AL_INITIAL;
+	}
+	
+	public boolean isPlaying() {
+		return AL10.alGetSourcei(sourceId, AL10.AL_SOURCE_STATE) == AL10.AL_PLAYING;
 	}
 
 	public void play() {
 		AL10.alSourcePlay(sourceId);
-	}
-
-	public boolean isPlaying() {
-		return AL10.alGetSourcei(sourceId, AL10.AL_SOURCE_STATE) == AL10.AL_PLAYING;
 	}
 
 	public void pause() {

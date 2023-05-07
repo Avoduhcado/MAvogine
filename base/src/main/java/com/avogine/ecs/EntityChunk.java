@@ -93,12 +93,28 @@ public class EntityChunk implements Serializable {
 	}
 	
 	/**
-	 * 
-	 * @param entityID
-	 * @return
+	 * Remove an {@link EntityComponentMap} from this chunk and optionally cleanup all components.
+	 * @param entityID The ID of the entity to remove.
+	 * @param cleanup If true this will additionally call {@link EntityComponent#cleanup()} on all components contained in the map.
+	 * Useful if you're deleting the entity from the game, but this method is also used to reorganize chunks and should not be
+	 * performing cleanups.
+	 * @return The removed {@link EntityComponentMap} or null if no matching ID was found.
+	 */
+	public EntityComponentMap removeComponentMap(UUID entityID, boolean cleanup) {
+		var map = componentsMap.remove(entityID);
+		if (map != null && cleanup) {
+			map.values().forEach(EntityComponent::cleanup);
+		}
+		return map;
+	}
+	
+	/**
+	 * Remove an {@link EntityComponentMap} from this chunk and do not cleanup components.
+	 * @param entityID The ID of the entity to remove.
+	 * @return The removed {@link EntityComponentMap} or null if no matching ID was found.
 	 */
 	public EntityComponentMap removeComponentMap(UUID entityID) {
-		return componentsMap.remove(entityID);
+		return removeComponentMap(entityID, false);
 	}
 	
 	/**
