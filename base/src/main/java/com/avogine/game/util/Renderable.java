@@ -5,7 +5,7 @@ import com.avogine.game.scene.Scene;
 /**
  *
  */
-public non-sealed interface Renderable extends Registerable {
+public non-sealed interface Renderable extends GameListener {
 
 	/**
 	 * This will be called once per frame refresh and should handle rendering the current state of the {@link Scene}.

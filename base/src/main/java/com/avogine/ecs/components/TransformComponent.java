@@ -2,29 +2,13 @@ package com.avogine.ecs.components;
 
 import org.joml.*;
 
-import com.avogine.ecs.*;
+import com.avogine.ecs.EntityComponent;
 
 /**
  *
  */
-public class TransformComponent extends EntityComponent {
+public record TransformComponent(Vector3f position, Quaternionf orientation, Vector3f scale) implements EntityComponent {
 
-	private final Vector3f position;
-	private final Quaternionf orientation;
-	private final Vector3f scale;
-
-	/**
-	 * 
-	 * @param position
-	 * @param orientation 
-	 * @param scale
-	 */
-	public TransformComponent(Vector3f position, Quaternionf orientation, Vector3f scale) {
-		this.position = position;
-		this.orientation = orientation;
-		this.scale = scale;
-	}
-	
 	/**
 	 * 
 	 * @param position
@@ -59,13 +43,6 @@ public class TransformComponent extends EntityComponent {
 	}
 	
 	/**
-	 * @return the position
-	 */
-	public Vector3f getPosition() {
-		return position;
-	}
-
-	/**
 	 * @param x
 	 * @param y
 	 * @param z
@@ -83,13 +60,6 @@ public class TransformComponent extends EntityComponent {
 	}
 
 	/**
-	 * @return the orientation
-	 */
-	public Quaternionf getOrientation() {
-		return orientation;
-	}
-	
-	/**
 	 * 
 	 * @param x
 	 * @param y
@@ -106,13 +76,6 @@ public class TransformComponent extends EntityComponent {
 	 */
 	public void setOrientation(Quaternionf orientation) {
 		this.orientation.set(orientation);
-	}
-	
-	/**
-	 * @return the scale
-	 */
-	public Vector3f getScale() {
-		return scale;
 	}
 	
 	/**

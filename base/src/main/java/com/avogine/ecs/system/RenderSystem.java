@@ -1,22 +1,24 @@
 package com.avogine.ecs.system;
 
+import java.util.UUID;
+
 import org.joml.*;
 
 import com.avogine.ecs.*;
+import com.avogine.ecs.addons.ModelCache;
 import com.avogine.ecs.components.*;
 import com.avogine.game.Game;
 import com.avogine.game.scene.ECSScene;
 import com.avogine.game.util.*;
 import com.avogine.render.data.material.PBRMaterial;
-import com.avogine.render.loader.assimp.ModelCache;
 import com.avogine.render.shader.BasicShader;
 
 /**
  *
  */
 public class RenderSystem extends EntitySystem implements Renderable, Cleanupable {
-	
-	private EntityComponentQuery renderQuery;
+
+	private record Renderable(UUID id, TransformComponent transform, ModelComponent modelComponent) implements EntityArchetype {}
 	
 	private BasicShader basicShader;
 	
@@ -26,7 +28,6 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	 * 
 	 */
 	public RenderSystem() {
-		renderQuery = new EntityComponentQuery(EntityArchetype.of(TransformComponent.class, ModelComponent.class));
 		model = new Matrix4f();
 	}
 	
@@ -43,39 +44,40 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	}
 	
 	private void renderScene(ECSScene scene) {
-		renderQuery.fetch(scene.getEntityWorld());
-
 		basicShader.bind();
 		
 		basicShader.projection.loadMatrix(scene.getProjection());
 		basicShader.view.loadMatrix(scene.getView());
-		var modelCache = scene.getEntityWorld().getAddon(ModelCache.class);
-		
-		renderQuery.getResultMap().forEach(map -> {
-			var transform = map.getAs(TransformComponent.class);
-			var modelC = map.getAs(ModelComponent.class);
-			
-			model.identity().translationRotateScale(
-					transform.getPosition().x, transform.getPosition().y, transform.getPosition().z,
-					transform.getOrientation().x, transform.getOrientation().y, transform.getOrientation().z, transform.getOrientation().w,
-					transform.getScale().x, transform.getScale().y, transform.getScale().z);
-			basicShader.model.loadMatrix(model);
 
-			var realModel = modelCache.getModel(modelC.getModel(), "");
-			if (realModel.getMaterial(0) instanceof PBRMaterial tex) {
-				basicShader.uvTransform.loadMatrix(tex.uvTransform());
-			} else {
-				basicShader.uvTransform.loadMatrix(new Matrix3f());
-			}
-			realModel.render();
+		var modelCache = scene.getEntityManager().getAddon(ModelCache.class)
+				.orElseGet(ModelCache.registerModelCache(scene.getEntityManager()));
+		
+		scene.getEntityManager().query(Renderable.class).forEach(renderable -> {
+			renderEntity(renderable, modelCache);
 		});
 		
 		basicShader.unbind();
 	}
+	
+	private void renderEntity(Renderable entity, ModelCache modelCache) {
+		model.identity().translationRotateScale(
+				entity.transform.position().x, entity.transform.position().y, entity.transform.position().z,
+				entity.transform.orientation().x, entity.transform.orientation().y, entity.transform.orientation().z, entity.transform.orientation().w,
+				entity.transform.scale().x, entity.transform.scale().y, entity.transform.scale().z);
+		basicShader.model.loadMatrix(model);
 
+		var realModel = modelCache.getModel(entity.modelComponent.model(), "");
+		if (realModel.getMaterial(0) instanceof PBRMaterial tex) {
+			basicShader.uvTransform.loadMatrix(tex.uvTransform());
+		} else {
+			basicShader.uvTransform.loadMatrix(new Matrix3f());
+		}
+		realModel.render();
+	}
+	
 	@Override
 	public void onCleanup() {
 		basicShader.cleanup();
 	}
-
+	
 }

@@ -33,12 +33,13 @@ public class TextureCache {
 		return textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().reduce((a, b) -> a + " " + b).get(), v -> TextureLoader.loadCubemap(textureFiles));
 	}
 	
-	public Texture getCubemap(String directory) {
-		return textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory));
+	public Texture getCubemap(String directory, String fileType) {
+		return textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory, fileType));
 	}
 
 	public void cleanup() {
 		textureMap.values().forEach(Texture::cleanup);
+		textureMap.clear();
 	}
 	
 }

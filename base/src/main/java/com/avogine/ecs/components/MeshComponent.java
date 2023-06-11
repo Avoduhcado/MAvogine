@@ -1,19 +1,20 @@
 package com.avogine.ecs.components;
 
-import com.avogine.ecs.*;
+import java.util.Arrays;
+
+import com.avogine.ecs.EntityComponent;
+import com.avogine.render.data.mesh.Mesh;
 
 /**
- *
+ * @param meshIndices an array of {@link Mesh} IDs used in rendering this component.
  */
-public class MeshComponent extends EntityComponent {
-
-	private int[] meshIndices;
+public record MeshComponent(int[] meshIndices) implements EntityComponent {
 	
 	/**
 	 * 
 	 */
 	public MeshComponent() {
-		meshIndices = new int[0];
+		this(new int[0]);
 	}
 	
 	/**
@@ -21,28 +22,34 @@ public class MeshComponent extends EntityComponent {
 	 * @param meshIndex
 	 */
 	public MeshComponent(int meshIndex) {
-		meshIndices = new int[] {meshIndex};
+		this(new int[] {meshIndex});
 	}
 	
-	/**
-	 * @param meshIndices
-	 */
-	public MeshComponent(int[] meshIndices) {
-		this.meshIndices = meshIndices;
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(meshIndices);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MeshComponent other = (MeshComponent) obj;
+		if (!Arrays.equals(meshIndices, other.meshIndices))
+			return false;
+		return true;
 	}
 	
-	/**
-	 * @return the array of Meshes used by this component
-	 */
-	public int[] getMeshes() {
-		return meshIndices;
+	@Override
+	public String toString() {
+		return "MeshComponent [meshIndices=" + Arrays.toString(meshIndices) + "]";
 	}
-	
-	/**
-	 * @param meshIndices the Meshes to set
-	 */
-	public void setMeshes(int[] meshIndices) {
-		this.meshIndices = meshIndices;
-	}
-	
+
 }

@@ -1,7 +1,8 @@
 package com.avogine.ecs;
 
-import com.avogine.game.*;
-import com.avogine.game.scene.*;
+import com.avogine.game.Game;
+import com.avogine.game.scene.Scene;
+import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.io.*;
 
 /**
@@ -10,7 +11,7 @@ import com.avogine.io.*;
 public class TestGame extends Game {
 
 	@Override
-	public void init(Window window) {
+	public void init(Window window, Audio audio, NuklearUI gui) {
 		// Not Implemented
 	}
 

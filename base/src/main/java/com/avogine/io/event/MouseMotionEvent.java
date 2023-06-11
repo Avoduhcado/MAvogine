@@ -20,5 +20,17 @@ public record MouseMotionEvent(float xPosition, float yPosition, float xDelta, f
 	public MouseMotionEvent(double xPosition, double yPosition, double xDelta, double yDelta, long window) {
 		this((float) xPosition, (float) yPosition, (float) xDelta, (float) yDelta, window);
 	}
+
+	@Override
+	public void consume() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isConsumed() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
 }

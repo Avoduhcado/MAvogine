@@ -1,30 +1,30 @@
 package com.avogine.game.ui.nuklear;
 
-import static org.lwjgl.glfw.Callbacks.*;
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.nuklear.Nuklear.*;
 import static org.lwjgl.opengl.ARBDebugOutput.*;
 import static org.lwjgl.opengl.GL11C.*;
-import static org.lwjgl.opengl.GL12C.*;
+import static org.lwjgl.opengl.GL12C.GL_UNSIGNED_INT_8_8_8_8_REV;
 import static org.lwjgl.opengl.GL13C.*;
 import static org.lwjgl.opengl.GL14C.*;
 import static org.lwjgl.opengl.GL15C.*;
 import static org.lwjgl.opengl.GL20C.*;
 import static org.lwjgl.opengl.GL30C.*;
 import static org.lwjgl.stb.STBTruetype.*;
-import static org.lwjgl.system.MemoryStack.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.*;
 
 import java.nio.*;
-import java.util.*;
+import java.util.Objects;
 
-import org.lwjgl.glfw.*;
+import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
-import com.avogine.util.resource.*;
+import com.avogine.util.resource.ResourceFileReader;
 
 /**
  * Nuklear demo using GLFW, OpenGL and stb_truetype for rendering.
@@ -573,7 +573,7 @@ public class GLFWDemo {
 						.vertex_layout(VERTEX_LAYOUT)
 						.vertex_size(20)
 						.vertex_alignment(4)
-						.null_texture(null_texture)
+						.tex_null(null_texture)
 						.circle_segment_count(22)
 						.curve_segment_count(22)
 						.arc_segment_count(22)
