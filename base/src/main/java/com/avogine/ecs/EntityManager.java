@@ -42,7 +42,7 @@ public class EntityManager {
 		for (EntityComponent component : components) {
 			componentMap.put(component.getClass(), component);
 		}
-		var componentSet = EntityComponentSet.of(components);
+		var componentSet = EntityComponentSet.of(componentMap.keySet());
 		storeChunk(entityID, componentSet, componentMap);
 		
 		return entityID;
@@ -94,12 +94,12 @@ public class EntityManager {
 		.ifPresentOrElse(chunk -> {
 			EntityComponentMap entityMap = chunk.removeComponentMap(entityID);
 			entityMap.put(component.getClass(), component);
-			storeChunk(entityID, EntityComponentSet.of(entityMap.values().toArray(new EntityComponent[0])), entityMap);
+			storeChunk(entityID, EntityComponentSet.of(entityMap.keySet()), entityMap);
 		}, () -> {
 			// Not preferred, but this method can be used to store a new entity
 			var entityMap = new EntityComponentMap();
 			entityMap.put(component.getClass(), component);
-			storeChunk(entityID, EntityComponentSet.of(entityMap.values().toArray(new EntityComponent[0])), entityMap);
+			storeChunk(entityID, EntityComponentSet.of(entityMap.keySet()), entityMap);
 		});
 	}
 	
@@ -114,7 +114,7 @@ public class EntityManager {
 		.ifPresent(chunk -> {
 			EntityComponentMap entityMap = chunk.removeComponentMap(entityID);
 			entityMap.remove(component.getClass());
-			storeChunk(entityID, EntityComponentSet.of(entityMap.values().toArray(new EntityComponent[0])), entityMap);
+			storeChunk(entityID, EntityComponentSet.of(entityMap.keySet()), entityMap);
 		});
 	}
 

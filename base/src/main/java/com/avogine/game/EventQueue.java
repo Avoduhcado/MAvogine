@@ -1,7 +1,6 @@
 package com.avogine.game;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import com.avogine.experimental.annotation.InDev;
 import com.avogine.io.event.Event;

@@ -1,9 +1,11 @@
 package com.avogine.audio.loader;
 
+import static org.lwjgl.openal.AL10.*;
+import static org.lwjgl.stb.STBVorbis.*;
+
 import java.nio.*;
 
-import org.lwjgl.openal.AL10;
-import org.lwjgl.stb.*;
+import org.lwjgl.stb.STBVorbisInfo;
 import org.lwjgl.system.*;
 
 import com.avogine.audio.data.AudioBuffer;
@@ -16,10 +18,10 @@ public class AudioLoader {
 
 	/**
 	 * @param soundFile
-	 * @return
+	 * @return The ID of a new {@link AudioBuffer} containing the loaded sound file.
 	 */
 	public static AudioBuffer loadSound(String soundFile) {
-		int bufferID = AL10.alGenBuffers();
+		int bufferID = alGenBuffers();
 		ShortBuffer pcm;
 		
 		try (STBVorbisInfo info = STBVorbisInfo.malloc();
@@ -28,24 +30,24 @@ public class AudioLoader {
 			ByteBuffer vorbis = ResourceFileReader.ioResourceToByteBuffer(filePath, 32 * 1024);
 			
 			IntBuffer error = stack.mallocInt(1);
-			long decoder = STBVorbis.stb_vorbis_open_memory(vorbis, error, null);
+			long decoder = stb_vorbis_open_memory(vorbis, error, null);
 			if (decoder == MemoryUtil.NULL) {
+				// TODO Probably don't need a RuntimeException here, just log an error.
 				throw new RuntimeException("Failed to open Ogg Vorbis file. Error: " + error.get(0));
 			}
 
-			STBVorbis.stb_vorbis_get_info(decoder, info);
+			stb_vorbis_get_info(decoder, info);
 
 			int channels = info.channels();
+			int lengthSamples = stb_vorbis_stream_length_in_samples(decoder);
 
-			int lengthSamples = STBVorbis.stb_vorbis_stream_length_in_samples(decoder);
+			pcm = MemoryUtil.memAllocShort(lengthSamples * channels);
 
-			pcm = MemoryUtil.memAllocShort(lengthSamples);
-
-			pcm.limit(STBVorbis.stb_vorbis_get_samples_short_interleaved(decoder, channels, pcm) * channels);
-			STBVorbis.stb_vorbis_close(decoder);
+			stb_vorbis_get_samples_short_interleaved(decoder, channels, pcm);
+			stb_vorbis_close(decoder);
 
 			// Copy to buffer
-			AL10.alBufferData(bufferID, info.channels() == 1 ? AL10.AL_FORMAT_MONO16 : AL10.AL_FORMAT_STEREO16, pcm, info.sample_rate());
+			alBufferData(bufferID, info.channels() == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16, pcm, info.sample_rate());
 		}
 		
 		return new AudioBuffer(bufferID, pcm);

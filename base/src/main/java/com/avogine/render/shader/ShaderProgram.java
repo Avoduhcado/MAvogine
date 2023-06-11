@@ -2,15 +2,15 @@ package com.avogine.render.shader;
 
 import static org.lwjgl.opengl.GL20.*;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Function;
 import java.util.stream.*;
 
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL20;
 
-import com.avogine.logging.*;
-import com.avogine.render.shader.uniform.*;
+import com.avogine.logging.AvoLog;
+import com.avogine.render.shader.uniform.Uniform;
 import com.avogine.util.resource.*;
 
 /**
@@ -114,9 +114,7 @@ public abstract class ShaderProgram {
 		glShaderSource(shaderId, shaderCode);
 		glCompileShader(shaderId);
 		if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {
-			if (AvoLog.log().isErrorEnabled()) {
-				AvoLog.log().error("Error compiling shader: {}\n{}", shaderFile, glGetShaderInfoLog(shaderId, 500));
-			}
+			AvoLog.log().error("Error compiling shader: {}\n{}", shaderFile, glGetShaderInfoLog(shaderId, 500));
 			System.exit(-1);
 		}
 		
@@ -128,14 +126,12 @@ public abstract class ShaderProgram {
 	protected void link() {
 		glLinkProgram(programId);
 		if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
-			if (AvoLog.log().isErrorEnabled()) {
-				AvoLog.log().error("Error linking shader code: {}", glGetProgramInfoLog(programId));
-			}
+			AvoLog.log().error("Error linking shader code: {}", glGetProgramInfoLog(programId));
 			System.exit(-1);
 		}
 		
 		glValidateProgram(programId);
-		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0 && AvoLog.log().isWarnEnabled()) {
+		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
 			AvoLog.log().warn("Warning validating shader code: {}", glGetProgramInfoLog(programId));
 		}
 		

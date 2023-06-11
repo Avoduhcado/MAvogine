@@ -213,7 +213,7 @@ public class TextureLoader {
 				ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
 				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 0);
 				if (imageData != null) {
-					GL11.glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL11.GL_RGBA8, width.get(), height.get(), 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, imageData);
+					GL11.glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL11.GL_RGBA8, width.get(), height.get(), 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, imageData);
 					STBImage.stbi_image_free(imageData);
 				} else {
 					AvoLog.log().error("Cubemap texture failed to load at path: {}", filePath);
@@ -234,26 +234,32 @@ public class TextureLoader {
 	 * <p>
 	 * This method assumes the given directory is a valid directory and contains at least 6 files named:
 	 * <ul>
-	 * <li>right.jpg
-	 * <li>left.jpg
-	 * <li>top.jpg
-	 * <li>bottom.jpg
-	 * <li>front.jpg
-	 * <li>back.jpg
+	 * <li>right
+	 * <li>left
+	 * <li>top
+	 * <li>bottom
+	 * <li>front
+	 * <li>back
 	 * </ul>
 	 * @param directoryName The directory name contained in {@link ResourceConstants#TEXTURE_PATH}
 	 * @return
 	 */
-	protected static TextureAtlas loadCubemap(String directoryName) {
+	protected static TextureAtlas loadCubemap(String directoryName, String fileType) {
 		String texturePathPrefix = directoryName + File.separator;
-		return loadCubemap(texturePathPrefix + "right.jpg", texturePathPrefix + "left.jpg", texturePathPrefix + "top.jpg", texturePathPrefix + "bottom.jpg", texturePathPrefix + "front.jpg", texturePathPrefix + "back.jpg");
+		return loadCubemap(
+				texturePathPrefix + "right." + fileType,
+				texturePathPrefix + "left." + fileType,
+				texturePathPrefix + "top." + fileType,
+				texturePathPrefix + "bottom." + fileType,
+				texturePathPrefix + "front." + fileType,
+				texturePathPrefix + "back." + fileType);
 	}
 	
 	/**
 	 * Create a new {@code Texture} with a specified size but do not fill it with any actual data.
 	 * <p>
 	 * This should be used exclusively for {@link FrameBuffer}s as the returned {@code Texture} object <b>will not</b> be
-	 * stored in the {@link TextureCache} and is the resposibility of the creater to handle cleanup through whatever
+	 * stored in the {@link TextureCache} and is the responsibility of the creator to handle cleanup through whatever
 	 * containing object creates this {@code Texture}.
 	 * @param width the width of the Texture
 	 * @param height the height of the Texture

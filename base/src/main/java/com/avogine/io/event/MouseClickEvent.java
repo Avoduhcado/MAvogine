@@ -1,6 +1,8 @@
 package com.avogine.io.event;
 
-import org.lwjgl.glfw.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.lwjgl.glfw.GLFWMouseButtonCallbackI;
 
 /**
  *
@@ -9,7 +11,22 @@ import org.lwjgl.glfw.*;
  * @param mouseX
  * @param mouseY
  * @param window
+ * @param stopped
  */
-public record MouseClickEvent(int type, int button, float mouseX, float mouseY, long window) implements MouseEvent {
+public record MouseClickEvent(int type, int button, float mouseX, float mouseY, long window, AtomicBoolean stopped) implements MouseEvent {
+
+	public MouseClickEvent(int type, int button, float mouseX, float mouseY, long window) {
+		this(type, button, mouseX, mouseY, window, new AtomicBoolean(false));
+	}
+	
+	@Override
+	public void consume() {
+		stopped.set(true);
+	}
+
+	@Override
+	public boolean isConsumed() {
+		return stopped.get();
+	}
 	
 }

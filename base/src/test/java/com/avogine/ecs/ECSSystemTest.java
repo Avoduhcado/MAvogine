@@ -21,7 +21,7 @@ class ECSSystemTest {
 	@BeforeEach
 	void setup() {
 		game = new TestGame();
-		game.init(null);
+		game.init(null, null, null);
 		
 		scene = new TestScene();
 		scene.init(game, null);

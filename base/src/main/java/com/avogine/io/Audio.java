@@ -2,8 +2,9 @@ package com.avogine.io;
 
 import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.openal.ALC10.*;
-import static org.lwjgl.openal.ALC11.ALC_ALL_DEVICES_SPECIFIER;
+import static org.lwjgl.openal.ALC11.*;
 
+import java.io.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -11,13 +12,15 @@ import java.util.concurrent.TimeUnit;
 import org.lwjgl.openal.*;
 import org.lwjgl.system.MemoryUtil;
 
+import com.avogine.audio.data.AudioBuffer;
 import com.avogine.audio.loader.AudioCache;
+import com.avogine.io.serializer.JsonMapper;
 import com.avogine.logging.AvoLog;
-import com.avogine.util.PropertiesUtil;
-import com.avogine.util.resource.ResourceFileReader;
 
 /**
- *
+ * XXX For some reason ALC_DEVICE_SPECIFIER and ALC_DEFAULT_DEVICE_SPECIFIER only ever return the start of the device specifier, ie. OpenAL Soft, 
+ * but it appears to be safe to just use ALC_ALL_DEVICES_SPECIFIER and ALC_DEFAULT_ALL_DEVICES_SPECIFIER either as a string list for all
+ * values or as just alGetString for the first value.
  */
 public class Audio {
 
@@ -26,120 +29,171 @@ public class Audio {
 	
 	private AudioProperties properties;
 	
-	private String defaultInitializedDevice;
+	private String currentDevice;
+	
+	private Timer defaultDeviceReopenTimer;
 
+	/**
+	 * Instantiate a new Audio system and initialize configuration properties from disk.
+	 */
+	public Audio() {
+		initProperties();
+	}
+	
 	/**
 	 * Initialize the OpenAL subsystem:
 	 * <ul>
-	 * <li>Open the default device.
+	 * <li>Open a device.
 	 * <li>Create the capabilities for that device.
 	 * <li>Create a sound context, like the OpenGL one, and set it as the current one.
 	 * </ul>
 	 */
 	public void init() {
-		enumerateAudioDevices();
-		
-		device = alcOpenDevice((ByteBuffer) null);
-		if (device == MemoryUtil.NULL) {
-			throw new IllegalStateException("Failed to open the default OpenAL device.");
+		List<String> deviceList = enumerateAudioDevices();
+		if (properties.defaultDevice != null && !deviceList.contains(properties.defaultDevice)) {
+			properties.defaultDevice = null;
 		}
-		defaultInitializedDevice = alcGetString(0, ALC11.ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
+		
+		device = alcOpenDevice(properties.defaultDevice);
+		if (device == MemoryUtil.NULL) {
+			throw new IllegalStateException("Failed to open OpenAL device.");
+		}
+		
+		currentDevice = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
 		context = alcCreateContext(device, (IntBuffer) null);
 		if (context == MemoryUtil.NULL) {
 			throw new IllegalStateException("Failed to create OpenAL context.");
 		}
 		alcMakeContextCurrent(context);
-		ALCCapabilities deviceCaps = ALC.createCapabilities(device);
-		AL.createCapabilities(deviceCaps);
+		var alcCaps = ALC.createCapabilities(device);
+		AL.createCapabilities(alcCaps);
+
+		setListenerVolume(properties.listenerGain);
 		
-		initProperties();
-		
-		alDistanceModel(properties.attenuationModel);
-		alListenerf(AL_GAIN, properties.listenerGain);
-
-		// With this disabled, if a device disconnects sources won't be stopped and can hopefully just immediately start playing on another reconnected device.
-		// This might cause issues?
-		alDisable(SOFTXHoldOnDisconnect.AL_STOP_SOURCES_ON_DISCONNECT_SOFT);
-
-		configureDeviceReopen();
-		configureSoftEvents();
-	}
-	
-	private List<String> enumerateAudioDevices() {
-		if (alcIsExtensionPresent(0, "ALC_ENUMERATION_EXT")) {
-			return ALUtil.getStringList(0, ALC_ALL_DEVICES_SPECIFIER);
+		if (alcCaps.ALC_SOFT_reopen_device) {
+			configureDeviceReopen();
 		}
-		return List.of();
-	}
-	
-	private void configureDeviceReopen() {
-		if (alcIsExtensionPresent(device, "ALC_SOFT_reopen_device")) {
-			// TODO Provide an option for a user to select their default device, ie. if set to "System Default" then run this code, if set to a specific device do not.
-			AvoLog.log().debug("Scheduling default audio device poller.");
-			
-			var timer = new java.util.Timer();
-			timer.scheduleAtFixedRate(new TimerTask() {
-				private int reconnectTry;
-				
-				@Override
-				public void run() {
-					// For some reason we need to first poll for all devices before the system default will actually be detected if it has changed.
-					ALUtil.getStringList(0, ALC_ALL_DEVICES_SPECIFIER);
-					
-					var defaultDevice = alcGetString(0, ALC11.ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
-					if (!defaultDevice.equalsIgnoreCase(defaultInitializedDevice)) {
-						AvoLog.log().debug("Default audio device has changed, reopening the device.");
-						boolean reopenSuccess = SOFTReopenDevice.alcReopenDeviceSOFT(device, (ByteBuffer) null, (IntBuffer) null);
-						if (reopenSuccess) {
-							reconnectTry = 0;
-							defaultInitializedDevice = defaultDevice;
-						} else {
-							reconnectTry++;
-							if (reconnectTry >= 3) {
-								reconnectTry = 0;
-								defaultInitializedDevice = defaultDevice;
-							}
-						}
-					}
-				}
-			}, new Date(), TimeUnit.SECONDS.toMillis(1));
-		}
-	}
-
-	private void configureSoftEvents() {
-		if (alIsExtensionPresent("AL_SOFT_events")) {
-			SOFTEvents.alEventCallbackSOFT((eventType, object, param, length, message, userParam) -> {
-				switch (eventType) {
-				case SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT -> {
-					AvoLog.log().debug("Device disconnected, attempting to reopen...");
-					ALUtil.getStringList(0, ALC_ALL_DEVICES_SPECIFIER);
-					alcGetString(0, ALC11.ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
-					SOFTReopenDevice.alcReopenDeviceSOFT(device, (ByteBuffer) null, (IntBuffer) null);
-				}
-				case SOFTEvents.AL_EVENT_TYPE_SOURCE_STATE_CHANGED_SOFT ->
-					AvoLog.log().debug("Source state changed");
-				case SOFTEvents.AL_EVENT_TYPE_BUFFER_COMPLETED_SOFT ->
-					AvoLog.log().debug("Buffer completed?");
-				default ->
-					AvoLog.log().debug("Event of type: {}", eventType);
-				}
-			}, (ByteBuffer) null);
-			int[] eventTypes = new int[] { SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT };
-			SOFTEvents.alEventControlSOFT(eventTypes, true);
+		if (AL.getCapabilities().AL_SOFT_events) {
+			configureSoftEvents();
+			// With this disabled, if a device disconnects sources won't be stopped and can hopefully just immediately start playing on another reconnected device.
+			// This might cause issues?
+			alDisable(SOFTXHoldOnDisconnect.AL_STOP_SOURCES_ON_DISCONNECT_SOFT);
 		}
 	}
 	
-	private void initProperties() {
-		Properties prop = ResourceFileReader.readPropertiesFile("audio");
-		properties = new AudioProperties(
-				PropertiesUtil.getInteger(prop, "attenuationModel", AL_INVERSE_DISTANCE_CLAMPED),
-				PropertiesUtil.getFloat(prop, "listenerGain", 1.0f));
+	/**
+	 * @return the address of the currently open device.
+	 */
+	public long getDevice() {
+		return device;
+	}
+	
+	/**
+	 * The listener's gain acts as the max volume.
+	 * @return the gain value of the listener.
+	 */
+	public float getListenerVolume() {
+		return alGetListenerf(AL_GAIN);
+	}
+	
+	/**
+	 * @param volume The value to set the Listener's gain to.
+	 */
+	public void setListenerVolume(float volume) {
+		alListenerf(AL_GAIN, volume);
+		properties.listenerGain = volume;
+	}
+	
+	/**
+	 * @return the name of the currently opened device, or null if the properties specify to use the "System Default" device.
+	 */
+	public String getDeviceSpecifier() {
+		if (properties.defaultDevice == null) {
+			return null;
+		}
+		return alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
+	}
+	
+	/**
+	 * @param deviceSpecifier
+	 */
+	public void changeDevice(String deviceSpecifier) {
+		properties.defaultDevice = deviceSpecifier;
+		if (ALC.getCapabilities().ALC_SOFT_reopen_device) {
+			SOFTReopenDevice.alcReopenDeviceSOFT(device, deviceSpecifier, (IntBuffer) null);
+			currentDevice = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
+			configureDeviceReopen();
+		}
 	}
 
 	/**
+	 * @return 
 	 * 
 	 */
+	public List<String> enumerateAudioDevices() {
+		return ALUtil.getStringList(0, ALC_ALL_DEVICES_SPECIFIER);
+	}
+	
+	private void configureDeviceReopen() {
+		if (defaultDeviceReopenTimer != null) {
+			defaultDeviceReopenTimer.cancel();
+			AvoLog.log().info("Cancelled default audio device poller.");
+		}
+		if (properties.defaultDevice != null) {
+			return;
+		}
+		AvoLog.log().info("Scheduling default audio device poller.");
+
+		defaultDeviceReopenTimer = new Timer();
+		defaultDeviceReopenTimer.scheduleAtFixedRate(new DefaultDeviceReopenTask(), new Date(), TimeUnit.SECONDS.toMillis(1));
+	}
+
+	private void configureSoftEvents() {
+		SOFTEvents.alEventCallbackSOFT((eventType, object, param, length, message, userParam) -> {
+			switch (eventType) {
+				case SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT -> {
+					if (ALC.getCapabilities().ALC_SOFT_reopen_device && properties.defaultDevice == null) {
+						AvoLog.log().info("Audio device disconnected, attempting to reopen default...");
+						SOFTReopenDevice.alcReopenDeviceSOFT(device, (ByteBuffer) null, (IntBuffer) null);
+					} else {
+						AvoLog.log().info("Audio device disconnected.");
+					}
+				}
+				case SOFTEvents.AL_EVENT_TYPE_SOURCE_STATE_CHANGED_SOFT -> AvoLog.log().debug("Source state changed");
+				case SOFTEvents.AL_EVENT_TYPE_BUFFER_COMPLETED_SOFT -> AvoLog.log().debug("Buffer completed?");
+				default -> AvoLog.log().debug("Event of type: {}", eventType);
+			}
+		}, (ByteBuffer) null);
+		int[] eventTypes = new int[] { SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT };
+		SOFTEvents.alEventControlSOFT(eventTypes, true);
+	}
+	
+	private void initProperties() {
+		AudioProperties loadedProperties = new AudioProperties();
+		try (var fis = new FileInputStream("audio.json")) {
+			loadedProperties = JsonMapper.defaultMapper().readValue(fis, AudioProperties.class);
+		} catch (IOException e) {
+			AvoLog.log().error("Failed to load app properties.", e);
+		}
+		
+		properties = loadedProperties;
+	}
+	
+	private void saveProperties() {
+		try (var fos = new FileOutputStream("audio.json")) {
+			JsonMapper.defaultMapper().writeValue(fos, properties);
+		} catch (IOException e) {
+			AvoLog.log().error("Failed to save audio properties.", e);
+		}
+	}
+	
+	/**
+	 * Save the {@link AudioProperties}, free all {@link AudioBuffer}s in the {@link AudioCache} and then destroy the context
+	 * and close the device if they were properly allocated.
+	 */
 	public void cleanup() {
+		saveProperties();
+		
 		AudioCache.getInstance().cleanup();
 		if (context != MemoryUtil.NULL) {
 			alcDestroyContext(context);
@@ -149,12 +203,45 @@ public class Audio {
 		}
 	}
 	
+	private class DefaultDeviceReopenTask extends TimerTask {
+		private static final int MAX_RECONNECTS = 3;
+		private int reconnectAttempt;
+
+		@Override
+		public void run() {
+			// Refresh the device list to see if any devices have changed.
+			enumerateAudioDevices();
+			var defaultDevice = alcGetString(0, ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
+			
+			if (!defaultDevice.equalsIgnoreCase(currentDevice)) {
+				AvoLog.log().debug("Default audio device has changed, reopening the device.");
+				boolean reopenSuccess = SOFTReopenDevice.alcReopenDeviceSOFT(device, (ByteBuffer) null, (IntBuffer) null);
+				if (reopenSuccess) {
+					reconnectAttempt = 0;
+					currentDevice = defaultDevice;
+				} else {
+					reconnectAttempt++;
+					if (reconnectAttempt >= MAX_RECONNECTS) {
+						reconnectAttempt = 0;
+						currentDevice = defaultDevice;
+					}
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Data structure for any customizable options to use while initializing the audio system.
-	 * @param attenuationModel Value applied to {@link AL10#alDistanceModel(int)}.
-	 * @param listenerGain The gain setting of the listener. Pseudo max volume.
 	 */
-	public record AudioProperties(int attenuationModel, float listenerGain) {
+	public static class AudioProperties {
+		/** 
+		 * The default device to open when initializing OpenAL.
+		 * Set to {@code null} to automatically open the default system device.
+		 */
+		public String defaultDevice = null;
+		
+		/** The gain setting of the listener. Pseudo max volume. */
+		public float listenerGain = 1.0f;
 	}
 
 }

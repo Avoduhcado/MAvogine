@@ -1,8 +1,8 @@
 package com.avogine.render.shader.uniform;
 
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL20;
 
-import com.avogine.logging.*;
+import com.avogine.logging.AvoLog;
 
 /**
  * Base class for uniform variables to be passed along to OpenGL shaders.

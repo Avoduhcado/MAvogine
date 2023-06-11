@@ -172,6 +172,16 @@ public class NuklearMesh {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}
+	
+	/**
+	 * TODO This is caching framebuffer/window size and it probably shouldn't be.
+	 */
+	public void setSize(int width, int height) {
+		this.displayWidth = width;
+		this.displayHeight = height;
+		this.width = width;
+		this.height = height;
+	}
 
 	/**
 	 * Free all GPU memory.

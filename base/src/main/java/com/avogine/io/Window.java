@@ -1,5 +1,7 @@
 package com.avogine.io;
 
+import java.awt.Dimension;
+import java.io.*;
 import java.nio.IntBuffer;
 import java.util.*;
 
@@ -9,9 +11,8 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
-import com.avogine.game.ui.nuklear.AvoNuklear;
-import com.avogine.util.PropertiesUtil;
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.io.serializer.JsonMapper;
+import com.avogine.logging.AvoLog;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.
@@ -45,7 +46,6 @@ public class Window {
 	private List<Long> monitorList = new ArrayList<>();
 	
 	private Input input;
-	private AvoNuklear gui;
 	
 	/**
 	 * @param width The width in pixels for this window
@@ -59,10 +59,21 @@ public class Window {
 	}
 	
 	/**
-	 * @param input 
-	 * @param gui
+	 * @param title The window title
 	 */
-	public void init(Input input, AvoNuklear gui) {
+	public Window(String title) {
+		this.title = title;
+		
+		initProperties();
+		
+		width = properties.resolution.width;
+		height = properties.resolution.height;
+	}
+	
+	/**
+	 * @param input 
+	 */
+	public void init(Input input) {
 		GLFWErrorCallback.createPrint().set();
 		
 		if (!GLFW.glfwInit()) {
@@ -184,22 +195,25 @@ public class Window {
 		
 		this.input = input;
 		this.input.init(this);
-		
-		this.gui = gui;
-		this.gui.init(this);
 	}
 
 	private void initProperties() {
-		Properties prop = ResourceFileReader.readPropertiesFile("window");
-		properties = new WindowProperties(
-				PropertiesUtil.getBoolean(prop, "fullscreen", false),
-				PropertiesUtil.getBoolean(prop, "vsync", false),
-				PropertiesUtil.getInteger(prop, "monitorIndex", 0),
-				PropertiesUtil.getFloatArray(prop, "clearColor", new Float[] {100f / 255f, 149f / 255f, 237f / 255f, 1f}),
-				PropertiesUtil.getBoolean(prop, "depthTest", true),
-				PropertiesUtil.getBoolean(prop, "cullFaces", false),
-				PropertiesUtil.getBoolean(prop, "blend", true),
-				PropertiesUtil.getBoolean(prop, "multisample", true));
+		var loadedProperties = new WindowProperties();
+		try (var fis = new FileInputStream("window.json")) {
+			loadedProperties = JsonMapper.defaultMapper().readValue(fis, WindowProperties.class);
+		} catch (IOException e) {
+			AvoLog.log().error("Failed to load app properties.", e);
+		}
+		
+		properties = loadedProperties;
+	}
+	
+	private void saveProperties() {
+		try (var fos = new FileOutputStream("window.json")) {
+			JsonMapper.defaultMapper().writeValue(fos, properties);
+		} catch (IOException e) {
+			AvoLog.log().error("Failed to save window properties.", e);
+		}
 	}
 	
 	/**
@@ -220,12 +234,8 @@ public class Window {
 	 * TODO
 	 */
 	public void pollEvents() {
-		gui.inputBegin();
-		
 		GLFW.glfwPollEvents();
 		input.update();
-		
-		gui.inputEnd();
 	}
 	
 	public void restoreState() {
@@ -266,6 +276,8 @@ public class Window {
 	public void cleanup() {
 		close();
 		
+		saveProperties();
+		
 		GLFW.glfwTerminate();
 		GLFW.glfwSetErrorCallback(null).free();
 	}
@@ -275,13 +287,6 @@ public class Window {
 	 */
 	public Input getInput() {
 		return input;
-	}
-	
-	/**
-	 * @return the gui
-	 */
-	public AvoNuklear getGui() {
-		return gui;
 	}
 	
 	/**
@@ -330,47 +335,34 @@ public class Window {
 	
 	/**
 	 * A configurable set of parameters you can change to customize assorted OpenGL features.
-	 * @param fullscreen Initialize the window in full screen mode.
-	 * @param vsync Sync the window's refresh rate with the monitor's to avoid screen tearing.
-	 * @param monitorIndex The default monitor that the window should be placed on.
-	 * @param clearColor 4 float values determining the color to use when calling {@code glClear()}. <b>Probably shouldn't be in here</b>
-	 * @param depthTest Enable depth testing when rendering to the screen. <b>Probably shouldn't be in here</b>
-	 * @param cullFaces Perform face culling when rendering 3D objects. <b>Probably shouldn't be in here</b>
-	 * @param blend Perform basic alpha blending when rendering. <b>Probably shouldn't be in here</b>
-	 * @param multisample Perform multi-sample anti aliasing (MSAA) when rendering the screen.
 	 */
-	public static record WindowProperties(boolean fullscreen, boolean vsync, int monitorIndex, Float[] clearColor, boolean depthTest, boolean cullFaces, boolean blend, boolean multisample) {
-		@Override
-		public String toString() {
-			return "WindowProperties [fullscreen=" + fullscreen + ", vsync=" + vsync + ", monitorIndex=" + monitorIndex
-					+ ", clearColor=" + Arrays.toString(clearColor) + ", depthTest=" + depthTest + ", cullFaces="
-					+ cullFaces + ", blend=" + blend + ", multisample=" + multisample + "]";
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + Arrays.hashCode(clearColor);
-			result = prime * result
-					+ Objects.hash(blend, cullFaces, depthTest, fullscreen, monitorIndex, multisample, vsync);
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			WindowProperties other = (WindowProperties) obj;
-			return blend == other.blend && Arrays.equals(clearColor, other.clearColor) && cullFaces == other.cullFaces
-					&& depthTest == other.depthTest && fullscreen == other.fullscreen
-					&& monitorIndex == other.monitorIndex && multisample == other.multisample && vsync == other.vsync;
-		}
+	public static class WindowProperties {
+		/** Initialize the window in full screen mode. */
+		public boolean fullscreen = false;
 		
+		/** The default resolution of the display window. */
+		public Dimension resolution = new Dimension(1920, 1080);
+		
+		/** Sync the window's refresh rate with the monitor's to avoid screen tearing. */
+		public boolean vsync = false;
+		
+		/** The default monitor that the window should be placed on. */
+		public int monitorIndex = 0;
+		
+		/** 4 float values determining the color to use when calling {@code glClear()}. <b>Probably shouldn't be in here</b> */
+		public float[] clearColor = new float[] {100f / 255f, 149f / 255f, 237f / 255f, 1f};
+		
+		/** Enable depth testing when rendering to the screen. <b>Probably shouldn't be in here</b> */
+		public boolean depthTest = true;
+		
+		/** Perform face culling when rendering 3D objects. <b>Probably shouldn't be in here</b> */
+		public boolean cullFaces = false;
+		
+		/** Perform basic alpha blending when rendering. <b>Probably shouldn't be in here</b> */
+		public boolean blend = true;
+		
+		/** Perform multi-sample anti aliasing (MSAA) when rendering the screen. */
+		public boolean multisample = true;
 	}
 	
 }

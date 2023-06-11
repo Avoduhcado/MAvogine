@@ -1,6 +1,8 @@
 package com.avogine.logging;
 
-import static java.lang.StackWalker.Option.*;
+import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
+
+import java.util.*;
 
 import org.slf4j.*;
 
@@ -9,6 +11,10 @@ import org.slf4j.*;
  */
 public final class AvoLog {
 
+	private static final StackWalker walker = StackWalker.getInstance(RETAIN_CLASS_REFERENCE);
+	
+	private static final Map<Class<?>, Logger> loggerMap = new HashMap<>();
+	
 	private AvoLog() {
 		// AvoLog should only be used through static references.
 	}
@@ -18,9 +24,8 @@ public final class AvoLog {
 	 * @return a {@link Logger} from {@link LoggerFactory} for the calling class.
 	 */
 	public static Logger log() {
-		StackWalker walker = StackWalker.getInstance(RETAIN_CLASS_REFERENCE);
 		Class<?> clazz = walker.getCallerClass();
-		return LoggerFactory.getLogger(clazz);
+		return loggerMap.computeIfAbsent(clazz, LoggerFactory::getLogger);
 	}
 	
 }

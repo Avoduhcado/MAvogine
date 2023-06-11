@@ -16,6 +16,8 @@ import com.avogine.render.shader.BasicShader;
  *
  */
 public class RenderSystem extends EntitySystem implements Renderable, Cleanupable {
+
+	private record Renderable(UUID id, TransformComponent transform, ModelComponent modelComponent) implements EntityArchetype {}
 	
 	private BasicShader basicShader;
 	
@@ -66,8 +68,6 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 		var realModel = modelCache.getModel(entity.modelComponent.model(), "");
 		realModel.render();
 	}
-	
-	private record Renderable(UUID id, TransformComponent transform, ModelComponent modelComponent) implements EntityArchetype {}
 	
 	@Override
 	public void onCleanup() {

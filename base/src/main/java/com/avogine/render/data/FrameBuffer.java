@@ -3,12 +3,12 @@ package com.avogine.render.data;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.*;
 
-import java.nio.*;
-import java.util.function.*;
+import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 
-import com.avogine.experimental.annotation.*;
-import com.avogine.io.*;
-import com.avogine.logging.*;
+import com.avogine.experimental.annotation.MemoryManaged;
+import com.avogine.io.Window;
+import com.avogine.logging.AvoLog;
 
 /**
  * @author Dominus
