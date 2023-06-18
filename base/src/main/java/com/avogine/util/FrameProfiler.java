@@ -1,12 +1,12 @@
 package com.avogine.util;
 
-import java.text.DecimalFormat;
+import java.text.*;
 import java.util.*;
 
 import com.avogine.logging.AvoLog;
 
 /**
- *
+ * Singleton for profiling the game loop.
  */
 public enum FrameProfiler implements Profilable {
 
@@ -110,19 +110,19 @@ public enum FrameProfiler implements Profilable {
 			double budgets = getBudgetAverage();
 			
 			String frameTime = df.format(frames);
-			String framePerBudget = DecimalFormat.getPercentInstance().format(frames / budgets);
+			String framePerBudget = NumberFormat.getPercentInstance().format(frames / budgets);
 
 			String inputTime = df.format(input);
-			String inputPerFrame = DecimalFormat.getPercentInstance().format(input / frames);
-			String inputPerBudget = DecimalFormat.getPercentInstance().format(input / budgets);
+			String inputPerFrame = NumberFormat.getPercentInstance().format(input / frames);
+			String inputPerBudget = NumberFormat.getPercentInstance().format(input / budgets);
 			
 			String updateTime = df.format(update);
-			String updatePerFrame = DecimalFormat.getPercentInstance().format(update / frames);
-			String updatePerBudget = DecimalFormat.getPercentInstance().format(update / budgets);
+			String updatePerFrame = NumberFormat.getPercentInstance().format(update / frames);
+			String updatePerBudget = NumberFormat.getPercentInstance().format(update / budgets);
 			
 			String renderTime = df.format(render);
-			String renderPerFrame = DecimalFormat.getPercentInstance().format(render / frames);
-			String renderPerBudget = DecimalFormat.getPercentInstance().format(render / budgets);
+			String renderPerFrame = NumberFormat.getPercentInstance().format(render / frames);
+			String renderPerBudget = NumberFormat.getPercentInstance().format(render / budgets);
 			
 			AvoLog.log().debug("""
 
@@ -145,62 +145,51 @@ public enum FrameProfiler implements Profilable {
 	},
 	
 	/**
-	 * A No-Op profiler that performs no actions while profiling.
+	 * A No-OP profiler that performs no actions while profiling.
 	 */
 	NO_OP;
-
-	@Override
-	public void startFrame() {}
-
-	@Override
-	public void endFrame() {}
-
-	@Override
-	public void endBudget() {}
-	
-	@Override
-	public void inputStart() {}
-	
-	@Override
-	public void inputEnd() {}
-
-	@Override
-	public void updateStart() {}
-
-	@Override
-	public void updateEnd() {}
-
-	@Override
-	public void renderStart() {}
-
-	@Override
-	public void renderEnd() {}
-
-	@Override
-	public void printAverages() {}
-
 }
 
 sealed interface Profilable permits FrameProfiler {
 	
-	public void startFrame();
+	public default void startFrame() {
+		// Default No-OP
+	}
 	
-	public void endFrame();
+	public default void endFrame() {
+		// Default No-OP
+	}
 	
-	public void endBudget();
+	public default void endBudget() {
+		// Default No-OP
+	}
 	
-	public void inputStart();
+	public default void inputStart() {
+		// Default No-OP
+	}
 	
-	public void inputEnd();
+	public default void inputEnd() {
+		// Default No-OP
+	}
 	
-	public void updateStart();
+	public default void updateStart() {
+		// Default No-OP
+	}
 	
-	public void updateEnd();
+	public default void updateEnd() {
+		// Default No-OP
+	}
 	
-	public void renderStart();
+	public default void renderStart() {
+		// Default No-OP
+	}
 	
-	public void renderEnd();
+	public default void renderEnd() {
+		// Default No-OP
+	}
 	
-	public void printAverages();
+	public default void printAverages() {
+		// Default No-OP
+	}
 	
 }
