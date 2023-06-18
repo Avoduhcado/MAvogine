@@ -45,7 +45,7 @@ public class StaticModelLoader {
 	 */
 	public static Model load(String resourcePath, String texturesDir) {
 		//return load(resourcePath, texturesDir, Assimp.aiProcess_JoinIdenticalVertices | Assimp.aiProcess_Triangulate | Assimp.aiProcess_FixInfacingNormals, 1);
-		return load(resourcePath, texturesDir, Assimp.aiProcess_Triangulate, 1);
+		return load(resourcePath, texturesDir, Assimp.aiProcess_Triangulate | Assimp.aiProcess_CalcTangentSpace, 1);
 	}
 	
 	/**
@@ -256,10 +256,12 @@ public class StaticModelLoader {
 	private static FloatBuffer processVertices(AIMesh aiMesh) {
 		AIVector3D.Buffer aiPositions = aiMesh.mVertices();
 		AIVector3D.Buffer aiNormals = !aiMesh.isNull(AIMesh.MNORMALS) ? aiMesh.mNormals() : null;
+		AIVector3D.Buffer aiTangents = !aiMesh.isNull(AIMesh.MTANGENTS) ? aiMesh.mTangents() : null;
+		AIVector3D.Buffer aiBitangents = !aiMesh.isNull(AIMesh.MBITANGENTS) ? aiMesh.mBitangents() : null;
 		// XXX Potentially support multiple texture coordinates per mesh?
 		AIVector3D.Buffer aiTextureCoordinates = !aiMesh.isNull(AIMesh.MTEXTURECOORDS) ? aiMesh.mTextureCoords(0) : null;
-
-		var vertexData = MemoryUtil.memAllocFloat(aiMesh.mNumVertices() * Mesh.VERTEX_SIZE);
+		
+		var vertexData = MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * Mesh.VERTEX_SIZE);
 		
 		while (aiPositions.remaining() > 0) {
 			AIVector3D aiPosition = aiPositions.get();
@@ -273,9 +275,28 @@ public class StaticModelLoader {
 				vertexData.put(aiNormal.y());
 				vertexData.put(aiNormal.z());
 			} else {
-				vertexData.put(0f);
-				vertexData.put(0f);
-				vertexData.put(0f);
+				vertexData.position(vertexData.position() + 3);
+//				vertexData.put(0f);
+//				vertexData.put(0f);
+//				vertexData.put(0f);
+			}
+			
+			if (aiTangents != null) {
+				AIVector3D aiTangent = aiTangents.get();
+				vertexData.put(aiTangent.x());
+				vertexData.put(aiTangent.y());
+				vertexData.put(aiTangent.z());
+			} else {
+				vertexData.position(vertexData.position() + 3);
+			}
+			
+			if (aiBitangents != null) {
+				AIVector3D aiBtangent = aiBitangents.get();
+				vertexData.put(aiBtangent.x());
+				vertexData.put(aiBtangent.y());
+				vertexData.put(aiBtangent.z());
+			} else {
+				vertexData.position(vertexData.position() + 3);
 			}
 			
 			if (aiTextureCoordinates != null)  {
@@ -283,8 +304,9 @@ public class StaticModelLoader {
 				vertexData.put(aiTextureCoordinate.x());
 				vertexData.put(aiTextureCoordinate.y());
 			} else {
-				vertexData.put(0f);
-				vertexData.put(0f);
+				vertexData.position(vertexData.position() + 2);
+//				vertexData.put(0f);
+//				vertexData.put(0f);
 			}
 		}
 		vertexData.flip();

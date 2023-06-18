@@ -62,7 +62,7 @@ public class TextureLoader {
 					format = GL11.GL_RGBA;
 				}
 //				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, imageData);
-				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, format, width, height, 0, format, GL11.GL_UNSIGNED_BYTE, imageData);
+				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, format, GL11.GL_UNSIGNED_BYTE, imageData);
 				// TODO Add check to some sort of Options object for mipmaps/anisotropic filtering
 				GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
 				// TODO Add customizable options for these when loading textures
@@ -154,6 +154,7 @@ public class TextureLoader {
 			try (MemoryStack stack = MemoryStack.stackPush()) {
 				width = stack.mallocInt(1);
 				height = stack.mallocInt(1);
+				// TODO Throw an error if the width/height don't match
 				nrChannels = stack.mallocInt(1);
 				String filePath = ResourceConstants.TEXTURE_PATH + filenames[i];
 				ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
@@ -177,6 +178,8 @@ public class TextureLoader {
 	
 	/**
 	 * Load a cube map texture from a specified directory of textures.
+	 * <p>
+	 * <b>XXX: This will apparently fail silently if all of the files are not the same resolution.</b>
 	 * <p>
 	 * This method assumes the given directory is a valid directory and contains at least 6 files named:
 	 * <ul>

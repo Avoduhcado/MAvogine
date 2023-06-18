@@ -60,6 +60,8 @@ public class ParShapesBuilder {
 	
 	/**
 	 * {@link ParShapes#par_shapes_create_rock(int, int)}
+	 * @param seed 
+	 * @param subdivisions 
 	 * @return
 	 */
 	public ParShapesBuilder createRock(int seed, int subdivisions) {
@@ -146,8 +148,9 @@ public class ParShapesBuilder {
 			if (normals != null) {
 				vertexBuffer.put((i * Mesh.VERTEX_SIZE) + 3, normals, i * 3, 3);
 			}
+			// TODO actually calculate tangents/bitangets
 			if (textureCoordinates != null) {
-				vertexBuffer.put((i * Mesh.VERTEX_SIZE) + 6, textureCoordinates, i * 2, 2);
+				vertexBuffer.put((i * Mesh.VERTEX_SIZE) + 12, textureCoordinates, i * 2, 2);
 			}
 		}
 

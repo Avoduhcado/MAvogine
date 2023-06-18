@@ -7,6 +7,7 @@ import com.avogine.logging.AvoLog;
 
 /**
  * Singleton for profiling the game loop.
+ * TODO Modify this to allow for arbitrary profiling by just passing in String titles for what phase of whatever you want to profile
  */
 public enum FrameProfiler implements Profilable {
 
@@ -125,20 +126,20 @@ public enum FrameProfiler implements Profilable {
 			String renderPerBudget = NumberFormat.getPercentInstance().format(render / budgets);
 			
 			AvoLog.log().debug("""
-
+					
 					Frame Time: 	{}
 					Input Time: 	{}
 					Update Time:	{}
 					Render Time:	{}
-
+					
 					Input/Frame:	{}
 					Update/Frame:	{}
 					Render/Frame:	{}
+					
 					Frame/Budget:	{}
 					Input/Budget:	{}
 					Update/Budget:	{}
-					Render/Budget:	{}
-					""",
+					Render/Budget:	{}""",
 					frameTime, inputTime, updateTime, renderTime,
 					inputPerFrame, updatePerFrame, renderPerFrame, framePerBudget, inputPerBudget, updatePerBudget, renderPerBudget);
 		}
