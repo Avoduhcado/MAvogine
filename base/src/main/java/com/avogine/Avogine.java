@@ -6,6 +6,7 @@ import com.avogine.game.*;
 import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.io.*;
 import com.avogine.logging.AvoLog;
+import com.avogine.util.FrameProfiler;
 
 /**
  * This is the primary entry point into running a game.
@@ -21,9 +22,18 @@ public class Avogine implements Runnable {
 	 */
 	public static final int TARGET_UPS = 60;
 	
+	/**
+	 * When sleeping the game loop thread per frame, the system will issue {@code Thread.sleep(1)} requests for as long as the
+	 * remaining frame time is greater than this value. Once it's below this value it will go into a busy wait until 
+	 * the frame time is up.
+	 * </p>
+	 * Certain platforms may have higher error rates on their {@code Thread.sleep()} precision, and this value could be
+	 * increased to better suit them. Although a higher value will mean more busy waiting leading to more CPU cycling.
+	 */
 	private static final long SLEEP_PRECISION = TimeUnit.MILLISECONDS.toNanos(2);
 
 	private final Thread gameLoopThread;
+	private final FrameProfiler profiler;
 	
 	private final Window window;
 	private final Game game;
@@ -33,12 +43,16 @@ public class Avogine implements Runnable {
 	private final Timer timer;
 	private final Audio audio;
 	
+	private double updateInterval;
+	private double updateAccumulator;
+	
 	/**
 	 * @param window The primary game {@link Window} to display to
 	 * @param game An implementation of {@link Game} that contains the main game logic
 	 */
 	public Avogine(Window window, Game game) {
 		gameLoopThread = new Thread(this, "GAME_LOOP_THREAD");
+		profiler = FrameProfiler.NO_OP;
 		this.window = window;
 		this.game = game;
 		// TODO Add an additional constructor for custom Input implementations as well, maybe even Timer? But idc right now.
@@ -86,29 +100,32 @@ public class Avogine implements Runnable {
 	}
 	
 	private void loop() {
-		double updateInterval = 1.0 / TARGET_UPS;
+		updateInterval = 1.0 / TARGET_UPS;
 		
 		double previousFrameTime = timer.getTime();
-		double accumulator = 0.0;
-				
+		double loopTime = 0;
+		
 		while (!window.shouldClose()) {
+			profiler.startFrame();
 			double frameStartTime = timer.getTime();
 			double elapsedTime = (frameStartTime - previousFrameTime);
+			previousFrameTime = frameStartTime;
 			window.setFps((int) (1 / elapsedTime));
-			accumulator += elapsedTime;
+			updateAccumulator += elapsedTime;
 			
-			game.drainRegistrationQueue();
-			
-			input();
-			
-			while (accumulator > updateInterval) {
-				update((float) updateInterval);
-				accumulator -= updateInterval;
+			loopTime += elapsedTime;
+			if (loopTime >= 1) {
+				profiler.printAverages();
+				loopTime = 0;
 			}
+
+			input();
+
+			update();
 			
 			render();
-
-			previousFrameTime = frameStartTime;
+			
+			profiler.endFrame();
 			// Get the time it took to actually process the entire frame (this should be counted as a segment of our overall time dictated by renderInterval)
 			double frameProcessTimeNanos = timer.getTime() - frameStartTime;
 			long sleepTime = (long) (Math.max(window.getTargetFps() - frameProcessTimeNanos, 0) * 1_000_000_000); // Convert to nanoseconds
@@ -119,32 +136,51 @@ public class Avogine implements Runnable {
 				AvoLog.log().warn("Sync operation was interrupted?", e);
 				Thread.currentThread().interrupt();
 			}
+			profiler.endBudget();
 		}
 	}
 	
 	private void input() {
+		profiler.inputStart();
+
+		// TODO Where should this go?
+		game.drainRegistrationQueue();
+		
 		gui.inputBegin();
 		window.pollEvents();
 		gui.inputEnd();
+		
+		profiler.inputEnd();
 	}
 
-	private void update(float interval) {
-		// TODO Process EventQueue
-		game.update(interval);
+	private void update() {
+		profiler.updateStart();
+		
+		while (updateAccumulator > updateInterval) {
+			// TODO Process EventQueue
+			game.update((float) updateInterval);
+			updateAccumulator -= updateInterval;
+		}
+		
+		profiler.updateEnd();
 	}
 	
 	private void render() {
+		profiler.renderStart();
+		
 		game.render();
 		window.swapBuffers();
+		
+		profiler.renderEnd();
 	}
 	
 	/**
 	 * Perform regular {@link Thread#sleep()} while the remaining sleep duration is greater than {@code Avogine.SLEEP_PRECISION}.
-	 * If the remaining time is less than {@code Avogine.SLEEP_PRECISION} then perform a {@link Thread#onSpinWait()} for the remainder of the time.
+	 * If the remaining time is less than {@code Avogine.SLEEP_PRECISION} then perform {@link Thread#onSpinWait()} for the remainder of the time.
 	 * </p>
 	 * This method is preferable than just relying on {@code Thread.sleep()} since not only does {@code Thread.sleep()} not support sleeping for less
-	 * than a millisecond on Windows, but also because there's about a 1-2ms error rate on waking from the sleep so using a busy wait loop allows us
-	 * to more quickly recover from smaller sleep durations.
+	 * than a millisecond, but also because there's about a 0.5-3ms error rate on waking from the sleep so using a busy wait loop allows us to more 
+	 * quickly recover from smaller sleep durations.
 	 * 
 	 * @see <a href="http://andy-malakov.blogspot.com/2010/06/alternative-to-threadsleep.html">http://andy-malakov.blogspot.com/2010/06/alternative-to-threadsleep.html</a>
 	 * 
@@ -155,11 +191,10 @@ public class Avogine implements Runnable {
 		final long end = System.nanoTime() + nanoDuration;
 
 		long timeLeft = nanoDuration;
-		do {
-			if (timeLeft > SLEEP_PRECISION)
+		while (timeLeft > 0) {
+			if (timeLeft > SLEEP_PRECISION) {
 				Thread.sleep(1);
-			else {
-				// Potentially opt instead for spin waiting while greater than some other spin_yield_precision value
+			} else {
 				Thread.onSpinWait();
 			}
 			
@@ -168,7 +203,7 @@ public class Avogine implements Runnable {
 			if (Thread.interrupted()) {
 				throw new InterruptedException();
 			}
-		} while (timeLeft > 0);
+		}
 	}
 	
 	private void cleanup() {
