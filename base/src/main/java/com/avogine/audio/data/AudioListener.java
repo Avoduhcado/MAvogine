@@ -35,7 +35,11 @@ public class AudioListener {
 	public void setPosition(Vector3f position) {
 		alListener3f(AL_POSITION, position.x, position.y, position.z);
 	}
-
+	
+	public void setPosition(float x, float y, float z) {
+		alListener3f(AL_POSITION, x, y, z);
+	}
+	
 	public void setOrientation(Quaternionf orientation) {
 		// The "Forward" direction of objects is -Z by default
 		orientation.transform(0, 0, -1, transformedAt);

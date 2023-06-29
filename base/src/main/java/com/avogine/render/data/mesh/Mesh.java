@@ -9,8 +9,6 @@ import java.nio.*;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-import com.avogine.ecs.EntityArchetype;
-
 /**
  * Used by {@link Model}.
  */
@@ -74,17 +72,17 @@ public class Mesh {
 		glBindVertexArray(0);
 	}
 	
-	public <T extends EntityArchetype> void renderPro(Collection<T> entities, Consumer<T> consumer) {
-		glBindVertexArray(vao);
-		
-		entities.forEach(entity -> {
-			consumer.accept(entity);
-			
-			glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
-		});
-		
-		glBindVertexArray(0);
-	}
+//	public <T extends EntityArchetype> void renderPro(Collection<T> entities, Consumer<T> consumer) {
+//		glBindVertexArray(vao);
+//		
+//		entities.forEach(entity -> {
+//			consumer.accept(entity);
+//			
+//			glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
+//		});
+//		
+//		glBindVertexArray(0);
+//	}
 	
 	public <T> void renderBoo(Collection<T> entities, Consumer<T> consumer) {
 		glBindVertexArray(vao);

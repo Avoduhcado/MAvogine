@@ -32,6 +32,10 @@ public class AudioSource {
 	public void setPosition(Vector3f position) {
 		alSource3f(sourceId, AL_POSITION, position.x, position.y, position.z);
 	}
+	
+	public void setPosition(float x, float y, float z) {
+		alSource3f(sourceId, AL_POSITION, x, y, z);
+	}
 
 	public void setVelocity(Vector3f speed) {
 		alSource3f(sourceId, AL_VELOCITY, speed.x, speed.y, speed.z);

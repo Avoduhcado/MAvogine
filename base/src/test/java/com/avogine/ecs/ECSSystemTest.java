@@ -2,9 +2,6 @@ package com.avogine.ecs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.jupiter.api.*;
 
 import com.avogine.ecs.components.*;
@@ -36,15 +33,20 @@ class ECSSystemTest {
 	
 	@Test
 	void componentQueryTest() {
-		var entityA = manager.createEntityWith(new TransformComponent(), new MeshComponent());
-		var entityB = manager.createEntityWith(new TransformComponent());
+		var aTransform = new TransformComponent();
+		var bTransform = new TransformComponent();
+		manager.createEntityWith(aTransform, new ModelComponent(""));
+		manager.createEntityWith(bTransform);
 		
-		manager.query(TestMeshRenderable.class).forEach(meshRenderable -> {
-			meshRenderable.transform().position().x += 2;
+		manager.query(TransformComponent.class, ModelComponent.class).forEach(chunk -> {
+			for (int i = 0; i < chunk.getChunkSize(); i++) {
+				var transform = chunk.getAs(TransformComponent.class, i);
+				transform.x(transform.x() + 2);
+			}
 		});
 		
-		assertEquals(2, manager.getEntity(entityA).orElseThrow().getAs(TransformComponent.class).position().x);
-		assertEquals(0, manager.getEntity(entityB).orElseThrow().getAs(TransformComponent.class).position().x);
+		assertEquals(2, aTransform.x());
+		assertEquals(0, bTransform.x());
 	}
 	
 
@@ -57,50 +59,13 @@ class ECSSystemTest {
 		manager.createEntityWith(new TransformComponent());
 		manager.createEntityWith(new TransformComponent());
 		
-		assertEquals(2, manager.getChunks().size(), "Chunk size does not match: " + manager.getChunks().size());
+		assertEquals(2, manager.query().count(), "Chunk size does not match: " + manager.query().count());
 		
-		AtomicInteger countRender = new AtomicInteger();
-		manager.query(TestRenderable.class).forEach(renderable -> {
-			countRender.incrementAndGet();
-		});
-		assertEquals(3, countRender.get(), "Failed to find all renderables: " + countRender.get());
+		int transformModelCount = manager.query(TransformComponent.class, ModelComponent.class).mapToInt(EntityChunk::getChunkSize).sum();
+		assertEquals(3, transformModelCount, "Failed to find all renderables: " + transformModelCount);
 		
-		AtomicInteger countTransform = new AtomicInteger();
-		manager.query(TestTransformable.class).forEach(transformable -> {
-			countTransform.incrementAndGet();
-		});
-		assertEquals(5, countTransform.get(), "Failed to find all transformables: " + countTransform.get());
+		int transformCount = manager.query(TransformComponent.class).mapToInt(EntityChunk::getChunkSize).sum();
+		assertEquals(5, transformCount, "Failed to find all transformables: " + transformCount);
 	}
 
-	@Test
-	void testRecordArchetypeQueryModifying() {
-		manager.createEntityWith(new TransformComponent(), new ModelComponent(""));
-		manager.createEntityWith(new ModelComponent(""), new TransformComponent());
-		manager.createEntityWith(new TransformComponent(), new ModelComponent(""));
-		
-		manager.createEntityWith(new TransformComponent());
-		manager.createEntityWith(new TransformComponent());
-		
-		Map<UUID, Float> pairs = new HashMap<>();
-		
-		AtomicInteger movement = new AtomicInteger();
-		manager.query(TestRenderable.class).forEach(renderable -> {
-			pairs.put(renderable.id(), (float) movement.incrementAndGet());
-			renderable.transform().setPosition(movement.get(), 0, 0);
-		});
-		
-		manager.query(TestRenderable.class).forEach(renderable -> {
-			assertEquals(pairs.get(renderable.id()), renderable.transform().position().x);
-		});
-	}
-	
-	@Test
-	void testWeirdIDParamPlacement() {
-		var id = manager.createEntityWith(new TransformComponent(), new ModelComponent(""));
-		
-		manager.query(TestWonkyArchetype.class).forEach(wonky -> {
-			assertEquals(id, wonky.id());
-		});
-	}
-	
 }

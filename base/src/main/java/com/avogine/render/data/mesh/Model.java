@@ -3,7 +3,6 @@ package com.avogine.render.data.mesh;
 import java.util.*;
 import java.util.function.Consumer;
 
-import com.avogine.ecs.EntityArchetype;
 import com.avogine.render.data.material.Material;
 
 /**
@@ -31,13 +30,13 @@ public class Model {
 		this(List.of(mesh), List.of(material));
 	}
 	
-	public <T extends EntityArchetype> void renderPro(Collection<T> entities, Consumer<T> consumer) {
-		meshes.forEach(mesh -> {
-			bindMaterial(mesh); // TODO Different entities could be using different materials, we'll need to store unique materials with the component instead of the mesh
-			
-			mesh.renderPro(entities, consumer);
-		});
-	}
+//	public <T extends EntityArchetype> void renderPro(Collection<T> entities, Consumer<T> consumer) {
+//		meshes.forEach(mesh -> {
+//			bindMaterial(mesh); // TODO Different entities could be using different materials, we'll need to store unique materials with the component instead of the mesh
+//			
+//			mesh.renderPro(entities, consumer);
+//		});
+//	}
 	
 	public <T> void renderBoo(Collection<T> entities, Consumer<T> consumer) {
 		meshes.forEach(mesh -> {

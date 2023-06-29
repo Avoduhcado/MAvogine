@@ -1,106 +1,197 @@
 package com.avogine.ecs.components;
 
-import org.joml.*;
-
 import com.avogine.ecs.EntityComponent;
+
 
 /**
  *
  */
-public record TransformComponent(Vector3f position, Quaternionf orientation, Vector3f scale) implements EntityComponent {
-
+public class TransformComponent implements EntityComponent {
+	
+	private float x;
+	private float y;
+	private float z;
+	private float rx;
+	private float ry;
+	private float rz;
+	private float rw;
+	private float sx;
+	private float sy;
+	private float sz;
+	
 	/**
-	 * 
-	 * @param position
-	 * @param orientation 
+	 * Translation, orientation, and scale.
+	 * @param x 
+	 * @param y 
+	 * @param z 
+	 * @param rx 
+	 * @param ry 
+	 * @param rz 
+	 * @param rw 
+	 * @param sx 
+	 * @param sy 
+	 * @param sz 
 	 */
-	public TransformComponent(Vector3f position, Quaternionf orientation) {
-		this(position, orientation, new Vector3f(1.0f));
+	public TransformComponent(
+			float x, float y, float z,
+			float rx, float ry, float rz, float rw,
+			float sx, float sy, float sz) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.rx = rx;
+		this.ry = ry;
+		this.rz = rz;
+		this.rw = rw;
+		this.sx = sx;
+		this.sy = sy;
+		this.sz = sz;
 	}
 	
 	/**
-	 * 
-	 * @param position
-	 * @param scale
+	 * Default translation, orientation, 1 dimensional scale constructor
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @param rx
+	 * @param ry
+	 * @param rz
+	 * @param rw
+	 * @param s
 	 */
-	public TransformComponent(Vector3f position, Vector3f scale) {
-		this(position, new Quaternionf(), scale);
-	}
-
-	/**
-	 * 
-	 * @param position
-	 */
-	public TransformComponent(Vector3f position) {
-		this(position, new Vector3f(1.0f));
+	public TransformComponent(
+			float x, float y, float z,
+			float rx, float ry, float rz, float rw,
+			float s) {
+		this(x, y, z, rx, ry, rz, rw, s, s, s);
 	}
 	
 	/**
-	 * 
+	 * Default translation, orientation constructor
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @param rx
+	 * @param ry
+	 * @param rz
+	 * @param rw
+	 */
+	public TransformComponent(
+			float x, float y, float z,
+			float rx, float ry, float rz, float rw) {
+		this(x, y, z, rx, ry, rz, rw, 1);
+	}
+	
+	/**
+	 * Default translation constructor
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
+	public TransformComponent(float x, float y, float z) {
+		this(x, y, z, 0, 0, 0, 1);
+	}
+	
+	/**
+	 * Default no argument constructor
 	 */
 	public TransformComponent() {
-		this(new Vector3f());
+		this(0, 0, 0);
 	}
 	
-	/**
-	 * @param x
-	 * @param y
-	 * @param z
-	 */
-	public void setPosition(float x, float y, float z) {
-		this.position.set(x, y, z);
+	public float x() {
+		return x;
 	}
 	
-	/**
-	 * Set this transform's position to a copy of the input {@code position}.
-	 * @param position The position to set this transform to.
-	 */
-	public void setPosition(Vector3f position) {
-		this.position.set(position);
+	public TransformComponent x(float x) {
+		this.x = x;
+		return this;
+	}
+	
+	public float y() {
+		return y;
+	}
+	
+	public TransformComponent y(float y) {
+		this.y = y;
+		return this;
 	}
 
-	/**
-	 * 
-	 * @param x
-	 * @param y
-	 * @param z
-	 * @param w
-	 */
-	public void setOrientation(float x, float y, float z, float w) {
-		this.orientation.set(x, y, z, w);
+	public float z() {
+		return z;
+	}
+	
+	public TransformComponent z(float z) {
+		this.z = z;
+		return this;
 	}
 
-	/**
-	 * Set this transform's orientation to a copy of the input {@code orientation}.
-	 * @param orientation The orientation to set this transform to.
-	 */
-	public void setOrientation(Quaternionf orientation) {
-		this.orientation.set(orientation);
+	public float rx() {
+		return rx;
 	}
 	
-	/**
-	 * Set the scale to a uniform value across all 3 axes.
-	 * @param scale a value to set the x, y, z values of this transform's scale to.
-	 */
-	public void setScale(float scale) {
-		this.scale.set(scale);
-	}
-	
-	/**
-	 * @param x
-	 * @param y
-	 * @param z
-	 */
-	public void setScale(float x, float y, float z) {
-		this.scale.set(x, y, z);
-	}
-	
-	/**
-	 * Set this transform's scale to a copy of the input {@code scale}.
-	 * @param scale The scale to set this transform to.
-	 */
-	public void setScale(Vector3f scale) {
-		this.scale.set(scale);
+	public TransformComponent rx(float rx) {
+		this.rx = rx;
+		return this;
 	}
 
+	public float ry() {
+		return ry;
+	}
+	
+	public TransformComponent ry(float ry) {
+		this.ry = ry;
+		return this;
+	}
+
+	public float rz() {
+		return rz;
+	}
+	
+	public TransformComponent rz(float rz) {
+		this.rz = rz;
+		return this;
+	}
+
+	public float rw() {
+		return rw;
+	}
+	
+	public TransformComponent rw(float rw) {
+		this.rw = rw;
+		return this;
+	}
+
+	public float sx() {
+		return sx;
+	}
+	
+	public TransformComponent sx(float sx) {
+		this.sx = sx;
+		return this;
+	}
+
+	public float sy() {
+		return sy;
+	}
+	
+	public TransformComponent sy(float sy) {
+		this.sy = sy;
+		return this;
+	}
+
+	public float sz() {
+		return sz;
+	}
+	
+	public TransformComponent sz(float sz) {
+		this.sz = sz;
+		return this;
+	}
+	
+	@Override
+	public String toString() {
+		return x + " " + y + " " + z + " " + rx + " " + ry + " " + rz +" " + rw;
+	}
+	
 }

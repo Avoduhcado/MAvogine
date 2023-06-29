@@ -1,187 +1,115 @@
 package com.avogine.ecs;
 
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 /**
- * TODO Document process of adding entities here, how they're stored and updated, and how to access them through component queries
+ * Top level container for Entity Component System.
+ * </p>
+ * This is the primary entry point for interacting with {@link EntityComponent}s. Each component
+ * is stored in an {@link EntityChunk} according to what other {@code EntityComponents} are associated
+ * with the given entity ID in a maximum of 512 entities per chunk before a new {@link EntityChunk} is
+ * created.
+ * </p>
+ * Components can be accessed in multiple ways, all starting from a {@code query()} method depending on
+ * the desired performance/safety levels of access. You can either directly query for a set of component
+ * types by class via {@link #query(Set)} to receive a {@code Stream} of {@code EntityChunks} that are guaranteed
+ * to at least contain all specified {@code EntityComponents}.
+ * From there it's up to the implementor to access individual components from those chunks via the
+ * {@code EntityChunk#getAs(Class<? extends EntityComponent> clazz)} method. This approach makes no guarantee that the type
+ * requested is contained in the initial set of query parameters. In a majority of all cases, querying with an implementation 
+ * of {@link EntityQuery} should be sufficient instead of the previous approach as it supplies varied functional consumer
+ * methods to operate on the queried chunks albeit in a slightly slower fashion.
  */
 public class EntityManager {
-
-	private final Set<EntityChunk> chunks;
 	
-	private final Map<Class<? extends EntitySystemAddon>, EntitySystemAddon> addons;
+	private final List<EntityChunk> chunks;
 	
 	/**
 	 * 
 	 */
 	public EntityManager() {
-		chunks = new HashSet<>();
-		addons = new HashMap<>();
-	}
-	
-	private UUID getNewEntityID() {
-		return UUID.randomUUID();
-	}
-	
-	/**
-	 * Create a new Entity ID with no components linked to it.
-	 * @return a new Entity ID
-	 */
-	public UUID createEntity() {
-		return createEntityWith();
+		chunks = new ArrayList<>();
 	}
 	
 	/**
 	 * @param components
-	 * @return a new Entity ID created with the supplied {@code EntityComponent}s
+	 * @return The ID of the added entity.
 	 */
 	public UUID createEntityWith(EntityComponent...components) {
-		UUID entityID = getNewEntityID();
-		var componentMap = new EntityComponentMap();
-		for (EntityComponent component : components) {
-			componentMap.put(component.getClass(), component);
-		}
-		var componentSet = EntityComponentSet.of(componentMap.keySet());
-		storeChunk(entityID, componentSet, componentMap);
-		
-		return entityID;
-	}
-
-	/**
-	 * @param entityID The ID of the entity to retrieve.
-	 * @return The {@link EntityComponentMap} matching the given ID or null if no entity exists with that ID.
-	 */
-	public Optional<EntityComponentMap> getEntity(UUID entityID) {
-		return chunks.stream()
-				.flatMap(chunk -> chunk.getComponentMaps().entrySet().stream())
-				.filter(entry -> entry.getKey().equals(entityID))
-				.findFirst()
-				.map(map -> map.getValue());
+		var id = UUID.randomUUID();
+		return addEntity(id, components);
 	}
 	
 	/**
-	 * @param entityID
+	 * @param id 
+	 * @param components
+	 * @return The ID of the added entity.
 	 */
-	public void removeEntity(UUID entityID) {
+	public UUID addEntity(UUID id, EntityComponent...components) {
+		Set<Class<? extends EntityComponent>> archetype = Stream.of(components)
+				.map(EntityComponent::getClass)
+				.collect(Collectors.toSet());
+		
 		chunks.stream()
-		.filter(chunk -> chunk.containsEntity(entityID))
+		.filter(chunk -> chunk.getArchetype().equals(archetype) && chunk.hasRoom())
 		.findFirst()
-		.ifPresent(chunk -> chunk.removeComponentMap(entityID, true));
+		.orElseGet(() -> {
+			var newChunk = new EntityChunk(archetype);
+			chunks.add(newChunk);
+			return newChunk;
+		}).addComponents(id, components);
 		
-		removeEmptyChunks();
+		return id;
 	}
 	
 	/**
-	 * @param <T>
+	 * @param id
+	 */
+	public void removeEntity(UUID id) {
+		chunks.stream()
+		.filter(chunk -> chunk.containsID(id))
+		.findFirst()
+		.ifPresent(chunk -> chunk.removeComponents(id));
+		
+		chunks.removeIf(chunk -> chunk.getChunkSize() == 0);
+	}
+	
+	/**
 	 * @param archetype
 	 * @return
 	 */
-	public <T extends Record & EntityArchetype> Stream<T> query(Class<T> archetype) {
-		return chunks.stream()
-				.filter(chunk -> chunk.containsAll(archetype))
-				.flatMap(chunk -> chunk.getComponentsAs(archetype));
+	public Stream<EntityChunk> query(Set<Class<? extends EntityComponent>> archetype) {
+		return chunks.stream().filter(chunk -> chunk.getArchetype().containsAll(archetype));
 	}
 	
 	/**
-	 * @param entityID
-	 * @param component
-	 */
-	public void addComponent(UUID entityID, EntityComponent component) {
-		chunks.stream()
-		.filter(chunk -> chunk.containsEntity(entityID))
-		.findFirst()
-		.ifPresentOrElse(chunk -> {
-			EntityComponentMap entityMap = chunk.removeComponentMap(entityID);
-			entityMap.put(component.getClass(), component);
-			storeChunk(entityID, EntityComponentSet.of(entityMap.keySet()), entityMap);
-		}, () -> {
-			// Not preferred, but this method can be used to store a new entity
-			var entityMap = new EntityComponentMap();
-			entityMap.put(component.getClass(), component);
-			storeChunk(entityID, EntityComponentSet.of(entityMap.keySet()), entityMap);
-		});
-	}
-	
-	/**
-	 * @param entityID
-	 * @param component
-	 */
-	public void removeComponent(UUID entityID, EntityComponent component) {
-		chunks.stream()
-		.filter(chunk -> chunk.containsEntity(entityID))
-		.findFirst()
-		.ifPresent(chunk -> {
-			EntityComponentMap entityMap = chunk.removeComponentMap(entityID);
-			entityMap.remove(component.getClass());
-			storeChunk(entityID, EntityComponentSet.of(entityMap.keySet()), entityMap);
-		});
-	}
-
-	/**
-	 * Find the {@link EntityChunk} that has a matching archetype to the entity being created, if no such {@code EntityChunk} exists, a new one will be created.
-	 * @param entityID
-	 * @param componentSet
-	 * @param componentMap
-	 */
-	private void storeChunk(UUID entityID, EntityComponentSet componentSet, EntityComponentMap componentMap) {
-		chunks.stream()
-		.filter(chunk -> chunk.getComponentSet().equals(componentSet))
-		.findFirst()
-		.orElseGet(() -> {
-			var entityChunk = new EntityChunk(componentSet);
-			chunks.add(entityChunk);
-			return entityChunk;
-		})
-		.addComponentMap(entityID, componentMap);
-
-		removeEmptyChunks();
-	}
-	
-	private void removeEmptyChunks() {
-		chunks.removeIf(chunk -> chunk.getComponentMaps().isEmpty());
-	}
-	
-	/**
-	 * @return the chunks
-	 */
-	public Set<EntityChunk> getChunks() {
-		return chunks;
-	}
-
-	/**
-	 * Register an {@link EntitySystemAddon} to this {@link EntityManager}.
-	 * 
-	 * <p>{@code EntitySystemAddon}s can contain arbitrary data useful to managing {@link EntitySystem}s. If an {@code EntitySystem}
-	 * would otherwise need to contain data to manage processing, that data should be relocated into an
-	 * {@code EntitySystemAddon}. {@code EntitySystemAddon}s will be automatically serialized when saving the
-	 * game state, and can contain global data that would not otherwise make sense to be stored in individual
-	 * components, ie. shared data.
-	 * @param addon the {@code EntitySystemAddon} to register
-	 * @return the previous value associated with the given addon's class, or null if there was no mapping for that class.
-	 */
-	public EntitySystemAddon registerAddon(EntitySystemAddon addon) {
-		return this.addons.put(addon.getClass(), addon);
-	}
-	
-	/**
-	 * @param <T>
-	 * @param clazz
+	 * @param classes
 	 * @return
 	 */
-	public <T extends EntitySystemAddon> Optional<T> getAddon(Class<T> clazz) {
-		EntitySystemAddon addon = addons.get(clazz);
-		if (addon != null && addon.getClass().isAssignableFrom(clazz)) {
-			return Optional.of(clazz.cast(addon));
-		}
-		return Optional.empty();
+	@SafeVarargs
+	public final Stream<EntityChunk> query(Class<? extends EntityComponent>...classes) {
+		var archetype = Set.of(classes);
+		return chunks.stream().filter(chunk -> chunk.getArchetype().containsAll(archetype));
 	}
-
+	
+	// TODO It may be worth exposing direct query(Class<T> type1, Class<U> type2, BiConsumer<T, U> consumer, int index) methods as they seem to perform faster at the cost of no type safety, for the trustworthy developer
+	
 	/**
-	 * @return the addons
+	 * @param query
+	 * @return
 	 */
-	public Map<Class<? extends EntitySystemAddon>, EntitySystemAddon> getAddons() {
-		return addons;
+	public Stream<EntityChunk> query(EntityQuery query) {
+		return chunks.stream().filter(chunk -> chunk.getArchetype().containsAll(query.getParamTypes()));
+	}
+	
+	/**
+	 * @param query
+	 */
+	public void queryAndProcess(EntityQuery query) {
+		chunks.stream()
+		.filter(chunk -> chunk.getArchetype().containsAll(query.getParamTypes()))
+		.forEach(chunk -> chunk.processWholeChunkQuery(query));
 	}
 	
 }

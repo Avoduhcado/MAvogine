@@ -1,149 +1,153 @@
 package com.avogine.ecs;
 
-import java.io.Serializable;
-import java.lang.reflect.*;
 import java.util.*;
-import java.util.stream.Stream;
-
-import com.avogine.logging.AvoLog;
 
 /**
- * TODO
+ *
  */
-public class EntityChunk implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class EntityChunk {
 
-	private final EntityComponentSet componentSet;
+	private static final int MAX_CHUNK_SIZE = 512;
+
+	private int chunkSize;
+	private final Map<Class<? extends EntityComponent>, EntityComponent[]> components;
 	
-	private final Map<UUID, EntityComponentMap> componentsMap = new HashMap<>();
+	private final UUID[] entityIndex;
 	
 	/**
-	 * @param componentSet 
-	 * 
+	 * @param archetype 
 	 */
-	public EntityChunk(EntityComponentSet componentSet) {
-		this.componentSet = componentSet;
+	public EntityChunk(Set<Class<? extends EntityComponent>> archetype) {
+		components = new HashMap<>();
+		for (Class<? extends EntityComponent> clazz : archetype) {
+			components.put(clazz, new EntityComponent[MAX_CHUNK_SIZE]);
+		}
+		entityIndex = new UUID[MAX_CHUNK_SIZE];
 	}
 	
 	/**
-	 * @return the componentMaps
+	 * @param id
+	 * @param components
 	 */
-	public Map<UUID, EntityComponentMap> getComponentMaps() {
-		return componentsMap;
+	public void addComponents(UUID id, EntityComponent...components) {
+		for (var component : components) {
+			this.components.get(component.getClass())[chunkSize] = component;
+		}
+		entityIndex[chunkSize] = id;
+		chunkSize++;
+	}
+	
+	/**
+	 * @param id
+	 * @param components
+	 */
+	public void addComponents(UUID id, Set<EntityComponent> components) {
+		for (var component : components) {
+			this.components.get(component.getClass())[chunkSize] = component;
+		}
+		entityIndex[chunkSize] = id;
+		chunkSize++;
+	}
+	
+	/**
+	 * @param id
+	 */
+	public void removeComponents(UUID id) {
+		int indexToRemove = getIndexFor(id);
+		if (indexToRemove == -1) {
+			return;
+		}
+		
+		components.values().forEach(componentArray -> {
+			for (int i = indexToRemove; i < chunkSize; i++) {
+				if (i == MAX_CHUNK_SIZE - 1) {
+					componentArray[i] = null;
+					entityIndex[i] = null;
+				}
+				componentArray[i] = componentArray[i + 1];
+				entityIndex[i] = entityIndex[i + 1];
+			}
+		});
+		chunkSize--;
+	}
+	
+	private int getIndexFor(UUID id) {
+		for (int i = 0; i < chunkSize; i++) {
+			if (id == entityIndex[i]) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * @param id
+	 * @return true if this chunk contains the given entity ID.
+	 */
+	public boolean containsID(UUID id) {
+		for (int i = 0; i < chunkSize; i++) {
+			if (entityIndex[i] == id) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @return true if this chunk has open spots in its components arrays.
+	 */
+	public boolean hasRoom() {
+		return chunkSize < MAX_CHUNK_SIZE;
 	}
 	
 	/**
 	 * @param <T>
-	 * @param archetype
+	 * @param clazz
+	 * @param index
 	 * @return
 	 */
-	public <T extends Record & EntityArchetype> Stream<T> getComponentsAs(Class<T> archetype) {
-		return componentsMap.entrySet().stream()
-				.map(entry -> convertToArchetype(entry, archetype))
-				.filter(Objects::nonNull);
+	public <T extends EntityComponent> T getAs(Class<T> clazz, int index) {
+		var component = components.get(clazz)[index];
+		return clazz.cast(component);
 	}
 	
-	private <T extends Record & EntityArchetype> T convertToArchetype(Map.Entry<UUID, EntityComponentMap> entity, Class<T> archetype) {
-		try {
-			Class<?>[] paramTypes = Arrays.stream(archetype.getRecordComponents())
-					.map(RecordComponent::getType)
-					.toArray(Class<?>[]::new);
-			var archetypeConstructor = archetype.getDeclaredConstructor(paramTypes);
-			
-			Object[] params = Arrays.stream(paramTypes)
-					.map(type -> mapTypeFromComponentMap(type, entity))
-					.toArray();
-			archetypeConstructor.setAccessible(true);
-			return archetypeConstructor.newInstance(params);
-		} catch (NoSuchMethodException e) {
-			AvoLog.log().error("Failed to find EntityArchetype constructor.", e);
-			return null;
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			AvoLog.log().error("Failed to build instance of EntityArchetype.", e);
-			return null;
-		}
+	/**
+	 * @param query
+	 * @param index
+	 */
+	public void processQuery(EntityQuery query, int index) {
+		query.process(components, index);
 	}
-	
-	private Object mapTypeFromComponentMap(Class<?> type, Map.Entry<UUID, EntityComponentMap> entity) {
-		if (EntityComponent.class.isAssignableFrom(type)) {
-			return entity.getValue().get(type);
-		} else if (UUID.class.isAssignableFrom(type)) {
-			return entity.getKey();
-		} else {
-			AvoLog.log().warn("Found an archetype param that isn't an EntityComponent or UUID: {}", type);
-			return null;
+
+	/**
+	 * @param query
+	 */
+	public void processWholeChunkQuery(EntityQuery query) {
+		for (int i = 0; i < chunkSize; i++) {
+			query.process(components, i);
 		}
 	}
 	
 	/**
-	 * @param entity
 	 * @return
 	 */
-	public EntityComponentMap getComponentMap(UUID entity) {
-		return componentsMap.get(entity);
+	public Set<Class<? extends EntityComponent>> getArchetype() {
+		return components.keySet();
 	}
-	
+
 	/**
-	 * 
-	 * @param entityID 
-	 * @param componentMap
-	 */
-	public void addComponentMap(UUID entityID, EntityComponentMap componentMap) {
-		componentsMap.put(entityID, componentMap);
-	}
-	
-	/**
-	 * Remove an {@link EntityComponentMap} from this chunk and optionally cleanup all components.
-	 * @param entityID The ID of the entity to remove.
-	 * @param cleanup If true this will additionally call {@link EntityComponent#cleanup()} on all components contained in the map.
-	 * Useful if you're deleting the entity from the game, but this method is also used to reorganize chunks and should not be
-	 * performing cleanups.
-	 * @return The removed {@link EntityComponentMap} or null if no matching ID was found.
-	 */
-	public EntityComponentMap removeComponentMap(UUID entityID, boolean cleanup) {
-		var map = componentsMap.remove(entityID);
-		if (map != null && cleanup) {
-			map.values().forEach(EntityComponent::cleanup);
-		}
-		return map;
-	}
-	
-	/**
-	 * Remove an {@link EntityComponentMap} from this chunk and do not cleanup components.
-	 * @param entityID The ID of the entity to remove.
-	 * @return The removed {@link EntityComponentMap} or null if no matching ID was found.
-	 */
-	public EntityComponentMap removeComponentMap(UUID entityID) {
-		return removeComponentMap(entityID, false);
-	}
-	
-	/**
-	 * TODO
-	 * @param <T>
-	 * @param archetype
 	 * @return
 	 */
-	public <T extends Record & EntityArchetype> boolean containsAll(Class<T> archetype) {
-		var components = Arrays.stream(archetype.getRecordComponents())
-				.map(RecordComponent::getType)
-				.filter(clazz -> EntityComponent.class.isAssignableFrom(clazz))
-				.toList();
-		return this.componentSet.containsAll(components);
+	public int getChunkSize() {
+		return chunkSize;
 	}
-	
+
 	/**
-	 * @param entityID the Long ID of an entity
-	 * @return true if this chunk contains the given entity ID
+	 * @param i
+	 * @return
 	 */
-	public boolean containsEntity(UUID entityID) {
-		return componentsMap.containsKey(entityID);
-	}
-	
-	/**
-	 * @return the archetype
-	 */
-	public EntityComponentSet getComponentSet() {
-		return componentSet;
+	public UUID getID(int i) {
+		return entityIndex[i];
 	}
 	
 }
