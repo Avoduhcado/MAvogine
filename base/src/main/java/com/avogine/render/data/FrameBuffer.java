@@ -6,7 +6,6 @@ import static org.lwjgl.opengl.GL30.*;
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
 
-import com.avogine.experimental.annotation.MemoryManaged;
 import com.avogine.io.Window;
 import com.avogine.logging.AvoLog;
 import com.avogine.render.data.texture.*;
@@ -15,7 +14,6 @@ import com.avogine.render.data.texture.*;
  * @author Dominus
  *
  */
-@MemoryManaged
 public class FrameBuffer {
 
 	protected final int fbo;
