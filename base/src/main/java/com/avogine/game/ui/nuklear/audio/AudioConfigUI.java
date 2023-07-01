@@ -51,7 +51,7 @@ public class AudioConfigUI {
 			.collect(Collectors.joining("\0"));
 		deviceSelection = deviceList.indexOf(audio.getDeviceSpecifier()) + 1;
 		
-		comboBounds = NkVec2.create().set(400, 400);
+		comboBounds = NkVec2.calloc().set(400, 400);
 		
 //		asciiFilter = NkPluginFilter.create(Nuklear::nnk_filter_ascii);
 	}

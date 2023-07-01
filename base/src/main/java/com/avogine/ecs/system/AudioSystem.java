@@ -41,7 +41,7 @@ public class AudioSystem implements Updateable {
 	private void updateSources(EntityManager manager) {
 		manager.query(AudioListenerTag.class, TransformComponent.class).findFirst().ifPresent(chunk -> {
 			var transform = chunk.getAs(TransformComponent.class, 0);
-			listenerOrientation.set(transform.rx(), transform.ry(), transform.rz(), transform.rw());
+			transform.orientation(listenerOrientation);
 			audioListener.setPosition(transform.x(), transform.y(), transform.z());
 			audioListener.setOrientation(listenerOrientation);
 		});

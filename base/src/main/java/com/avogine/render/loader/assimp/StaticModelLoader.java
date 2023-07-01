@@ -56,7 +56,7 @@ public class StaticModelLoader {
 	 * @return
 	 */
 	public static Model load(String resourcePath, String texturesDir, int flags, int numberOfInstances) {
-		AIFileIO fileIo = AIFileIO.create()
+		AIFileIO fileIo = AIFileIO.calloc()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					ByteBuffer data;
 					String fileNameUtf8 = MemoryUtil.memUTF8(fileName);
@@ -276,9 +276,6 @@ public class StaticModelLoader {
 				vertexData.put(aiNormal.z());
 			} else {
 				vertexData.position(vertexData.position() + 3);
-//				vertexData.put(0f);
-//				vertexData.put(0f);
-//				vertexData.put(0f);
 			}
 			
 			if (aiTangents != null) {
@@ -305,69 +302,9 @@ public class StaticModelLoader {
 				vertexData.put(aiTextureCoordinate.y());
 			} else {
 				vertexData.position(vertexData.position() + 2);
-//				vertexData.put(0f);
-//				vertexData.put(0f);
 			}
 		}
 		vertexData.flip();
-		
-		return vertexData;
-	}
-	
-	private static FloatBuffer processVerticesPro(AIMesh aiMesh) {
-		AIVector3D.Buffer aiPositions = aiMesh.mVertices();
-		AIVector3D.Buffer aiNormals = !aiMesh.isNull(AIMesh.MNORMALS) ? aiMesh.mNormals() : null;
-//		AIVector3D.Buffer aiTangents = !aiMesh.isNull(AIMesh.MTANGENTS) ? aiMesh.mTangents() : null; 
-		// XXX Potentially support multiple texture coordinates per mesh?
-		AIVector3D.Buffer aiTextureCoordinates = !aiMesh.isNull(AIMesh.MTEXTURECOORDS) ? aiMesh.mTextureCoords(0) : null;
-
-		List<Vector3f> positions = new ArrayList<>();
-		List<Vector3f> normals = new ArrayList<>();
-		List<Vector2f> uvs = new ArrayList<>();
-		
-		while (aiPositions.remaining() > 0) {
-			AIVector3D aiPosition = aiPositions.get();
-			positions.add(new Vector3f(aiPosition.x(), aiPosition.y(), aiPosition.z()));
-			
-			if (aiNormals != null) {
-				AIVector3D aiNormal = aiNormals.get();
-				normals.add(new Vector3f(aiNormal.x(), aiNormal.y(), aiNormal.z()));
-			} else {
-				normals.add(new Vector3f(0f));
-			}
-			
-			if (aiTextureCoordinates != null)  {
-				AIVector3D aiTextureCoordinate = aiTextureCoordinates.get();
-				uvs.add(new Vector2f(aiTextureCoordinate.x(), aiTextureCoordinate.y()));
-			} else {
-				uvs.add(new Vector2f(0f));
-			}
-		}
-		
-		// Compute tangent basis
-		for (int i = 0; i < positions.size(); i += 3) {
-			var v0 = positions.get(i);
-			var v1 = positions.get(i + 1);
-			var v2 = positions.get(i + 2);
-			
-			var uv0 = uvs.get(i);
-			var uv1 = uvs.get(i + 1);
-			var uv2 = uvs.get(i + 2);
-			
-			// Edges of the triangle : position delta
-			Vector3f deltaPos1 = v1.sub(v0, new Vector3f());
-			Vector3f deltaPos2 = v2.sub(v0, new Vector3f());
-			
-			// UV Delta
-			Vector2f deltaUV1 = uv1.sub(uv0, new Vector2f());
-			Vector2f deltaUV2 = uv2.sub(uv0, new Vector2f());
-			
-			float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
-			Vector3f tangent = (deltaPos1.mul(deltaUV2.y, new Vector3f()).sub(deltaPos2.mul(deltaUV1.y, new Vector3f()), new Vector3f())).mul(r, new Vector3f());
-			Vector3f bitangent = (deltaPos2.mul(deltaUV1.x, new Vector3f()).sub(deltaPos1.mul(deltaUV2.x, new Vector3f()), new Vector3f())).mul(r, new Vector3f());
-		}
-
-		var vertexData = MemoryUtil.memAllocFloat(aiMesh.mNumVertices() * (Mesh.VERTEX_SIZE - 3));
 		
 		return vertexData;
 	}

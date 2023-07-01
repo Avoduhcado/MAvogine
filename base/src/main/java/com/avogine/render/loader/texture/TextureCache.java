@@ -30,7 +30,7 @@ public class TextureCache {
 	
 	public Texture getCubemap(String...textureFiles) {
 		// XXX Might be better to standardize cubemap loading and instead reference a singular directory to load generic file names from for each side of the cube
-		return textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().reduce((a, b) -> a + " " + b).get(), v -> TextureLoader.loadCubemap(textureFiles));
+		return textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().reduce((a, b) -> a + " " + b).orElseThrow(), v -> TextureLoader.loadCubemap(textureFiles));
 	}
 	
 	public Texture getCubemap(String directory, String fileType) {

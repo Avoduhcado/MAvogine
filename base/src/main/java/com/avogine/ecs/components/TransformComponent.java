@@ -1,5 +1,7 @@
 package com.avogine.ecs.components;
 
+import org.joml.*;
+
 import com.avogine.ecs.EntityComponent;
 
 
@@ -187,6 +189,33 @@ public class TransformComponent implements EntityComponent {
 	public TransformComponent sz(float sz) {
 		this.sz = sz;
 		return this;
+	}
+	
+	/**
+	 * Store this transform's {@code x}, {@code y}, {@code z} values in the supplied {@link Vector3f}.
+	 * @param dest The vector to hold this transform's position.
+	 * @return {@code dest}
+	 */
+	public Vector3f position(Vector3f dest) {
+		return dest.set(x, y, z);
+	}
+	
+	/**
+	 * Store this transform's {@code rx}, {@code ry}, {@code rz}, {@code rw} values in the supplied {@link Quaternionf}.
+	 * @param dest The quaternion to hold this transform's orientation.
+	 * @return {@code dest}
+	 */
+	public Quaternionf orientation(Quaternionf dest) {
+		return dest.set(rx, ry, rz, rw);
+	}
+	
+	/**
+	 * Store this transform's {@code sx}, {@code sy}, {@code sz} values in the supplied {@link Vector3f}.
+	 * @param dest The vector to hold this transform's scale.
+	 * @return {@code dest}
+	 */
+	public Vector3f scale(Vector3f dest) {
+		return dest.set(sx, sy, sz);
 	}
 	
 	@Override

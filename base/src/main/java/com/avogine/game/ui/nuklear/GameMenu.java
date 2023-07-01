@@ -12,7 +12,6 @@ import org.lwjgl.system.MemoryStack;
 
 import com.avogine.game.Game;
 import com.avogine.game.scene.Scene;
-import com.avogine.game.ui.nuklear.UIElement;
 import com.avogine.game.ui.nuklear.audio.AudioConfigUI;
 import com.avogine.game.util.*;
 
@@ -154,7 +153,7 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 			background.r((byte) 255).g((byte) 0).b((byte) 0).a((byte) 0);
 			style.window().fixed_background().data().color().set(background);
 			
-			position.x((displayWidth * 0.5f) - 100).y((displayHeight * 0.5f) - 100).w(200).h(45 * 6);
+			position.x((displayWidth * 0.5f) - 100).y((displayHeight * 0.5f) - 100).w(200).h(45 * 6f);
 			if (nk_begin(context, windowTitle, position, windowOpts)) {
 				nk_layout_row_dynamic(context, 35, 1);
 				if (nk_button_label_styled(context, disabledStyleButton, "Save Game")) {

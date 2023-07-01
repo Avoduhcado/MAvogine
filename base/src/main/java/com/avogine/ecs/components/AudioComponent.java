@@ -6,8 +6,8 @@ import com.avogine.audio.data.AudioSource;
 import com.avogine.ecs.EntityComponent;
 
 /**
- * TODO Implement multiple sources per component
- * @param sourceID 
+ * TODO Make this store less heavy weight values
+ * @param sources 
  */
 public record AudioComponent(List<AudioSource> sources) implements EntityComponent {
 
