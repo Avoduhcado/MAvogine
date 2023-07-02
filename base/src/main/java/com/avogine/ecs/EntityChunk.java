@@ -50,7 +50,8 @@ public class EntityChunk {
 	}
 	
 	/**
-	 * @param id
+	 * Remove all components associated with the given ID.
+	 * @param id The ID of the entity to remove components for.
 	 */
 	public void removeComponents(UUID id) {
 		int indexToRemove = getIndexFor(id);
@@ -59,15 +60,21 @@ public class EntityChunk {
 		}
 		
 		components.values().forEach(componentArray -> {
-			for (int i = indexToRemove; i < chunkSize; i++) {
-				if (i == MAX_CHUNK_SIZE - 1) {
-					componentArray[i] = null;
-					entityIndex[i] = null;
-				}
-				componentArray[i] = componentArray[i + 1];
-				entityIndex[i] = entityIndex[i + 1];
+			if (indexToRemove == MAX_CHUNK_SIZE - 1) {
+				componentArray[indexToRemove] = null;
+			} else {
+				componentArray[indexToRemove] = componentArray[chunkSize - 1];
+				componentArray[chunkSize - 1] = null;
 			}
 		});
+		
+		if (indexToRemove == MAX_CHUNK_SIZE - 1) {
+			entityIndex[indexToRemove] = null;
+		} else {
+			entityIndex[indexToRemove] = entityIndex[chunkSize - 1];
+			entityIndex[chunkSize - 1] = null;
+		}
+		
 		chunkSize--;
 	}
 	
@@ -104,7 +111,7 @@ public class EntityChunk {
 	 * @param <T>
 	 * @param clazz
 	 * @param index
-	 * @return
+	 * @return the element contained at the given index in the array of types {@code clazz} cast to the given type.
 	 */
 	public <T extends EntityComponent> T getAs(Class<T> clazz, int index) {
 		var component = components.get(clazz)[index];
@@ -129,25 +136,29 @@ public class EntityChunk {
 	}
 	
 	/**
-	 * @return
+	 * @return the Set of {@link EntityComponent} types that define every entity contained in this chunk.
 	 */
 	public Set<Class<? extends EntityComponent>> getArchetype() {
 		return components.keySet();
 	}
 
 	/**
-	 * @return
+	 * @return the populated size of component arrays in this chunk.
 	 */
 	public int getChunkSize() {
 		return chunkSize;
 	}
 
 	/**
-	 * @param i
-	 * @return
+	 * @param i the index of the entity in the chunk to retrieve an ID for.
+	 * @return the ID of the entity contained in index {@code i}.
+	 * @throws ArrayIndexOutOfBoundsException if {@code i} is less than 0 or greater than or equal to the size of the chunk.
 	 */
-	public UUID getID(int i) {
+	public UUID getID(int i) throws ArrayIndexOutOfBoundsException {
+		if (i < 0 || i >= chunkSize) {
+			throw new ArrayIndexOutOfBoundsException(i);
+		}
 		return entityIndex[i];
 	}
-	
+
 }
