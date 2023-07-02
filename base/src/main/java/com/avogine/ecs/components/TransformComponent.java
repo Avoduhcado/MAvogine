@@ -200,6 +200,16 @@ public class TransformComponent implements EntityComponent {
 		return dest.set(x, y, z);
 	}
 	
+	public void setPosition(float x, float y, float z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+	}
+	
+	public void setPosition(Vector3f position) {
+		setPosition(position.x, position.y, position.z);
+	}
+	
 	/**
 	 * Store this transform's {@code rx}, {@code ry}, {@code rz}, {@code rw} values in the supplied {@link Quaternionf}.
 	 * @param dest The quaternion to hold this transform's orientation.
@@ -207,6 +217,17 @@ public class TransformComponent implements EntityComponent {
 	 */
 	public Quaternionf orientation(Quaternionf dest) {
 		return dest.set(rx, ry, rz, rw);
+	}
+	
+	public void setOrientation(float x, float y, float z, float w) {
+		this.rx = x;
+		this.ry = y;
+		this.rz = z;
+		this.rw = w;
+	}
+	
+	public void setOrientation(Quaternionf orientation) {
+		setOrientation(orientation.x, orientation.y, orientation.z, orientation.w);
 	}
 	
 	/**
@@ -218,9 +239,23 @@ public class TransformComponent implements EntityComponent {
 		return dest.set(sx, sy, sz);
 	}
 	
+	public void setScale(float x, float y, float z) {
+		this.sx = x;
+		this.sy = y;
+		this.sz = z;
+	}
+	
+	public void setScale(float scalar) {
+		setScale(scalar, scalar, scalar);
+	}
+	
+	public void setScale(Vector3f scale) {
+		setScale(scale.x, scale.y, scale.z);
+	}
+	
 	@Override
 	public String toString() {
-		return x + " " + y + " " + z + " " + rx + " " + ry + " " + rz +" " + rw;
+		return x + " " + y + " " + z + " " + rx + " " + ry + " " + rz +" " + rw + " " + sx + " " + sy + " " + sz;
 	}
 	
 }
