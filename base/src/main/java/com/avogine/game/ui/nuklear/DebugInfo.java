@@ -29,11 +29,8 @@ public class DebugInfo implements UIElement, Renderable {
 	@Override
 	public void prepare(NkContext context, long windowId) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
-			NkStyle style = context.style(); 
-			NkColor background = NkColor.malloc(stack);
-			// Set background to fully transparent layer
-			background.r((byte) 0).g((byte) 0).b((byte) 0).a((byte) 0);
-			style.window().fixed_background().data().color().set(background);
+			NkColor transparent = NkColor.calloc(stack).set((byte) 0, (byte) 0, (byte) 0, (byte) 0);
+			nk_style_push_color(context, context.style().window().fixed_background().data().color(), transparent);
 			
 			NkRect position = NkRect.calloc(stack).x(0).y(0).w(100).h(100);
 			if (nk_begin(context, "DEBUG", position, NK_WINDOW_NO_INPUT | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BACKGROUND)) {
@@ -41,6 +38,8 @@ public class DebugInfo implements UIElement, Renderable {
 				nk_label(context, "FPS: " + game.getWindow().getFps(), NK_TEXT_LEFT);
 			}
 			nk_end(context);
+			
+			nk_style_pop_color(context);
 		}
 	}
 

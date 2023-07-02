@@ -140,6 +140,8 @@ public abstract class Game {
 	 */
 	public void drainRegistrationQueue() {
 		if (nextScene != null) {
+			cleanup();
+			
 			scene = nextScene;
 			nextScene = null;
 			

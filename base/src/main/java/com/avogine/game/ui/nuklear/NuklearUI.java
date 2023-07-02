@@ -79,6 +79,8 @@ public class NuklearUI {
 	
 	private NuklearMesh mesh;
 	
+	private NuklearTheme theme;
+	
 	/**
 	 * 
 	 */
@@ -92,6 +94,8 @@ public class NuklearUI {
 		
 		commands = NkBuffer.create();
 		nk_buffer_init(commands, ALLOCATOR, BUFFER_INITIAL_SIZE);
+		
+		theme = new MenuTheme();
 	}
 	
 	/**
@@ -117,6 +121,8 @@ public class NuklearUI {
 		window.getInput().add(new NuklearScrollHandler());
 		window.getInput().add(new NuklearMouseHandler());
 		window.getInput().add(new NuklearKeyUnicodeHandler());
+		
+		theme.initializeTheme(context);
 	}
 	
 	private void initFont() {
@@ -349,6 +355,7 @@ public class NuklearUI {
 						nk_input_key(context, NK_KEY_SHIFT, false);
 					}
 				}
+				default -> {}
 			}
 		}
 		

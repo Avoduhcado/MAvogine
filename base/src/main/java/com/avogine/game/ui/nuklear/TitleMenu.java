@@ -56,7 +56,7 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 	public void onRegister(Game game) {
 		NkContext context = game.getGUI().getContext();
 		
-		position = NkRect.create();
+		position = NkRect.calloc();
 		nk_begin(context, windowTitle, position, 0);
 		nk_end(context);
 		nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
@@ -89,36 +89,14 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 			int displayWidth = w.get(0);
 			int displayHeight = h.get(0);
 
-			// TODO Move this Style stuff to some GameUIStyle class or at least into the register method to only perform it once
-			NkStyle style = context.style(); 
-			NkColor background = NkColor.malloc(stack);
-			background.r((byte) 255).g((byte) 0).b((byte) 0).a((byte) 0);
-			style.window().fixed_background().data().color().set(background);
-
-			NkColor text = NkColor.malloc(stack);
-			text.r((byte) 255).g((byte) 255).b((byte) 255).a((byte) 255);
-			style.text().color().set(text);
-
-			NkColor disabledItemColor = NkColor.malloc(stack);
-			disabledItemColor.r((byte) 40).g((byte) 40).b((byte) 40).a((byte) 255);
-			NkStyleItem disabledStyleItem = nk_style_item_color(disabledItemColor, NkStyleItem.malloc(stack));
-			NkColor disabledTextColor = NkColor.malloc(stack);
-			disabledTextColor.r((byte) 60).g((byte) 60).b((byte) 60).a((byte) 255);
-			NkStyleButton disabledStyleButton = NkStyleButton.malloc(stack).set(style.button());
-			disabledStyleButton.normal(disabledStyleItem);
-			disabledStyleButton.active(disabledStyleItem);
-			disabledStyleButton.hover(disabledStyleItem);
-			disabledStyleButton.border_color(disabledTextColor);
-			disabledStyleButton.text_background(disabledTextColor);
-			disabledStyleButton.text_normal(disabledTextColor);
-			disabledStyleButton.text_active(disabledTextColor);
-			disabledStyleButton.text_hover(disabledTextColor);
-
 			nk_window_show_if(context, windowTitle, NK_HIDDEN, nk_window_is_hidden(context, windowTitle));
 			nk_window_set_focus(context, windowTitle);
 			nk_window_show_if(context, audioWindowTitle, NK_HIDDEN, nk_window_is_hidden(context, audioWindowTitle));
 			nk_window_set_focus(context, audioWindowTitle);
 			
+			NkColor transparent = NkColor.calloc(stack).set((byte) 0, (byte) 0, (byte) 0, (byte) 0);
+			nk_style_push_color(context, context.style().window().fixed_background().data().color(), transparent);
+
 			position.x((displayWidth * 0.5f) - 100).y(displayHeight * 0.65f).w(200).h(200);
 			if (nk_begin(context, windowTitle, position, windowOpts)) {
 				nk_layout_row_dynamic(context, 35, 1);
@@ -126,7 +104,7 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 					loadNewGame();
 				}
 
-				if (nk_button_label_styled(context, loadGameEnabled ? style.button() : disabledStyleButton, "Load Game") && loadGameEnabled) {
+				if (loadGameEnabled && nk_button_label(context, "Load Game")) {
 					// TODO No saved games
 				}
 
@@ -149,11 +127,7 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 			}
 			nk_end(context);
 			
-			background.r((byte) 64).g((byte) 64).b((byte) 64).a((byte) 255);
-			style.window().fixed_background().data().color().set(background);
-
-			text.r((byte) 255).g((byte) 255).b((byte) 255).a((byte) 255);
-			style.text().color().set(text);
+			nk_style_pop_color(context);
 			
 			audioPosition.x((displayWidth * 0.5f) - 200).y(300).w(400).h(230);
 			if (nk_begin(context, audioWindowTitle, audioPosition, audioWindowOpts)) {

@@ -95,7 +95,7 @@ public class AudioConfigUI {
 	}
 	
 	private float getALVolume() {
-		return ((float) volume[0]) / 100.0f;
+		return volume[0] / 100.0f;
 	}
 	
 	private void setUIVolume(float alVolume) {

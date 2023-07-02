@@ -111,9 +111,7 @@ public class StaticModelLoader {
 
 		Assimp.aiReleaseImport(aiScene);
 
-		var model = new Model(meshes, materials);
-
-		return model;
+		return new Model(meshes, materials);
 	}
 	
 	protected static void processNode(AINode node, AIScene scene, List<Mesh> meshes, List<Material> materials) {
@@ -358,11 +356,9 @@ public class StaticModelLoader {
 			}
 			AvoLog.log().debug("Prop: {} Int: {}", prop.mKey().dataString(), values);
 		}
-		case Assimp.aiPTI_Buffer -> {
-			AvoLog.log().debug("Prop: {} Buffer: Length: {}", prop.mKey().dataString(), prop.mDataLength());
-		}
+		case Assimp.aiPTI_Buffer -> AvoLog.log().debug("Prop: {} Buffer: Length: {}", prop.mKey().dataString(), prop.mDataLength());
 		default -> throw new IllegalArgumentException("Unexpected value: " + prop.mType());
-		};
+		}
 	}
 	
 }
