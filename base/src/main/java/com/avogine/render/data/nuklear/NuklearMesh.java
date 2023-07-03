@@ -2,19 +2,19 @@ package com.avogine.render.data.nuklear;
 
 import static org.lwjgl.nuklear.Nuklear.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
+import static org.lwjgl.opengl.GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
-import java.nio.*;
-import java.util.*;
+import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import org.lwjgl.nuklear.*;
-import org.lwjgl.system.*;
+import org.lwjgl.system.MemoryStack;
 
 /**
  *
@@ -129,7 +129,7 @@ public class NuklearMesh {
 					.vertex_layout(VERTEX_LAYOUT)
 					.vertex_size(20)
 					.vertex_alignment(4)
-					.null_texture(nullTexture)
+					.tex_null(nullTexture)
 					.circle_segment_count(22)
 					.curve_segment_count(22)
 					.arc_segment_count(22)
@@ -171,6 +171,16 @@ public class NuklearMesh {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
+	}
+	
+	/**
+	 * TODO This is caching framebuffer/window size and it probably shouldn't be.
+	 */
+	public void setSize(int width, int height) {
+		this.displayWidth = width;
+		this.displayHeight = height;
+		this.width = width;
+		this.height = height;
 	}
 
 	/**

@@ -1,6 +1,6 @@
 package com.avogine.ecs;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 
@@ -13,17 +13,17 @@ class ECSSystemTest {
 
 	private TestGame game;
 	private TestScene scene;
-	private EntityWorld world;
+	private EntityManager manager;
 	
 	@BeforeEach
 	void setup() {
 		game = new TestGame();
-		game.init(null);
+		game.init(null, null, null);
 		
 		scene = new TestScene();
 		scene.init(game, null);
 		
-		world = scene.getEntityWorld();
+		manager = scene.getEntityManager();
 	}
 	
 	@AfterEach
@@ -33,19 +33,39 @@ class ECSSystemTest {
 	
 	@Test
 	void componentQueryTest() {
-		long entityA = world.createEntityWith(EntityArchetype.of(TransformComponent.class, MeshComponent.class));
-		long entityB = world.createEntityWith(EntityArchetype.of(TransformComponent.class));
+		var aTransform = new TransformComponent();
+		var bTransform = new TransformComponent();
+		manager.createEntityWith(aTransform, new ModelComponent(""));
+		manager.createEntityWith(bTransform);
 		
-		var query = new EntityComponentQuery(EntityArchetype.of(TransformComponent.class, MeshComponent.class));
-		query.fetch(world);
-		
-		query.getResultMap().forEach(map -> {
-			var transform = map.getAs(TransformComponent.class);
-			transform.getPosition().x += 2;
+		manager.query(TransformComponent.class, ModelComponent.class).forEach(chunk -> {
+			for (int i = 0; i < chunk.getChunkSize(); i++) {
+				var transform = chunk.getAs(TransformComponent.class, i);
+				transform.x(transform.x() + 2);
+			}
 		});
 		
-		assertEquals(2, world.getEntity(entityA).getAs(TransformComponent.class).getPosition().x);
-		assertEquals(0, world.getEntity(entityB).getAs(TransformComponent.class).getPosition().x);
+		assertEquals(2, aTransform.x());
+		assertEquals(0, bTransform.x());
+	}
+	
+
+	@Test
+	void testInlineArchetypeCasting() {
+		manager.createEntityWith(new TransformComponent(), new ModelComponent(""));
+		manager.createEntityWith(new ModelComponent(""), new TransformComponent());
+		manager.createEntityWith(new TransformComponent(), new ModelComponent(""));
+		
+		manager.createEntityWith(new TransformComponent());
+		manager.createEntityWith(new TransformComponent());
+		
+		assertEquals(2, manager.query().count(), "Chunk size does not match: " + manager.query().count());
+		
+		int transformModelCount = manager.query(TransformComponent.class, ModelComponent.class).mapToInt(EntityChunk::getChunkSize).sum();
+		assertEquals(3, transformModelCount, "Failed to find all renderables: " + transformModelCount);
+		
+		int transformCount = manager.query(TransformComponent.class).mapToInt(EntityChunk::getChunkSize).sum();
+		assertEquals(5, transformCount, "Failed to find all transformables: " + transformCount);
 	}
 
 }

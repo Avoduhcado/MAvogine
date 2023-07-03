@@ -20,7 +20,7 @@ import com.avogine.render.data.material.Material;
  * TODO Potentially include multiple VBOs for instanced meshes, one for static data, and one for dynamic data that is streamed in as the scene updates and meshes transform themselves
  * Cleanup all this code, presently this is pretty hardcoded just for rendering 2D sprites with a texture atlas
  */
-public class InstancedMesh implements Renderable {
+public class InstancedMesh {
 
 	private int vao;
 	private int vbo;
@@ -107,17 +107,14 @@ public class InstancedMesh implements Renderable {
 		this.numberOfInstances = numberOfInstances;
 	}
 
-	@Override
 	public void bind() {
 		glBindVertexArray(vao);
 	}
 
-	@Override
 	public void unbind() {
 		glBindVertexArray(0);
 	}
 
-	@Override
 	public void render() {
 		bind();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
@@ -128,13 +125,11 @@ public class InstancedMesh implements Renderable {
 		unbind();
 	}
 	
-	@Override
 	public <T> void renderBatch(Collection<T> entities, Consumer<T> action) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
 	public <T> void renderBatch(Stream<T> entities, Consumer<T> action) {
 		// TODO Auto-generated method stub
 		
@@ -282,7 +277,6 @@ public class InstancedMesh implements Renderable {
 		this.material = material;
 	}
 
-	@Override
 	public void cleanup() {
 		glDeleteBuffers(vbo);
 		glDeleteBuffers(ebo);

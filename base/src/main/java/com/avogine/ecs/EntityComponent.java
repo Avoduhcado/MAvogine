@@ -1,18 +1,17 @@
 package com.avogine.ecs;
 
 /**
- * XXX Implementers of this type MUST include a public no-args constructor in order to satisfy {@link EntityWorld#createEntityWith(EntityArchetype)}.
- * It's also worth noting that no assumptions should be made about default field values if they're
- * not strictly defined inside of that constructor.
+ *
  */
-public abstract class EntityComponent {
-	
+public interface EntityComponent {
+
 	/**
-	 * Zero-argument constructor for use in creating instances of a given component through reflection.
-	 * <p>
-	 * This will only be executed if the subclass does not define any constructors of its own.
+	 * Optional cleanup method.
+	 * </p>
+	 * This is a no-op by default but can be overridden by subclasses to perform unique
+	 * cleanup operations for components.
 	 */
-	protected EntityComponent() {
+	public default void cleanup() {
 		
 	}
 	

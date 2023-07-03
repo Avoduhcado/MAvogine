@@ -16,5 +16,17 @@ public record MouseScrollEvent(float xOffset, float yOffset, long window) implem
 	public MouseScrollEvent(double xOffset, double yOffset, long window) {
 		this((float) xOffset, (float) yOffset, window);
 	}
+
+	@Override
+	public void consume() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isConsumed() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
 }

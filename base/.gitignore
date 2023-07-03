@@ -2,6 +2,9 @@
 /bin/
 /.settings/
 
+# Crazy test files can live in untracked /experimental packages
+src/**/experimental/
+
 # Compiled class file
 *.class
 

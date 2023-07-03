@@ -2,142 +2,260 @@ package com.avogine.ecs.components;
 
 import org.joml.*;
 
-import com.avogine.ecs.*;
+import com.avogine.ecs.EntityComponent;
+
 
 /**
  *
  */
-public class TransformComponent extends EntityComponent {
-
-	private final Vector3f position;
-	private final Quaternionf orientation;
-	private final Vector3f scale;
-
+public class TransformComponent implements EntityComponent {
+	
+	private float x;
+	private float y;
+	private float z;
+	private float rx;
+	private float ry;
+	private float rz;
+	private float rw;
+	private float sx;
+	private float sy;
+	private float sz;
+	
 	/**
-	 * 
-	 * @param position
-	 * @param orientation 
-	 * @param scale
+	 * Translation, orientation, and scale.
+	 * @param x 
+	 * @param y 
+	 * @param z 
+	 * @param rx 
+	 * @param ry 
+	 * @param rz 
+	 * @param rw 
+	 * @param sx 
+	 * @param sy 
+	 * @param sz 
 	 */
-	public TransformComponent(Vector3f position, Quaternionf orientation, Vector3f scale) {
-		this.position = position;
-		this.orientation = orientation;
-		this.scale = scale;
+	public TransformComponent(
+			float x, float y, float z,
+			float rx, float ry, float rz, float rw,
+			float sx, float sy, float sz) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.rx = rx;
+		this.ry = ry;
+		this.rz = rz;
+		this.rw = rw;
+		this.sx = sx;
+		this.sy = sy;
+		this.sz = sz;
 	}
 	
 	/**
-	 * 
-	 * @param position
-	 * @param orientation 
+	 * Default translation, orientation, 1 dimensional scale constructor
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @param rx
+	 * @param ry
+	 * @param rz
+	 * @param rw
+	 * @param s
 	 */
-	public TransformComponent(Vector3f position, Quaternionf orientation) {
-		this(position, orientation, new Vector3f(1.0f));
+	public TransformComponent(
+			float x, float y, float z,
+			float rx, float ry, float rz, float rw,
+			float s) {
+		this(x, y, z, rx, ry, rz, rw, s, s, s);
 	}
 	
 	/**
-	 * 
-	 * @param position
-	 * @param scale
+	 * Default translation, orientation constructor
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @param rx
+	 * @param ry
+	 * @param rz
+	 * @param rw
 	 */
-	public TransformComponent(Vector3f position, Vector3f scale) {
-		this(position, new Quaternionf(), scale);
-	}
-
-	/**
-	 * 
-	 * @param position
-	 */
-	public TransformComponent(Vector3f position) {
-		this(position, new Vector3f(1.0f));
+	public TransformComponent(
+			float x, float y, float z,
+			float rx, float ry, float rz, float rw) {
+		this(x, y, z, rx, ry, rz, rw, 1);
 	}
 	
 	/**
-	 * 
+	 * Default translation constructor
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
+	public TransformComponent(float x, float y, float z) {
+		this(x, y, z, 0, 0, 0, 1);
+	}
+	
+	/**
+	 * Default no argument constructor
 	 */
 	public TransformComponent() {
-		this(new Vector3f());
+		this(0, 0, 0);
+	}
+	
+	public float x() {
+		return x;
+	}
+	
+	public TransformComponent x(float x) {
+		this.x = x;
+		return this;
+	}
+	
+	public float y() {
+		return y;
+	}
+	
+	public TransformComponent y(float y) {
+		this.y = y;
+		return this;
+	}
+
+	public float z() {
+		return z;
+	}
+	
+	public TransformComponent z(float z) {
+		this.z = z;
+		return this;
+	}
+
+	public float rx() {
+		return rx;
+	}
+	
+	public TransformComponent rx(float rx) {
+		this.rx = rx;
+		return this;
+	}
+
+	public float ry() {
+		return ry;
+	}
+	
+	public TransformComponent ry(float ry) {
+		this.ry = ry;
+		return this;
+	}
+
+	public float rz() {
+		return rz;
+	}
+	
+	public TransformComponent rz(float rz) {
+		this.rz = rz;
+		return this;
+	}
+
+	public float rw() {
+		return rw;
+	}
+	
+	public TransformComponent rw(float rw) {
+		this.rw = rw;
+		return this;
+	}
+
+	public float sx() {
+		return sx;
+	}
+	
+	public TransformComponent sx(float sx) {
+		this.sx = sx;
+		return this;
+	}
+
+	public float sy() {
+		return sy;
+	}
+	
+	public TransformComponent sy(float sy) {
+		this.sy = sy;
+		return this;
+	}
+
+	public float sz() {
+		return sz;
+	}
+	
+	public TransformComponent sz(float sz) {
+		this.sz = sz;
+		return this;
 	}
 	
 	/**
-	 * @return the position
+	 * Store this transform's {@code x}, {@code y}, {@code z} values in the supplied {@link Vector3f}.
+	 * @param dest The vector to hold this transform's position.
+	 * @return {@code dest}
 	 */
-	public Vector3f getPosition() {
-		return position;
+	public Vector3f position(Vector3f dest) {
+		return dest.set(x, y, z);
 	}
-
-	/**
-	 * @param x
-	 * @param y
-	 * @param z
-	 */
+	
 	public void setPosition(float x, float y, float z) {
-		this.position.set(x, y, z);
+		this.x = x;
+		this.y = y;
+		this.z = z;
 	}
 	
-	/**
-	 * Set this transform's position to a copy of the input {@code position}.
-	 * @param position The position to set this transform to.
-	 */
 	public void setPosition(Vector3f position) {
-		this.position.set(position);
-	}
-
-	/**
-	 * @return the orientation
-	 */
-	public Quaternionf getOrientation() {
-		return orientation;
+		setPosition(position.x, position.y, position.z);
 	}
 	
 	/**
-	 * 
-	 * @param x
-	 * @param y
-	 * @param z
-	 * @param w
+	 * Store this transform's {@code rx}, {@code ry}, {@code rz}, {@code rw} values in the supplied {@link Quaternionf}.
+	 * @param dest The quaternion to hold this transform's orientation.
+	 * @return {@code dest}
 	 */
+	public Quaternionf orientation(Quaternionf dest) {
+		return dest.set(rx, ry, rz, rw);
+	}
+	
 	public void setOrientation(float x, float y, float z, float w) {
-		this.orientation.set(x, y, z, w);
+		this.rx = x;
+		this.ry = y;
+		this.rz = z;
+		this.rw = w;
 	}
-
-	/**
-	 * Set this transform's orientation to a copy of the input {@code orientation}.
-	 * @param orientation The orientation to set this transform to.
-	 */
+	
 	public void setOrientation(Quaternionf orientation) {
-		this.orientation.set(orientation);
+		setOrientation(orientation.x, orientation.y, orientation.z, orientation.w);
 	}
 	
 	/**
-	 * @return the scale
+	 * Store this transform's {@code sx}, {@code sy}, {@code sz} values in the supplied {@link Vector3f}.
+	 * @param dest The vector to hold this transform's scale.
+	 * @return {@code dest}
 	 */
-	public Vector3f getScale() {
-		return scale;
+	public Vector3f scale(Vector3f dest) {
+		return dest.set(sx, sy, sz);
 	}
 	
-	/**
-	 * Set the scale to a uniform value across all 3 axes.
-	 * @param scale a value to set the x, y, z values of this transform's scale to.
-	 */
-	public void setScale(float scale) {
-		this.scale.set(scale);
-	}
-	
-	/**
-	 * @param x
-	 * @param y
-	 * @param z
-	 */
 	public void setScale(float x, float y, float z) {
-		this.scale.set(x, y, z);
+		this.sx = x;
+		this.sy = y;
+		this.sz = z;
 	}
 	
-	/**
-	 * Set this transform's scale to a copy of the input {@code scale}.
-	 * @param scale The scale to set this transform to.
-	 */
-	public void setScale(Vector3f scale) {
-		this.scale.set(scale);
+	public void setScale(float scalar) {
+		setScale(scalar, scalar, scalar);
 	}
-
+	
+	public void setScale(Vector3f scale) {
+		setScale(scale.x, scale.y, scale.z);
+	}
+	
+	@Override
+	public String toString() {
+		return x + " " + y + " " + z + " " + rx + " " + ry + " " + rz +" " + rw + " " + sx + " " + sy + " " + sz;
+	}
+	
 }

@@ -27,6 +27,7 @@ public record PBRMaterial(Texture diffuse, Vector3f diffuseColor, Texture specul
 			glActiveTexture(GL_TEXTURE0);
 			diffuse.bind();
 		}
+		
 		if (specular != null) {
 			glActiveTexture(GL_TEXTURE1);
 			specular.bind();
@@ -35,6 +36,7 @@ public record PBRMaterial(Texture diffuse, Vector3f diffuseColor, Texture specul
 			// TODO Experiment if a leftover texture bound to GL_TEXTURE1 would otherwise get drawn here if we didn't bind the target to 0
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
+		
 		if (normalMap != null) {
 			glActiveTexture(GL_TEXTURE2);
 			normalMap.bind();

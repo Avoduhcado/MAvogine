@@ -60,6 +60,8 @@ public class ParShapesBuilder {
 	
 	/**
 	 * {@link ParShapes#par_shapes_create_rock(int, int)}
+	 * @param seed 
+	 * @param subdivisions 
 	 * @return
 	 */
 	public ParShapesBuilder createRock(int seed, int subdivisions) {
@@ -146,8 +148,9 @@ public class ParShapesBuilder {
 			if (normals != null) {
 				vertexBuffer.put((i * Mesh.VERTEX_SIZE) + 3, normals, i * 3, 3);
 			}
+			// TODO actually calculate tangents/bitangets
 			if (textureCoordinates != null) {
-				vertexBuffer.put((i * Mesh.VERTEX_SIZE) + 6, textureCoordinates, i * 2, 2);
+				vertexBuffer.put((i * Mesh.VERTEX_SIZE) + 12, textureCoordinates, i * 2, 2);
 			}
 		}
 
@@ -167,50 +170,50 @@ public class ParShapesBuilder {
 	public InstancedMesh buildInstanced(int instances) {
 		FloatBuffer vertexData = null;
 		try {
-		vertexData = MemoryUtil.memAllocFloat(parMesh.npoints() * (3 + 3 + 2));
+			vertexData = MemoryUtil.memAllocFloat(parMesh.npoints() * (3 + 3 + 2));
 
-		FloatBuffer positions = parMesh.points(parMesh.npoints() * 3);
-		FloatBuffer normals = null;
-		if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
-			normals = parMesh.normals(parMesh.npoints() * 3);
-		}
-		FloatBuffer textureCoordinates = null;
-		if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
-			textureCoordinates = parMesh.tcoords(parMesh.npoints() * 2);
-		}
-
-		for (int i = 0; i < parMesh.npoints(); i++) {
-			// Vertex positions
-			vertexData.put(positions.get());
-			vertexData.put(positions.get());
-			vertexData.put(positions.get());
-
-			// Vertex normals
-			if (normals != null) {
-				vertexData.put(normals.get());
-				vertexData.put(normals.get());
-				vertexData.put(normals.get());
-			} else {
-				vertexData.put(0.0f);
-				vertexData.put(0.0f);
-				vertexData.put(0.0f);
+			FloatBuffer positions = parMesh.points(parMesh.npoints() * 3);
+			FloatBuffer normals = null;
+			if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
+				normals = parMesh.normals(parMesh.npoints() * 3);
+			}
+			FloatBuffer textureCoordinates = null;
+			if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
+				textureCoordinates = parMesh.tcoords(parMesh.npoints() * 2);
 			}
 
-			// Vertex texture coordinates
-			if (textureCoordinates != null) {
-				vertexData.put(textureCoordinates.get());
-				vertexData.put(textureCoordinates.get());
-			} else {
-				vertexData.put(0.0f);
-				vertexData.put(0.0f);
-			}
-		}
-		vertexData.flip();
-		IntBuffer indices = parMesh.triangles(parMesh.ntriangles() * 3);
-		
-		FloatBuffer instancedVertexData = MemoryUtil.memAllocFloat(17 * instances);
+			for (int i = 0; i < parMesh.npoints(); i++) {
+				// Vertex positions
+				vertexData.put(positions.get());
+				vertexData.put(positions.get());
+				vertexData.put(positions.get());
 
-		return new InstancedMesh(vertexData, instancedVertexData, indices, instances);
+				// Vertex normals
+				if (normals != null) {
+					vertexData.put(normals.get());
+					vertexData.put(normals.get());
+					vertexData.put(normals.get());
+				} else {
+					vertexData.put(0.0f);
+					vertexData.put(0.0f);
+					vertexData.put(0.0f);
+				}
+
+				// Vertex texture coordinates
+				if (textureCoordinates != null) {
+					vertexData.put(textureCoordinates.get());
+					vertexData.put(textureCoordinates.get());
+				} else {
+					vertexData.put(0.0f);
+					vertexData.put(0.0f);
+				}
+			}
+			vertexData.flip();
+			IntBuffer indices = parMesh.triangles(parMesh.ntriangles() * 3);
+
+			FloatBuffer instancedVertexData = MemoryUtil.memAllocFloat(17 * instances);
+
+			return new InstancedMesh(vertexData, instancedVertexData, indices, instances);
 		} finally {
 			parMesh.free();
 			if (vertexData != null) {

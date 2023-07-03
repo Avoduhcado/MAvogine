@@ -1,7 +1,8 @@
 package com.avogine.audio.data;
 
+import static org.lwjgl.openal.AL10.*;
+
 import org.joml.Vector3f;
-import org.lwjgl.openal.AL10;
 
 /**
  *
@@ -12,59 +13,74 @@ public class AudioSource {
 
 	/**
 	 * 
-	 * @param loop indicates if the sound to be played should be in loop mode or not
-	 * @param relative controls if the position of the source is relative to the listener or not
+	 * @param loop If the sound should restart playing when it ends.
+	 * @param relative If the position of the source is relative to the listener or not.
+	 * Note that 3D audio will only work with mono (single channel) sounds. Any stereo sounds will ignore all
+	 * source relative/distance fall-off settings.
 	 */
 	public AudioSource(boolean loop, boolean relative) {
-		this.sourceId = AL10.alGenSources();
-		if (loop) {
-			AL10.alSourcei(sourceId, AL10.AL_LOOPING, AL10.AL_TRUE);
-		}
-		if (relative) {
-			AL10.alSourcei(sourceId, AL10.AL_SOURCE_RELATIVE, AL10.AL_TRUE);
-		}
+		this.sourceId = alGenSources();
+		alSourcei(sourceId, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
+		alSourcei(sourceId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
 	}
 
 	public void setBuffer(int bufferId) {
 		stop();
-		AL10.alSourcei(sourceId, AL10.AL_BUFFER, bufferId);
+		alSourcei(sourceId, AL_BUFFER, bufferId);
 	}
 
 	public void setPosition(Vector3f position) {
-		AL10.alSource3f(sourceId, AL10.AL_POSITION, position.x, position.y, position.z);
+		alSource3f(sourceId, AL_POSITION, position.x, position.y, position.z);
+	}
+	
+	public void setPosition(float x, float y, float z) {
+		alSource3f(sourceId, AL_POSITION, x, y, z);
 	}
 
-	public void setSpeed(Vector3f speed) {
-		AL10.alSource3f(sourceId, AL10.AL_VELOCITY, speed.x, speed.y, speed.z);
+	public void setVelocity(Vector3f speed) {
+		alSource3f(sourceId, AL_VELOCITY, speed.x, speed.y, speed.z);
 	}
 
 	public void setGain(float gain) {
-		AL10.alSourcef(sourceId, AL10.AL_GAIN, gain);
+		alSourcef(sourceId, AL_GAIN, gain);
 	}
-
-	public void setProperty(int param, float value) {
-		AL10.alSourcef(sourceId, param, value);
+	
+	public boolean isInitial() {
+		return alGetSourcei(sourceId, AL_SOURCE_STATE) == AL_INITIAL;
+	}
+	
+	public boolean isPlaying() {
+		return alGetSourcei(sourceId, AL_SOURCE_STATE) == AL_PLAYING;
+	}
+	
+	public boolean isPaused() {
+		return alGetSourcei(sourceId, AL_SOURCE_STATE) == AL_PAUSED;
+	}
+	
+	public boolean isStopped() {
+		return alGetSourcei(sourceId, AL_SOURCE_STATE) == AL_STOPPED;
 	}
 
 	public void play() {
-		AL10.alSourcePlay(sourceId);
+		alSourcePlay(sourceId);
 	}
-
-	public boolean isPlaying() {
-		return AL10.alGetSourcei(sourceId, AL10.AL_SOURCE_STATE) == AL10.AL_PLAYING;
+	
+	public void play(AudioBuffer buffer) {
+		alSourcei(sourceId, AL_BUFFER, buffer.getBufferID());
+		alSourcePlay(sourceId);
 	}
 
 	public void pause() {
-		AL10.alSourcePause(sourceId);
+		alSourcePause(sourceId);
 	}
 
 	public void stop() {
-		AL10.alSourceStop(sourceId);
+		alSourceStop(sourceId);
 	}
 
 	public void cleanup() {
 		stop();
-		AL10.alDeleteSources(sourceId);
+		alDeleteSources(sourceId);
 	}
 
 }

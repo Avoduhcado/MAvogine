@@ -71,6 +71,8 @@ public class Input {
 			}
 		});
 		
+		GLFW.glfwSetCharCallback(windowID, (window, codepoint) -> fireCharEvent(new CharEvent(codepoint, window)));
+		
 		GLFW.glfwSetMouseButtonCallback(windowID, (window, button, action, mods) -> 
 			fireMouseClickEvent(new MouseClickEvent(action, button, lastMouseX, lastMouseY, window)));
 		
@@ -106,6 +108,7 @@ public class Input {
 		for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
 			if (GLFW.glfwGetMouseButton(windowID, i) == GLFW.GLFW_PRESS) {
 				// Should this be a different type of event? MouseHeldEvent?
+				// TODO Does this cause issues elsewhere?
 				fireMouseClickEvent(new MouseClickEvent(GLFW.GLFW_REPEAT, i, lastMouseX, lastMouseY, windowID));
 			}
 		}
@@ -134,36 +137,47 @@ public class Input {
 	 * @param clazz
 	 * @return a {@code Stream} of {@link InputListener}s that are all the same type as {@code clazz}
 	 */
-	public <T extends InputListener> Stream<T> getListenersOfType(Class<T> clazz) {
+	private <T extends InputListener> Stream<T> getListenersOfType(Class<T> clazz) {
 		return listeners.stream()
+				.sorted()
 				.filter(clazz::isInstance)
 				.map(clazz::cast);
 	}
 	
 	private void fireKeyboardEvent(KeyboardEvent event) {
 		getListenersOfType(KeyboardListener.class)
-			.forEach(kl -> {
-				switch (event.type()) {
-				case GLFW.GLFW_PRESS -> kl.keyPressed(event);
-				case GLFW.GLFW_RELEASE -> kl.keyReleased(event);
-				case KeyboardEvent.KEY_TYPED -> kl.keyTyped(event);
-				}
-			});
+		.takeWhile(l -> !event.isConsumed())
+		.forEach(kl -> {
+			switch (event.type()) {
+			case GLFW.GLFW_PRESS -> kl.keyPressed(event);
+			case GLFW.GLFW_RELEASE -> kl.keyReleased(event);
+			case KeyboardEvent.KEY_TYPED -> kl.keyTyped(event);
+			}
+		});
 	}
 	
+	private void fireCharEvent(CharEvent event) {
+		getListenersOfType(CharListener.class)
+		.takeWhile(l -> !event.isConsumed())
+		.forEach(cl -> cl.charInput(event));
+	}
+
 	private void fireMouseClickEvent(MouseClickEvent event) {
 		getListenersOfType(MouseClickListener.class)
-			.forEach(mcl -> mcl.mouseClicked(event));
+		.takeWhile(l -> !event.isConsumed())
+		.forEach(mcl -> mcl.mouseClicked(event));
 	}
-	
+
 	private void fireMouseMotionEvent(MouseMotionEvent event) {
 		getListenersOfType(MouseMotionListener.class)
-			.forEach(mml -> mml.mouseMoved(event));
+		.takeWhile(l -> !event.isConsumed())
+		.forEach(mml -> mml.mouseMoved(event));
 	}
-	
+
 	private void fireMouseScrollEvent(MouseScrollEvent event) {
 		getListenersOfType(MouseScrollListener.class)
-			.forEach(msl -> msl.mouseScrolled(event));
+		.takeWhile(l -> !event.isConsumed())
+		.forEach(msl -> msl.mouseScrolled(event));
 	}
 	
 }

@@ -1,40 +1,56 @@
 package com.avogine.audio.data;
 
-import org.joml.Vector3f;
-import org.lwjgl.openal.AL10;
+import static org.lwjgl.openal.AL10.*;
+
+import java.nio.FloatBuffer;
+
+import org.joml.*;
+import org.lwjgl.system.MemoryStack;
 
 /**
  *
  */
 public class AudioListener {
 
+	private final Vector3f transformedAt;
+	private final Vector3f transformedUp;
+
+	public AudioListener(Vector3f position, Vector3f velocity, Quaternionf orientation) {
+		transformedAt = new Vector3f();
+		transformedUp = new Vector3f();
+		
+		setPosition(position);
+		setVelocity(velocity);
+		setOrientation(orientation);
+	}
+
 	public AudioListener() {
-		this(new Vector3f(0, 0, 0));
+		this(new Vector3f(), new Vector3f(), new Quaternionf());
 	}
 
-	public AudioListener(Vector3f position) {
-		AL10.alListener3f(AL10.AL_POSITION, position.x, position.y, position.z);
-		AL10.alListener3f(AL10.AL_VELOCITY, 0, 0, 0);
-
-	}
-
-	public void setSpeed(Vector3f speed) {
-		AL10.alListener3f(AL10.AL_VELOCITY, speed.x, speed.y, speed.z);
+	public void setVelocity(Vector3f velocity) {
+		alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	}
 
 	public void setPosition(Vector3f position) {
-		AL10.alListener3f(AL10.AL_POSITION, position.x, position.y, position.z);
+		alListener3f(AL_POSITION, position.x, position.y, position.z);
 	}
-
-	public void setOrientation(Vector3f at, Vector3f up) {
-		float[] data = new float[6];
-		data[0] = at.x;
-		data[1] = at.y;
-		data[2] = at.z;
-		data[3] = up.x;
-		data[4] = up.y;
-		data[5] = up.z;
-		AL10.alListenerfv(AL10.AL_ORIENTATION, data);
+	
+	public void setPosition(float x, float y, float z) {
+		alListener3f(AL_POSITION, x, y, z);
 	}
-
+	
+	public void setOrientation(Quaternionf orientation) {
+		// The "Forward" direction of objects is -Z by default
+		orientation.transform(0, 0, -1, transformedAt);
+		orientation.transformPositiveY(transformedUp);
+		
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			FloatBuffer orientationBuffer = stack.mallocFloat(6);
+			transformedAt.get(orientationBuffer);
+			transformedUp.get(3, orientationBuffer);
+			alListenerfv(AL_ORIENTATION, orientationBuffer);
+		}
+	}
+	
 }
