@@ -1,5 +1,6 @@
 package com.avogine.ecs;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -7,7 +8,7 @@ import java.util.*;
  */
 public class EntityChunk {
 
-	private static final int MAX_CHUNK_SIZE = 512;
+	private static final int MAX_CHUNK_SIZE = 4096;
 
 	private int chunkSize;
 	private final Map<Class<? extends EntityComponent>, EntityComponent[]> components;
@@ -19,8 +20,8 @@ public class EntityChunk {
 	 */
 	public EntityChunk(Set<Class<? extends EntityComponent>> archetype) {
 		components = new HashMap<>();
-		for (Class<? extends EntityComponent> clazz : archetype) {
-			components.put(clazz, new EntityComponent[MAX_CHUNK_SIZE]);
+		for (var clazz : archetype) {
+			components.put(clazz, (EntityComponent[]) Array.newInstance(clazz, MAX_CHUNK_SIZE));
 		}
 		entityIndex = new UUID[MAX_CHUNK_SIZE];
 	}

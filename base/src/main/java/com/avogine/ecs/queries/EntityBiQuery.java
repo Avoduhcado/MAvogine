@@ -1,16 +1,25 @@
 package com.avogine.ecs.queries;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.function.BiConsumer;
 
 import com.avogine.ecs.*;
 
 /**
- *
+ * @param <T> 
+ * @param <U> 
  */
 public abstract class EntityBiQuery<T extends EntityComponent, U extends EntityComponent> implements EntityQuery, BiConsumer<T, U> {
 
+	protected final Class<T> first;
+	protected final Class<U> second;
+	
+	@SuppressWarnings("unchecked")
+	protected EntityBiQuery() {
+		this.first = (Class<T>) getTypeParam(0);
+		this.second = (Class<U>) getTypeParam(1);
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void process(Map<Class<? extends EntityComponent>, EntityComponent[]> chunk, int index) {
@@ -22,16 +31,15 @@ public abstract class EntityBiQuery<T extends EntityComponent, U extends EntityC
 	 * @see <a href="https://stackoverflow.com/questions/1901164/get-type-of-a-generic-parameter-in-java-with-reflection">Parameter Reflection</a>
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public Class<T> getFirstType() {
-		return (Class<T>) ((ParameterizedType)getClass().getGenericSuperclass())
-				.getActualTypeArguments()[0];
+		return first;
 	}
 	
-	@SuppressWarnings("unchecked")
+	/**
+	 * @return
+	 */
 	public Class<U> getSecondType() {
-		return (Class<U>) ((ParameterizedType)getClass().getGenericSuperclass())
-				.getActualTypeArguments()[1];
+		return second;
 	}
 	
 	@Override

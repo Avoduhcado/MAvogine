@@ -1,6 +1,5 @@
 package com.avogine.ecs.queries;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 import com.avogine.ecs.*;
@@ -12,8 +11,22 @@ import com.avogine.util.TriConsumer;
  * @param <V> 
  *
  */
-public abstract class EntityTriConsumer<T extends EntityComponent, U extends EntityComponent, V extends EntityComponent> implements EntityQuery, TriConsumer<T, U, V> {
+public abstract class EntityTriQuery<T extends EntityComponent, U extends EntityComponent, V extends EntityComponent> implements EntityQuery, TriConsumer<T, U, V> {
 
+	private final Class<T> first;
+	private final Class<U> second;
+	private final Class<V> third;
+	
+	/**
+	 * 
+	 */
+	@SuppressWarnings("unchecked")
+	protected EntityTriQuery() {
+		first = (Class<T>) getTypeParam(0);
+		second = (Class<U>) getTypeParam(1);
+		third = (Class<V>) getTypeParam(2);
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void process(Map<Class<? extends EntityComponent>, EntityComponent[]> chunk, int index) {
@@ -22,22 +35,16 @@ public abstract class EntityTriConsumer<T extends EntityComponent, U extends Ent
 				(V) chunk.get(getThirdType())[index]);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public Class<T> getFirstType() {
-		return (Class<T>) ((ParameterizedType)getClass().getGenericSuperclass())
-				.getActualTypeArguments()[0];
+		return first;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public Class<U> getSecondType() {
-		return (Class<U>) ((ParameterizedType)getClass().getGenericSuperclass())
-				.getActualTypeArguments()[1];
+		return second;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public Class<V> getThirdType() {
-		return (Class<V>) ((ParameterizedType)getClass().getGenericSuperclass())
-				.getActualTypeArguments()[2];
+		return third;
 	}
 
 	@Override
