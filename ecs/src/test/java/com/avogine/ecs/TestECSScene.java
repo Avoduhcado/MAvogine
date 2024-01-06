@@ -7,12 +7,12 @@ import com.avogine.io.Window;
 /**
  *
  */
-public class TestScene extends ECSScene {
+public class TestECSScene extends ECSScene {
 
 	/**
 	 * @param projection
 	 */
-	protected TestScene() {
+	protected TestECSScene() {
 		super();
 	}
 
