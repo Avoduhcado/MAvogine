@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.*;
 
+import com.avogine.TestGame;
 import com.avogine.ecs.components.*;
 import com.avogine.io.serializer.SceneMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 class ECSWorldTest {
 	
 	private TestGame game;
-	private TestScene scene;
+	private TestECSScene scene;
 	private EntityManager world;
 	
 	@BeforeEach
@@ -26,7 +27,7 @@ class ECSWorldTest {
 		game = new TestGame();
 		game.init(null, null, null);
 		
-		scene = new TestScene();
+		scene = new TestECSScene();
 		scene.init(game, null);
 		
 		world = scene.getEntityManager();

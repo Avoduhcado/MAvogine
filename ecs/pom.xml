@@ -6,4 +6,11 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>ecs</artifactId>
+  <dependencies>
+  	<dependency>
+  		<groupId>com.avogine</groupId>
+  		<artifactId>base</artifactId>
+  		<version>0.0.1-SNAPSHOT</version>
+  	</dependency>
+  </dependencies>
 </project>

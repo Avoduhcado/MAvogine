@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.*;
 
+import com.avogine.TestGame;
 import com.avogine.ecs.components.*;
 
 /**
@@ -15,7 +16,7 @@ import com.avogine.ecs.components.*;
 class ECSSystemTest {
 
 	private TestGame game;
-	private TestScene scene;
+	private TestECSScene scene;
 	private EntityManager manager;
 	
 	@BeforeEach
@@ -23,7 +24,7 @@ class ECSSystemTest {
 		game = new TestGame();
 		game.init(null, null, null);
 		
-		scene = new TestScene();
+		scene = new TestECSScene();
 		scene.init(game, null);
 		
 		manager = scene.getEntityManager();

@@ -1,4 +1,4 @@
-package com.avogine.ecs;
+package com.avogine;
 
 import com.avogine.game.Game;
 import com.avogine.game.scene.Scene;
