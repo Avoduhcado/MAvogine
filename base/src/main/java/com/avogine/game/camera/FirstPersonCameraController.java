@@ -1,18 +1,18 @@
 package com.avogine.game.camera;
 
-import java.nio.*;
+import java.nio.DoubleBuffer;
 
-import org.lwjgl.glfw.*;
-import org.lwjgl.system.*;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
 
-import com.avogine.io.*;
+import com.avogine.io.Window;
 import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
 
 /**
  *
  */
-public class FirstPersonCameraController implements KeyboardListener, MouseMotionListener, MouseClickListener {
+public class FirstPersonCameraController implements KeyListener, MouseMotionListener, MouseButtonListener {
 
 	private Camera camera;
 	
@@ -41,11 +41,7 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 	}
 	
 	@Override
-	public void mouseClicked(MouseClickEvent event) {
-		if (event.type() != GLFW.GLFW_RELEASE) {
-			return;
-		}
-		
+	public void mouseClicked(MouseEvent event) {
 		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_1) {
 			GLFW.glfwSetInputMode(event.window(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 			lastX = event.mouseX();
@@ -56,15 +52,15 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 	}
 
 	@Override
-	public void mouseMoved(MouseMotionEvent event) {
+	public void mouseMoved(MouseEvent event) {
 		if (GLFW.glfwGetInputMode(event.window(), GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_DISABLED) {
 			return;
 		}
 		
-		float xOffset = event.xPosition() - lastX;
-		float yOffset = lastY - event.yPosition(); // reversed since y-coordinates go from bottom to top
-		lastX = event.xPosition();
-		lastY = event.yPosition();
+		float xOffset = event.mouseX() - lastX;
+		float yOffset = lastY - event.mouseY(); // reversed since y-coordinates go from bottom to top
+		lastX = event.mouseX();
+		lastY = event.mouseY();
 
 		float sensitivity = 0.1f; // TODO Make this a customizable mouse sensitivity option
 		xOffset *= sensitivity;
@@ -89,7 +85,7 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 	}
 
 	@Override
-	public void keyPressed(KeyboardEvent event) {
+	public void keyPressed(KeyEvent event) {
 		//		if (character != null && !character.onGround()) {
 		//		jump = 0;
 		//		return;
@@ -134,12 +130,12 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 	}
 
 	@Override
-	public void keyReleased(KeyboardEvent event) {
+	public void keyReleased(KeyEvent event) {
 		
 	}
 
 	@Override
-	public void keyTyped(KeyboardEvent event) {
+	public void keyTyped(KeyEvent event) {
 		switch (event.key()) {
 		case GLFW.GLFW_KEY_LEFT_CONTROL:
 			flymode = !flymode;
@@ -147,6 +143,24 @@ public class FirstPersonCameraController implements KeyboardListener, MouseMotio
 		default:
 			break;
 		}
+	}
+
+	@Override
+	public void mousePressed(MouseEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent event) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

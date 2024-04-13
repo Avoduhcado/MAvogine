@@ -1,26 +1,26 @@
 package com.avogine.io.listener;
 
-import com.avogine.io.event.KeyboardEvent;
+import com.avogine.io.event.KeyEvent;
 
 /**
  * 
  */
-public interface KeyboardListener extends InputListener {
+public interface KeyListener extends InputListener {
 
 	/**
 	 * @param event
 	 */
-	public void keyPressed(KeyboardEvent event);
+	public void keyPressed(KeyEvent event);
 	
 	/**
 	 * Fired when a keyboard key is released
 	 * @param event
 	 */
-	public void keyReleased(KeyboardEvent event);
+	public void keyReleased(KeyEvent event);
 	
 	/**
 	 * Fired when a key is first pressed only once until it's released.
 	 * @param event
 	 */
-	public void keyTyped(KeyboardEvent event);
+	public void keyTyped(KeyEvent event);
 }

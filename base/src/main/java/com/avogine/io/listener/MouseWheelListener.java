@@ -5,11 +5,11 @@ import com.avogine.io.event.*;
 /**
  * Respond to mouse wheel events.
  */
-public interface MouseScrollListener extends InputListener {
+public interface MouseWheelListener extends InputListener {
 
 	/**
 	 * @param event
 	 */
-	public void mouseScrolled(MouseScrollEvent event);
+	public void mouseWheelMoved(MouseWheelEvent event);
 	
 }

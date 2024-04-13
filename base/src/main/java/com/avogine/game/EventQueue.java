@@ -3,14 +3,14 @@ package com.avogine.game;
 import java.util.*;
 
 import com.avogine.experimental.annotation.InDev;
-import com.avogine.io.event.Event;
+import com.avogine.io.event.AvoEvent;
 
 @InDev
 public class EventQueue {
 
-	private final List<Event> events = new LinkedList<>();
+	private final List<AvoEvent> events = new LinkedList<>();
 	
-	public void addEvent(Event event) {
+	public void addEvent(AvoEvent event) {
 		events.add(event);
 	}
 	

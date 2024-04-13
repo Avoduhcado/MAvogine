@@ -116,7 +116,6 @@ public class NuklearUI {
 		window.getInput().add(new NuklearKeyboardHandler());
 		window.getInput().add(new NuklearScrollHandler());
 		window.getInput().add(new NuklearMouseHandler());
-		window.getInput().add(new NuklearKeyUnicodeHandler());
 	}
 	
 	private void initFont() {
@@ -238,7 +237,7 @@ public class NuklearUI {
 	/**
 	 * @param window
 	 */
-	public void render(Window window) {
+	public void onRender(Window window) {
 		try (MemoryStack stack = stackPush()) {
 			IntBuffer w = stack.mallocInt(1);
 			IntBuffer h = stack.mallocInt(1);
@@ -259,15 +258,8 @@ public class NuklearUI {
 			mesh.setSize(displayWidth, displayHeight);
 		}
 		
-		// setup global state
-		glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_SCISSOR_TEST);
-		glActiveTexture(GL_TEXTURE0);
-
+		setupUIState();
+		
 		// setup program
 		nuklearShader.bind();
 		nuklearShader.projectionMatrix.loadMatrix(projectionMatrix);
@@ -277,20 +269,37 @@ public class NuklearUI {
 		
 		nk_clear(context);
 		
+		teardownUIState();
+	}
+	
+	private void setupUIState() {
+		// setup global state
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_SCISSOR_TEST);
+		glActiveTexture(GL_TEXTURE0);
+	}
+	
+	private void teardownUIState() {
 		nuklearShader.unbind();
 		glDisable(GL_BLEND);
 		glDisable(GL_SCISSOR_TEST);
+		// TODO Re-enable these based on some global render settings
+		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 	}
 	
-	private class NuklearKeyboardHandler implements KeyboardListener {
+	private class NuklearKeyboardHandler implements KeyListener {
 		@Override
-		public void keyTyped(KeyboardEvent event) {
-			// Not implemented
+		public void keyTyped(KeyEvent event) {
+			nk_input_unicode(context, event.codepoint());
 		}
 
 		@Override
-		public void keyReleased(KeyboardEvent event) {
+		public void keyReleased(KeyEvent event) {
 			handleKeyEvent(event);
 			
 			if (nk_item_is_any_active(context)) {
@@ -299,7 +308,7 @@ public class NuklearUI {
 		}
 
 		@Override
-		public void keyPressed(KeyboardEvent event) {
+		public void keyPressed(KeyEvent event) {
 			handleKeyEvent(event);
 			
 			if (nk_item_is_any_active(context)) {
@@ -307,8 +316,8 @@ public class NuklearUI {
 			}
 		}
 		
-		private void handleKeyEvent(KeyboardEvent event) {
-			boolean press = event.type() == GLFW_PRESS;
+		private void handleKeyEvent(KeyEvent event) {
+			boolean press = event.id() == KeyEvent.KEY_PRESSED;
 			switch (event.key()) {
 				// XXX Hmm, this also seems like a terrible way to handle this, this event already exists in Input
 				case GLFW_KEY_ESCAPE ->	glfwSetWindowShouldClose(event.window(), true);
@@ -358,13 +367,13 @@ public class NuklearUI {
 		}
 	}
 	
-	private class NuklearScrollHandler implements MouseScrollListener {
+	private class NuklearScrollHandler implements MouseWheelListener {
 		@Override
-		public void mouseScrolled(MouseScrollEvent event) {
+		public void mouseWheelMoved(MouseWheelEvent event) {
 			try (MemoryStack stack = stackPush()) {
 				NkVec2 scroll = NkVec2.malloc(stack)
-						.x(event.xOffset())
-						.y(event.yOffset());
+						.x((float) event.xOffset())
+						.y((float) event.yOffset());
 				nk_input_scroll(context, scroll);
 			}
 			// TODO This may want to consume events as well
@@ -376,10 +385,10 @@ public class NuklearUI {
 		}
 	}
 	
-	private class NuklearMouseHandler implements MouseClickListener, MouseMotionListener {
+	private class NuklearMouseHandler implements MouseButtonListener, MouseMotionListener {
 		
 		@Override
-		public void mouseClicked(MouseClickEvent event) {
+		public void mouseClicked(MouseEvent event) {
 			try (MemoryStack stack = stackPush()) {
 				DoubleBuffer cx = stack.mallocDouble(1);
 				DoubleBuffer cy = stack.mallocDouble(1);
@@ -395,7 +404,7 @@ public class NuklearUI {
 					default -> NK_BUTTON_LEFT;
 				};
 				// XXX Input reports held mouse clicks as GLFW_REPEAT, unclear if that's correct.
-				nk_input_button(context, nkButton, x, y, event.type() == GLFW_PRESS || event.type() == GLFW_REPEAT);
+				nk_input_button(context, nkButton, x, y, true);
 				
 				if (nk_item_is_any_active(context)) {
 //				if (nk_window_is_any_hovered(context)) {
@@ -405,28 +414,71 @@ public class NuklearUI {
 		}
 
 		@Override
-		public void mouseMoved(MouseMotionEvent event) {
-			nk_input_motion(context, (int)event.xPosition(), (int)event.yPosition());
+		public void mousePressed(MouseEvent event) {
+			try (MemoryStack stack = stackPush()) {
+				DoubleBuffer cx = stack.mallocDouble(1);
+				DoubleBuffer cy = stack.mallocDouble(1);
+
+				glfwGetCursorPos(event.window(), cx, cy);
+
+				int x = (int)cx.get(0);
+				int y = (int)cy.get(0);
+
+				int nkButton = switch (event.button()) {
+					case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
+					case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
+					default -> NK_BUTTON_LEFT;
+				};
+				// XXX Input reports held mouse clicks as GLFW_REPEAT, unclear if that's correct.
+				nk_input_button(context, nkButton, x, y, true);
+				
+				if (nk_item_is_any_active(context)) {
+//				if (nk_window_is_any_hovered(context)) {
+					event.consume();
+				}
+			}
 		}
-		
-		@Override
-		public EventLayer getLayer() {
-			return EventLayer.UI;
-		}
-	}
-	
-	private class NuklearKeyUnicodeHandler implements CharListener {
 
 		@Override
-		public void charInput(CharEvent event) {
-			nk_input_unicode(context, event.codepoint());
+		public void mouseReleased(MouseEvent event) {
+			try (MemoryStack stack = stackPush()) {
+				DoubleBuffer cx = stack.mallocDouble(1);
+				DoubleBuffer cy = stack.mallocDouble(1);
+
+				glfwGetCursorPos(event.window(), cx, cy);
+
+				int x = (int)cx.get(0);
+				int y = (int)cy.get(0);
+
+				int nkButton = switch (event.button()) {
+					case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
+					case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
+					default -> NK_BUTTON_LEFT;
+				};
+				// XXX Input reports held mouse clicks as GLFW_REPEAT, unclear if that's correct.
+				nk_input_button(context, nkButton, x, y, false);
+				
+				if (nk_item_is_any_active(context)) {
+//				if (nk_window_is_any_hovered(context)) {
+					event.consume();
+				}
+			}
+		}
+
+		@Override
+		public void mouseMoved(MouseEvent event) {
+			nk_input_motion(context, (int)event.mouseX(), (int)event.mouseY());
+		}
+
+		@Override
+		public void mouseDragged(MouseEvent event) {
+			// Not implemented
 		}
 		
 		@Override
 		public EventLayer getLayer() {
 			return EventLayer.UI;
 		}
-		
 	}
 	
 	@SuppressWarnings("unused")
