@@ -74,7 +74,7 @@ public class Window {
 	 * @param input 
 	 */
 	public void init(Input input) {
-		GLFWErrorCallback.createPrint().set();
+		GLFWErrorCallback.createPrint(System.err).set();
 		
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Could not initialize GLFW!");
@@ -90,8 +90,10 @@ public class Window {
 		}
 		monitor = monitorList.get(properties.monitorIndex);
 		
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
+		// TODO Pull from some game config
+		GLFW.glfwDefaultWindowHints();
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 6);
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
 		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, 4);
@@ -155,7 +157,7 @@ public class Window {
 		if (properties.cullFaces) {
 			GL11.glEnable(GL11.GL_CULL_FACE);
 			// TODO Fetch which face to cull from options as well
-			GL11.glCullFace(GL11.GL_BACK);
+//			GL11.glCullFace(GL11.GL_BACK);
 		}
 
 		if (properties.multisample) {

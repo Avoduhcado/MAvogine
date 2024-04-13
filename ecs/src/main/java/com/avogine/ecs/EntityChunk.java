@@ -126,9 +126,13 @@ public class EntityChunk implements Serializable {
 	public <T extends Record & EntityArchetype> boolean containsAll(Class<T> archetype) {
 		var components = Arrays.stream(archetype.getRecordComponents())
 				.map(RecordComponent::getType)
-				.filter(clazz -> EntityComponent.class.isAssignableFrom(clazz))
+				.filter(EntityComponent.class::isAssignableFrom)
 				.toList();
 		return this.componentSet.containsAll(components);
+	}
+	
+	public boolean containsArch(Set<Class<? extends EntityComponent>> archetype) {
+		return componentSet.containsAll(archetype);
 	}
 	
 	/**

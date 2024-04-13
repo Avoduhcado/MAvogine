@@ -42,4 +42,9 @@ public class TextureCache {
 		textureMap.clear();
 	}
 	
+	// TODO Experimental
+	public Collection<TextureAtlas> getAll() {
+		return textureMap.values();
+	}
+	
 }
