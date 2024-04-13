@@ -22,8 +22,8 @@ public class TestECSScene extends ECSScene {
 	}
 
 	@Override
-	public void prepareRender() {
+	public void onRender(Window window) {
 		// Not implemented
 	}
-	
+
 }

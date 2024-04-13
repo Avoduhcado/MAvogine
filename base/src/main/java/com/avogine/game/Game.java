@@ -77,8 +77,11 @@ public abstract class Game {
 	 */
 	public void update(float interval) {
 		audioSources.removeIf(AudioSource::isStopped);
+		if (scene != null) {
+			scene.onUpdate(interval);
+		}
 		
-		var gameState = new GameState(getCurrentScene(), interval);
+		var gameState = new GameState<>(getCurrentScene(), interval);
 		getListenersOfType(Updateable.class).forEach(update -> update.onUpdate(gameState));
 	}
 	
@@ -91,12 +94,14 @@ public abstract class Game {
 	 * particularly care about abstract rendering methods at the moment.</b>
 	 */
 	public void render() {
-		scene.prepareRender();
+		if (scene != null) {
+			scene.onRender(window);
+		}
 		
 		var sceneState = new SceneState(getCurrentScene());
 		getListenersOfType(Renderable.class).forEach(render -> render.onRender(sceneState));
 		
-		gui.render(window);
+		gui.onRender(window);
 	}
 	
 	/**

@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.stream.*;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryUtil;
 
 import com.avogine.logging.AvoLog;
 
@@ -112,7 +113,7 @@ public class ResourceFileReader {
 		AvoLog.log().debug("Reading: {}", resource);
 		
 		Path path = Paths.get(resource);
-		if (Files.isReadable(path)) {
+		if (path != null && Files.isReadable(path)) {
 			return readResourceAsPath(path);
 		} else {
 			return readResourceAsInputStream(resource, bufferSize);
@@ -136,20 +137,23 @@ public class ResourceFileReader {
 	}
 	
 	private static ByteBuffer readResourceAsInputStream(String resource, int bufferSize) {
-		try (InputStream in = ResourceFileReader.class.getResourceAsStream(resource);
-				ReadableByteChannel rbc = Channels.newChannel(in)) {
+		try (
+				InputStream in = ResourceFileReader.class.getResourceAsStream(resource);
+				ReadableByteChannel rbc = Channels.newChannel(in)
+				) {
 			ByteBuffer buffer = BufferUtils.createByteBuffer(bufferSize);
-			
+
 			while (true) {
 				int bytes = rbc.read(buffer);
 				if (bytes == -1) {
 					break;
 				}
-				if (buffer.remaining() < bytes) {
-					buffer = resizeBuffer(buffer, Math.max(buffer.capacity() * 2, buffer.capacity() - buffer.remaining() + bytes));
+				if (buffer.remaining() == 0) {
+					buffer = resizeBuffer(buffer, buffer.capacity() * 3 / 2); // 50%
 				}
 			}
-			return buffer.flip();
+			buffer.flip();
+			return MemoryUtil.memSlice(buffer);
 		} catch (IOException e) {
 			AvoLog.log().error(FILE_READ_ERROR, resource, e);
 			System.exit(1);

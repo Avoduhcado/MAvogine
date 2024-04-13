@@ -83,12 +83,12 @@ public class ParShapesBuilder {
 		ParShapesMesh cylinder = ParShapes.par_shapes_create_cylinder(20, 2);
 		ParShapes.par_shapes_rotate(cylinder, (float) (Math.PI * 0.5f), new float[] {1, 0, 0});
 		ParShapes.par_shapes_scale(cylinder, width, height, width);
-		ParShapes.par_shapes_merge(parMesh, cylinder);
+		ParShapes.par_shapes_merge_and_free(parMesh, cylinder);
 
 		ParShapesMesh bottomHemi = ParShapes.par_shapes_clone(topHemi, null);
 		ParShapes.par_shapes_rotate(bottomHemi, (float) Math.PI, new float[] {1, 0, 0});
 		ParShapes.par_shapes_translate(bottomHemi, 0, -height, 0);
-		ParShapes.par_shapes_merge(parMesh, bottomHemi);
+		ParShapes.par_shapes_merge_and_free(parMesh, bottomHemi);
 		
 		return this;
 	}
@@ -138,7 +138,7 @@ public class ParShapesBuilder {
 	public Mesh build() {
 		FloatBuffer positions = parMesh.points(parMesh.npoints() * 3);
 		FloatBuffer normals = !parMesh.isNull(ParShapesMesh.NORMALS) ? parMesh.normals(parMesh.npoints() * 3) : null;
-		FloatBuffer textureCoordinates = !parMesh.isNull(ParShapesMesh.TCOORDS) ? textureCoordinates = parMesh.tcoords(parMesh.npoints() * 2) : null;
+		FloatBuffer textureCoordinates = !parMesh.isNull(ParShapesMesh.TCOORDS) ? parMesh.tcoords(parMesh.npoints() * 2) : null;
 
 		FloatBuffer vertexBuffer = MemoryUtil.memCallocFloat(parMesh.npoints() * 8);
 		for (int i = 0; i < parMesh.npoints(); i++) {
@@ -158,6 +158,10 @@ public class ParShapesBuilder {
 		parMesh.free();
 		MemoryUtil.memFree(vertexBuffer);
 		return mesh;
+	}
+	
+	public <T> T build(BuildFunction<T> builder) {
+		return builder.build(parMesh);
 	}
 	
 	/**

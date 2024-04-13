@@ -30,6 +30,8 @@ public abstract class ShaderProgram {
 		int fragmentShaderId = createShader(fragmentShaderFile, GL_FRAGMENT_SHADER);
 		link();
 		
+		glDetachShader(programId, vertexShaderId);
+		glDetachShader(programId, fragmentShaderId);
 		glDeleteShader(vertexShaderId);
 		glDeleteShader(fragmentShaderId);
 	}
@@ -63,6 +65,13 @@ public abstract class ShaderProgram {
 	 */
 	public void unbind() {
 		glUseProgram(0);
+	}
+	
+	/**
+	 * @return the programId
+	 */
+	public int getProgramId() {
+		return programId;
 	}
 
 	protected void storeAllUniformLocations(Uniform... uniforms) {

@@ -44,10 +44,10 @@ public class TextureLoader {
 			IntBuffer heightBuffer = stack.mallocInt(1);
 			IntBuffer nrChannels = stack.mallocInt(1);
 			
+//			STBImage.stbi_set_flip_vertically_on_load(true);
 			String filePath = ResourceConstants.TEXTURE_PATH + filename;
 			ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
 			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
-//			STBImage.stbi_set_flip_vertically_on_load(true);
 			if (imageData != null) {
 				width = widthBuffer.get();
 				height = heightBuffer.get();
@@ -79,6 +79,8 @@ public class TextureLoader {
 				AvoLog.log().error("Texture failed to load at path: {}", filePath);
 				return null;
 			}
+		} finally {
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
 		
 		return new TextureAtlas(textureID, width, height);
@@ -134,6 +136,8 @@ public class TextureLoader {
 				AvoLog.log().error("Texture failed to load at path: {}", filePath);
 				return -1;
 			}
+		} finally {
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
 		
 		return textureID;
@@ -182,6 +186,8 @@ public class TextureLoader {
 				return null;
 			}
 			STBImage.stbi_image_free(imageData);
+		} finally {
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
 		
 		return new TextureAtlas(textureID, width, height, columns, rows);
@@ -225,7 +231,9 @@ public class TextureLoader {
 		GL11.glTexParameteri(GL13.GL_TEXTURE_CUBE_MAP, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
 		GL11.glTexParameteri(GL13.GL_TEXTURE_CUBE_MAP, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
 		GL11.glTexParameteri(GL13.GL_TEXTURE_CUBE_MAP, GL12.GL_TEXTURE_WRAP_R, GL12.GL_CLAMP_TO_EDGE);
-
+		
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		
 		return new Cubemap(textureID);
 	}
 	
@@ -273,6 +281,8 @@ public class TextureLoader {
 		
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		
 		return new TextureAtlas(textureID, width, height);
 	}

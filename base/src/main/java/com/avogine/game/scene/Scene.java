@@ -33,9 +33,17 @@ public abstract class Scene {
 	public abstract void init(Game game, Window window);
 	
 	/**
-	 * 
+	 * @param window The window this scene is being rendered to.
 	 */
-	public abstract void prepareRender();
+	public abstract void onRender(Window window);
+	
+	/**
+	 * TODO Make abstract
+	 * @param delta
+	 */
+	public void onUpdate(float delta) {
+		
+	}
 	
 	/**
 	 * @return the projection matrix
