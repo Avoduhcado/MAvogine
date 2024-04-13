@@ -69,11 +69,15 @@ public class Mesh {
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 	}
 	
+	public int getVao() {
+		return vao;
+	}
+	
 	/**
 	 * XXX Should this return vertex.size instead?
 	 * @return the number of vertices to render in a single draw call
 	 */
-	private int getVertexCount() {
+	public int getVertexCount() {
 		return indexSize;
 	}
 	

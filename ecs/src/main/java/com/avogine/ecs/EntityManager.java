@@ -1,6 +1,7 @@
 package com.avogine.ecs;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 /**
@@ -57,7 +58,7 @@ public class EntityManager {
 				.flatMap(chunk -> chunk.getComponentMaps().entrySet().stream())
 				.filter(entry -> entry.getKey().equals(entityID))
 				.findFirst()
-				.map(map -> map.getValue());
+				.map(Entry::getValue);
 	}
 	
 	/**
@@ -81,6 +82,12 @@ public class EntityManager {
 		return chunks.stream()
 				.filter(chunk -> chunk.containsAll(archetype))
 				.flatMap(chunk -> chunk.getComponentsAs(archetype));
+	}
+	
+	public Stream<Entry<UUID, EntityComponentMap>> query2(Set<Class<? extends EntityComponent>> archetype) {
+		return chunks.stream()
+				.filter(chunk -> chunk.containsArch(archetype))
+				.flatMap(chunk -> chunk.getComponentMaps().entrySet().stream());
 	}
 	
 	/**
