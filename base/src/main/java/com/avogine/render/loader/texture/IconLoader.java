@@ -1,13 +1,14 @@
 package com.avogine.render.loader.texture;
 
 import java.nio.*;
-import java.util.*;
+import java.util.Set;
 
 import org.lwjgl.glfw.*;
 import org.lwjgl.glfw.GLFWImage.Buffer;
-import org.lwjgl.stb.*;
-import org.lwjgl.system.*;
+import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryStack;
 
+import com.avogine.logging.AvoLog;
 import com.avogine.util.resource.*;
 
 /**
@@ -22,6 +23,12 @@ import com.avogine.util.resource.*;
  */
 public class IconLoader {
 
+	/**
+	 * 
+	 */
+	private IconLoader() {
+	}
+	
 	/**
 	 * 
 	 * @param filename
@@ -42,7 +49,7 @@ public class IconLoader {
 			icon = GLFWImage.malloc(stack);
 			icon.set(width.get(), height.get(), imageData);
 		} else {
-			System.err.println("Icon failed to load: " + filePath);
+			AvoLog.log().warn("Icon failed to load: {}", filePath);
 		}
 		
 		return icon;
