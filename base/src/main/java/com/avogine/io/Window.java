@@ -13,6 +13,7 @@ import org.lwjgl.system.*;
 import com.avogine.Avogine;
 import com.avogine.io.serializer.JsonMapper;
 import com.avogine.logging.AvoLog;
+import com.avogine.render.loader.texture.IconLoader;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.
@@ -135,6 +136,8 @@ public class Window {
 		
 		targetFPS = 1.0 / TARGET_FPS_FOCUS;
 		GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFPS = 1.0 / (focused ? TARGET_FPS_FOCUS : TARGET_FPS_BACKGROUND));
+		
+		IconLoader.loadAndSetIcons(id, "icon");
 		
 		GLFW.glfwShowWindow(id);
 
