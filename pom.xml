@@ -13,9 +13,9 @@
   
   <distributionManagement>
     <repository>
-		<id>internal.repo</id>
-		<name>Temporary Staging Repository</name>
-		<url>file://${project.build.directory}/mvn-artifact</url>
+		<id>github</id>
+		<name>Github Avoduhcado Apache Maven Packages</name>
+		<url>https://maven.pkg.github.com/avoduhcado/mavogine</url>
     </repository>
   </distributionManagement>
   
@@ -26,59 +26,6 @@
     <lwjgl.natives>natives-windows</lwjgl.natives>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-  
-  <build>
-  	<plugins>
-		<plugin>
-		    <artifactId>maven-deploy-plugin</artifactId>
-		    <version>3.1.1</version>
-		    <configuration>
-		        <altDeploymentRepository>
-		            internal.repo::default::file://${project.build.directory}/mvn-artifact
-		        </altDeploymentRepository>
-		    </configuration>
-		</plugin>
-		<plugin>
-		    <groupId>org.apache.maven.plugins</groupId>
-		    <artifactId>maven-source-plugin</artifactId>
-		    <version>3.1.0</version>
-		    <executions>
-		        <execution>
-		            <id>attach-sources</id>
-		                <goals>
-		                    <goal>jar</goal>
-		                </goals>
-		        </execution>
-		    </executions>
-		</plugin>
-		<plugin>
-		    <groupId>com.github.github</groupId>
-		    <artifactId>site-maven-plugin</artifactId>
-		    <version>0.12</version>
-		    <configuration>
-		        <message>Maven artifacts for ${project.version}</message>
-		        <noJekyll>true</noJekyll>
-		        <outputDirectory>${project.build.directory}</outputDirectory>
-		        <branch>refs/heads/pom-cleanup-05-2024</branch>
-		        <includes>
-		            <include>**/*</include>
-		        </includes>
-		        <merge>true</merge>
-		        <repositoryName>mavogine</repositoryName>
-		        <repositoryOwner>avoduhcado</repositoryOwner>
-		        <server>github</server>
-		    </configuration>
-		    <executions>
-		        <execution>
-		            <goals>
-		                <goal>site</goal>
-		            </goals>
-		            <phase>deploy</phase>
-		        </execution>
-		    </executions>
-		</plugin>
-  	</plugins>
-  </build>
   
   <dependencyManagement>
 	<dependencies>
