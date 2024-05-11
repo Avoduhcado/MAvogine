@@ -96,7 +96,7 @@ public class ResourceFileReader {
 				try {
 					fileSystem.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					AvoLog.log().error("Could not close FileSystem.", e);
 				}
 			}
 		}
