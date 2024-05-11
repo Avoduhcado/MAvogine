@@ -30,7 +30,7 @@ public class Input {
 	private float lastMouseX;
 	private float lastMouseY;
 	private final Vector2f lastMouseClick;
-	private final float clickDriftTolerance = 5f;
+	private final float clickDriftTolerance = 1f;
 	
 	private final Map<Integer, Double> clickTimes;
 	

@@ -63,6 +63,11 @@ public non-sealed class MouseEvent extends InputEvent {
 		return mouseY;
 	}
 
+	@Override
+	public void consume() {
+		consumed = true;
+	}
+	
 	/**
 	 * @param projection
 	 */
