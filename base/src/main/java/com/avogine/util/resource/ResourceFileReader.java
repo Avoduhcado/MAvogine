@@ -71,13 +71,14 @@ public class ResourceFileReader {
 	 * @return a list of file names for every file contained in the given directory.
 	 */
 	public static Set<String> listFileNames(String resourceDirectory) {
+		FileSystem fileSystem = null;
 		try {
 			URI uri = ResourceFileReader.class.getResource(resourceDirectory).toURI();
 			Path myPath = null;
 			if (uri.getScheme().equals("jar")) {
-				try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap())) {
-					myPath = fileSystem.getPath(resourceDirectory);
-				}
+				// XXX Subsequent calls to listFileNames may throw a ClosedFileSystemException as this FileSystem will already have been closed here.
+				fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+				myPath = fileSystem.getPath(resourceDirectory);
 			} else {
 				myPath = Paths.get(uri);
 			}
@@ -90,6 +91,14 @@ public class ResourceFileReader {
 			throw new UnsupportedOperationException("Cannot read URI for resource: " + resourceDirectory);
 		} catch (IOException e) {
 			throw new RuntimeException("Could not open FileSystem for resource: " + resourceDirectory);
+		} finally {
+			if (fileSystem != null) {
+				try {
+					fileSystem.close();
+				} catch (IOException e) {
+					AvoLog.log().error("Could not close FileSystem.", e);
+				}
+			}
 		}
 	}
 	
