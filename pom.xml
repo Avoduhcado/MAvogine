@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.avogine</groupId>
   <artifactId>mavogine</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   
   <modules>
@@ -11,9 +11,16 @@
   	<module>ecs</module>
   </modules>
   
+  <distributionManagement>
+    <repository>
+		<id>internal.repo</id>
+		<name>Temporary Staging Repository</name>
+		<url>file://${project.build.directory}/mvn-artifact</url>
+    </repository>
+  </distributionManagement>
+  
   <properties>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <maven.compiler.release>21</maven.compiler.release>
     <lwjgl.version>3.3.3</lwjgl.version>
     <joml.version>1.10.1</joml.version>
     <lwjgl.natives>natives-windows</lwjgl.natives>
@@ -21,12 +28,75 @@
   </properties>
   
   <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
-      </plugin>
-    </plugins>
+  	<plugins>
+		<plugin>
+		    <artifactId>maven-deploy-plugin</artifactId>
+		    <version>3.1.1</version>
+		    <configuration>
+		        <altDeploymentRepository>
+		            internal.repo::default::file://${project.build.directory}/mvn-artifact
+		        </altDeploymentRepository>
+		    </configuration>
+		</plugin>
+		<plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-source-plugin</artifactId>
+		    <version>3.1.0</version>
+		    <executions>
+		        <execution>
+		            <id>attach-sources</id>
+		                <goals>
+		                    <goal>jar</goal>
+		                </goals>
+		        </execution>
+		    </executions>
+		</plugin>
+		<plugin>
+		    <groupId>com.github.github</groupId>
+		    <artifactId>site-maven-plugin</artifactId>
+		    <version>0.12</version>
+		    <configuration>
+		        <message>Maven artifacts for ${project.version}</message>
+		        <noJekyll>true</noJekyll>
+		        <outputDirectory>${project.build.directory}</outputDirectory>
+		        <branch>refs/heads/pom-cleanup-05-2024</branch>
+		        <includes>
+		            <include>**/*</include>
+		        </includes>
+		        <merge>true</merge>
+		        <repositoryName>mavogine</repositoryName>
+		        <repositoryOwner>avoduhcado</repositoryOwner>
+		        <server>github</server>
+		    </configuration>
+		    <executions>
+		        <execution>
+		            <goals>
+		                <goal>site</goal>
+		            </goals>
+		            <phase>deploy</phase>
+		        </execution>
+		    </executions>
+		</plugin>
+  	</plugins>
   </build>
+  
+  <dependencyManagement>
+	<dependencies>
+		<dependency>
+			<groupId>org.lwjgl</groupId>
+			<artifactId>lwjgl-bom</artifactId>
+			<version>${lwjgl.version}</version>
+			<scope>import</scope>
+			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.8.2</version>
+			<type>pom.sha512</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+  </dependencyManagement>
   
 </project>

@@ -2,7 +2,6 @@ package com.avogine.ecs;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import org.joml.Vector3f;
@@ -10,8 +9,6 @@ import org.junit.jupiter.api.*;
 
 import com.avogine.TestGame;
 import com.avogine.ecs.components.*;
-import com.avogine.io.serializer.SceneMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
  *
@@ -65,16 +62,6 @@ class ECSWorldTest {
 		world.createEntityWith(new TransformComponent(new Vector3f(7, 12, 31)), new MeshComponent());
 
 		assertEquals(2, world.getChunks().size());
-		
-		try {
-			SceneMapper.serializeScene(scene);
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	
 	@Test

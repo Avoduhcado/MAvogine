@@ -3,14 +3,20 @@
   <parent>
     <groupId>com.avogine</groupId>
     <artifactId>mavogine</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>ecs</artifactId>
+  
   <dependencies>
   	<dependency>
   		<groupId>com.avogine</groupId>
   		<artifactId>base</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
   	</dependency>
+  	<dependency>
+		<groupId>org.junit.jupiter</groupId>
+		<artifactId>junit-jupiter</artifactId>
+		<type>pom.sha512</type>
+	</dependency>
   </dependencies>
 </project>
