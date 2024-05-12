@@ -25,7 +25,7 @@
   
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
-    <mavogine.version>${project.version}</mavogine.version>
+    <mavogine.version>0.1.0-SNAPSHOT</mavogine.version>
     <lwjgl.version>3.3.3</lwjgl.version>
     <joml.version>1.10.1</joml.version>
     <lwjgl.natives>natives-windows</lwjgl.natives>
