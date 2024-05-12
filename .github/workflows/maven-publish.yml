@@ -7,9 +7,6 @@ on:
   push:
     branches:
       - 'master'
-    # Version tags should not publish packages, as that should be performed by the maven release plugin
-    tags-ignore:
-      - v*
 
 jobs:
   build:
