@@ -12,7 +12,6 @@ import org.lwjgl.system.MemoryStack;
 
 import com.avogine.game.Game;
 import com.avogine.game.scene.Scene;
-import com.avogine.game.ui.nuklear.UIElement;
 import com.avogine.game.ui.nuklear.audio.AudioConfigUI;
 import com.avogine.game.util.*;
 

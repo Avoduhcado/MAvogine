@@ -389,28 +389,31 @@ public class NuklearUI {
 		
 		@Override
 		public void mouseClicked(MouseEvent event) {
-			try (MemoryStack stack = stackPush()) {
-				DoubleBuffer cx = stack.mallocDouble(1);
-				DoubleBuffer cy = stack.mallocDouble(1);
-
-				glfwGetCursorPos(event.window(), cx, cy);
-
-				int x = (int)cx.get(0);
-				int y = (int)cy.get(0);
-
-				int nkButton = switch (event.button()) {
-					case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
-					case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
-					default -> NK_BUTTON_LEFT;
-				};
-				// XXX Input reports held mouse clicks as GLFW_REPEAT, unclear if that's correct.
-				nk_input_button(context, nkButton, x, y, true);
-				
-				if (nk_item_is_any_active(context)) {
-//				if (nk_window_is_any_hovered(context)) {
-					event.consume();
-				}
+			if (nk_window_is_any_hovered(context)) {
+				event.consume();
 			}
+//			try (MemoryStack stack = stackPush()) {
+//				DoubleBuffer cx = stack.mallocDouble(1);
+//				DoubleBuffer cy = stack.mallocDouble(1);
+//
+//				glfwGetCursorPos(event.window(), cx, cy);
+//
+//				int x = (int)cx.get(0);
+//				int y = (int)cy.get(0);
+//
+//				int nkButton = switch (event.button()) {
+//					case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
+//					case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
+//					default -> NK_BUTTON_LEFT;
+//				};
+//				// XXX Input reports held mouse clicks as GLFW_REPEAT, unclear if that's correct.
+//				nk_input_button(context, nkButton, x, y, true);
+//				
+//				if (nk_item_is_any_active(context)) {
+////				if (nk_window_is_any_hovered(context)) {
+//					event.consume();
+//				}
+//			}
 		}
 
 		@Override
@@ -472,7 +475,10 @@ public class NuklearUI {
 
 		@Override
 		public void mouseDragged(MouseEvent event) {
-			// Not implemented
+			nk_input_motion(context, (int)event.mouseX(), (int)event.mouseY());
+			if (nk_item_is_any_active(context)) {
+				event.consume();
+			}
 		}
 		
 		@Override
@@ -512,6 +518,9 @@ public class NuklearUI {
 		return context;
 	}
 	
+	/**
+	 * 
+	 */
 	public void cleanup() {
 		nk_free(context);
 		mesh.cleanup();
