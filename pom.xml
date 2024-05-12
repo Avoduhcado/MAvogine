@@ -55,6 +55,7 @@
 				<configuration>
 					<tagNameFormat>v@{project.version}</tagNameFormat>
 					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<scmCommentPrefix>[maven-release-plugin][[skip ci]</scmCommentPrefix>
 					<releaseProfiles>releases</releaseProfiles>
 				</configuration>
 			</plugin>
