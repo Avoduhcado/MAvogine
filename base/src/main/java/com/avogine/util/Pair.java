@@ -1,50 +1,12 @@
 package com.avogine.util;
 
 /**
- * @param <T> 
- * @param <K> 
- *
+ * A simple Tuple object containing two immutable values.
+ * @param <T> Type of the first element in this Pair.
+ * @param <K> Type of the second element in this Pair.
+ * @param first The first value.
+ * @param second The second value.
  */
-public class Pair<T, K> {
+public record Pair<T, K>(T first, K second) {
 
-	private T first;
-	private K second;
-	
-	/**
-	 * @param first
-	 * @param second
-	 */
-	public Pair(T first, K second) {
-		this.setFirst(first);
-		this.setSecond(second);
-	}
-
-	/**
-	 * @return
-	 */
-	public T getFirst() {
-		return first;
-	}
-
-	/**
-	 * @param first
-	 */
-	public void setFirst(T first) {
-		this.first = first;
-	}
-
-	/**
-	 * @return
-	 */
-	public K getSecond() {
-		return second;
-	}
-
-	/**
-	 * @param second
-	 */
-	public void setSecond(K second) {
-		this.second = second;
-	}
-	
 }

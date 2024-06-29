@@ -198,9 +198,9 @@ public class Input {
 		.takeWhile(l -> !event.isConsumed())
 		.forEach(mcl -> {
 			switch (event.id()) {
-				case MouseEvent.MOUSE_CLICKED -> mcl.mouseClicked(event);
 				case MouseEvent.MOUSE_PRESSED -> mcl.mousePressed(event);
 				case MouseEvent.MOUSE_RELEASED -> mcl.mouseReleased(event);
+				case MouseEvent.MOUSE_CLICKED -> mcl.mouseClicked(event);
 			}
 		});
 	}
