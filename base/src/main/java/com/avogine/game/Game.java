@@ -135,9 +135,11 @@ public abstract class Game {
 	/**
 	 * Add a {@link GameListener} to the registration queue to be added later.
 	 * @param registerable
+	 * @return The {@link GameListener} to be registered.
 	 */
-	public void register(GameListener registerable) {
-		this.registrationQueue.add(registerable);
+	public GameListener register(GameListener registerable) {
+		registrationQueue.add(registerable);
+		return registerable;
 	}
 	
 	/**

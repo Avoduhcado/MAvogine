@@ -44,7 +44,7 @@ public class FontSTB {
 					// If the character is a newline, increment the ypos
 					ypos.put(0, ypos.get(0) + lineHeight);
 					xpos.put(0, 0);
-				} else if (c < 32 || 128 <= c) {
+				} else if (c < 32 || 126 <= c) {
 					// If it's outside of the character set, skip it
 				} else {
 					STBTruetype.stbtt_GetBakedQuad(cdata, 512, 512, c - 32, xpos, ypos, q, true);

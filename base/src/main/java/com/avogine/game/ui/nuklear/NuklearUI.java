@@ -126,7 +126,7 @@ public class NuklearUI {
 		int fontTexID = glGenTextures();
 
 		STBTTFontinfo fontInfo = STBTTFontinfo.create();
-		STBTTPackedchar.Buffer cdata = STBTTPackedchar.create(95);
+		STBTTPackedchar.Buffer cdata = STBTTPackedchar.create(96);
 
 		float scale;
 		float descent;
@@ -357,6 +357,9 @@ public class NuklearUI {
 						nk_input_key(context, NK_KEY_CUT, false);
 						nk_input_key(context, NK_KEY_SHIFT, false);
 					}
+				}
+				default -> {
+					// Action not implemented
 				}
 			}
 		}
