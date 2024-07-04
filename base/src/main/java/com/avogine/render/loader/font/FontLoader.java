@@ -122,7 +122,7 @@ public class FontLoader {
 			
 			AvoLog.log().info("Saved font to: {}_{}.png", fontName, FONT_HEIGHT);
 		} catch (IOException e) {
-			e.printStackTrace();
+			AvoLog.log().error("Failed to save debug font bitmap.", e);
 		}
 	}
 	
