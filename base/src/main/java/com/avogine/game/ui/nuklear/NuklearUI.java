@@ -2,26 +2,8 @@ package com.avogine.game.ui.nuklear;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.nuklear.Nuklear.*;
-import static org.lwjgl.opengl.GL11.glBindTexture;
-import static org.lwjgl.opengl.GL11.glGenTextures;
-import static org.lwjgl.opengl.GL11.glTexImage2D;
-import static org.lwjgl.opengl.GL11.glTexParameteri;
-import static org.lwjgl.opengl.GL11C.GL_BLEND;
-import static org.lwjgl.opengl.GL11C.GL_CULL_FACE;
-import static org.lwjgl.opengl.GL11C.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL11C.GL_LINEAR;
-import static org.lwjgl.opengl.GL11C.GL_ONE_MINUS_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11C.GL_RGBA;
-import static org.lwjgl.opengl.GL11C.GL_RGBA8;
-import static org.lwjgl.opengl.GL11C.GL_SCISSOR_TEST;
-import static org.lwjgl.opengl.GL11C.GL_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11C.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11C.GL_TEXTURE_MAG_FILTER;
-import static org.lwjgl.opengl.GL11C.GL_TEXTURE_MIN_FILTER;
-import static org.lwjgl.opengl.GL11C.glBlendFunc;
-import static org.lwjgl.opengl.GL11C.glDisable;
-import static org.lwjgl.opengl.GL11C.glEnable;
-import static org.lwjgl.opengl.GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
+import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL12C.GL_UNSIGNED_INT_8_8_8_8_REV;
 import static org.lwjgl.opengl.GL13C.*;
 import static org.lwjgl.opengl.GL14C.*;
 import static org.lwjgl.stb.STBTruetype.*;
@@ -42,7 +24,7 @@ import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
 import com.avogine.render.data.nuklear.NuklearMesh;
 import com.avogine.render.shader.NuklearShader;
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.util.resource.*;
 
 /**
  * Wrapper implementation for {@link Nuklear}.
@@ -83,7 +65,7 @@ public class NuklearUI {
 	 * 
 	 */
 	public NuklearUI() {
-		ttf = ResourceFileReader.ioResourceToByteBuffer("/Roboto-Regular.ttf", 512 * 1024);
+		ttf = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONT_PATH + "Roboto-Regular.ttf", 512 * 1024);
 		projectionMatrix = new Matrix4f();
 		
 		// Create a Nuklear context, it is used everywhere.
@@ -126,7 +108,7 @@ public class NuklearUI {
 		int fontTexID = glGenTextures();
 
 		STBTTFontinfo fontInfo = STBTTFontinfo.create();
-		STBTTPackedchar.Buffer cdata = STBTTPackedchar.create(95);
+		STBTTPackedchar.Buffer cdata = STBTTPackedchar.create(96);
 
 		float scale;
 		float descent;
@@ -357,6 +339,9 @@ public class NuklearUI {
 						nk_input_key(context, NK_KEY_CUT, false);
 						nk_input_key(context, NK_KEY_SHIFT, false);
 					}
+				}
+				default -> {
+					// Action not implemented
 				}
 			}
 		}

@@ -1,14 +1,15 @@
 package com.avogine.render.loader.font;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import com.avogine.render.data.FontDetails;
 
 /**
  *
  */
 public class FontCache {
 
-	private final Map<String, FontSTB> fontMap = new HashMap<>();
+	private final Map<String, FontDetails> fontMap = new HashMap<>();
 	
 	private static final FontCache cache = new FontCache();
 	
@@ -20,18 +21,18 @@ public class FontCache {
 	}
 	
 	/**
-	 * @param fontname
+	 * @param fontName The name and file extension of the file in the {@code fonts} resource folder to load.
 	 * @return
 	 */
-	public FontSTB getFont(String fontname) {
-		return fontMap.computeIfAbsent(fontname, FontLoaderSTB::loadFont);
+	public FontDetails getFont(String fontName) {
+		return fontMap.computeIfAbsent(fontName, FontLoader::loadFont);
 	}
 	
 	/**
 	 * 
 	 */
 	public void cleanup() {
-		fontMap.values().forEach(FontSTB::cleanup);
+		fontMap.values().forEach(FontDetails::cleanup);
 	}
 	
 }
