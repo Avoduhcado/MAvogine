@@ -10,14 +10,14 @@ import static org.lwjgl.stb.STBTruetype.stbtt_GetPackedQuad;
 import java.nio.FloatBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.joml.*;
+import org.joml.Matrix4f;
 import org.lwjgl.stb.STBTTAlignedQuad;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.game.Game;
 import com.avogine.game.util.Cleanupable;
 import com.avogine.render.data.FontDetails;
-import com.avogine.render.loader.font.FontLoaderSTB;
+import com.avogine.render.loader.font.FontCache;
 import com.avogine.render.shader.FontShader;
 
 /**
@@ -32,7 +32,7 @@ public class TextRenderer implements Cleanupable {
 	
 	private int textBufferCapacity;
 	
-	private FontDetails font;
+	private FontDetails defaultFont;
 
 	@Override
 	public void onRegister(Game game) {
@@ -61,14 +61,15 @@ public class TextRenderer implements Cleanupable {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 		
-		font = FontLoaderSTB.quickLoad("/Roboto-Regular.ttf");
+		defaultFont = FontCache.getInstance().getFont("Roboto-Regular.ttf");
 	}
 	
 	/**
-	 * @param position
+	 * @param x 
+	 * @param y 
 	 * @param text
 	 */
-	public void renderText(Vector2f position, String text) {
+	public void renderText(float x, float y, String text, FontDetails font) {
 		fontShader.bind();
 		
 		glBindVertexArray(textVao);
@@ -84,15 +85,15 @@ public class TextRenderer implements Cleanupable {
 		glBindTexture(GL_TEXTURE_2D, font.textureID());
 		
 		Matrix4f modelMatrix = new Matrix4f();
-		modelMatrix.translate(position.x, position.y + font.fontSize() + font.descent(), 0);
+		modelMatrix.translate(x, y + font.fontSize() + font.descent(), 0);
 		fontShader.model.loadMatrix(modelMatrix);
 		
 		fontShader.textColor.loadVec4(1.0f, 1.0f, 1.0f, 1.0f);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			STBTTAlignedQuad q = STBTTAlignedQuad.malloc(stack);
-			FloatBuffer x = stack.floats(0.0f);
-			FloatBuffer y = stack.floats(0.0f);
+			FloatBuffer xpos = stack.floats(0.0f);
+			FloatBuffer ypos = stack.floats(0.0f);
 			
 			// XXX This may need to be allocated through MemoryUtil for large Strings
 			FloatBuffer vertexData = stack.mallocFloat(length);
@@ -101,12 +102,12 @@ public class TextRenderer implements Cleanupable {
 			text.codePoints()
 			.forEach(c -> {
 				if (c == '\n') {
-					x.put(0, 0.0f);
-					y.put(0, y.get(0) + font.fontSize() + font.descent());
+					xpos.put(0, 0.0f);
+					ypos.put(0, ypos.get(0) + font.fontSize() + font.descent());
 				} else if (c < 32 || c > 128) {
 					// Only concerned with rendering the ASCII character set
 				} else {
-					stbtt_GetPackedQuad(font.cdata(), 1024, 1024, c - 32, x, y, q, false);
+					stbtt_GetPackedQuad(font.cdata(), 1024, 1024, c - 32, xpos, ypos, q, false);
 					
 					vertexData.put(q.x0()).put(q.y1()).put(q.s0()).put(q.t1());
 					vertexData.put(q.x1()).put(q.y0()).put(q.s1()).put(q.t0());
@@ -127,6 +128,15 @@ public class TextRenderer implements Cleanupable {
 		glBindVertexArray(0);
 		
 		fontShader.unbind();
+	}
+	
+	/**
+	 * @param x
+	 * @param y
+	 * @param text
+	 */
+	public void renderText(float x, float y, String text) {
+		renderText(x, y, text, defaultFont);
 	}
 	
 	@Override
