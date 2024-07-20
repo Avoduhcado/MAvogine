@@ -5,29 +5,31 @@ import static org.lwjgl.nuklear.Nuklear.*;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.game.Game;
+import com.avogine.game.HotGame;
 import com.avogine.game.util.*;
+import com.avogine.io.Window;
 
 /**
  *
  */
 public class DebugInfo implements UIElement, Renderable {
 
-	private Game game;
+	private NuklearUI gui;
 	
 	@Override
-	public void onRegister(Game game) {
-		this.game = game;
+	public void onRegister(HotGame game) {
+		gui = game.getGUI();
 	}
 
 	@Override
-	public void onRender(SceneState sceneState) {
-		var context = game.getGUI().getContext();
-		prepare(context, game.getWindow().getId());
+	public void onRender(Window window, SceneState sceneState) {
+		if (gui != null) {
+			prepare(gui.getContext(), window);
+		}
 	}
 
 	@Override
-	public void prepare(NkContext context, long windowId) {
+	public void prepare(NkContext context, Window window) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			NkStyle style = context.style(); 
 			NkColor background = NkColor.malloc(stack);
@@ -38,7 +40,7 @@ public class DebugInfo implements UIElement, Renderable {
 			NkRect position = NkRect.calloc(stack).x(0).y(0).w(75).h(30);
 			if (nk_begin(context, "DEBUG", position, NK_WINDOW_NO_INPUT | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BACKGROUND)) {
 				nk_layout_row_dynamic(context, 0, 1);
-				nk_label(context, "FPS: " + game.getWindow().getFps(), NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_TOP);
+				nk_label(context, "FPS: " + window.getFps(), NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_TOP);
 			}
 			nk_end(context);
 		}

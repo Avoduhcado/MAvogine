@@ -21,11 +21,11 @@ class ECSSystemTest {
 	
 	@BeforeEach
 	void setup() {
-		game = new TestGame();
-		game.init(null, null, null);
-		
 		scene = new TestECSScene();
-		scene.init(game, null);
+		
+		game = new TestGame(scene);
+		game.init(null);
+
 		
 		manager = scene.getEntityManager();
 	}

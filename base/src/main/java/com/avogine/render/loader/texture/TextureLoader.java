@@ -198,7 +198,7 @@ public class TextureLoader {
 	 * @param filenames The images to construct a cubemap from, these should consist of 6 images, and be ordered from {@link GL13#GL_TEXTURE_CUBE_MAP_POSITIVE_X} to {@link GL13#GL_TEXTURE_CUBE_MAP_NEGATIVE_Z}
 	 * @return A {@link Cubemap} for the images
 	 */
-	protected static TextureAtlas loadCubemap(String... filenames) {
+	protected static Cubemap loadCubemap(String... filenames) {
 		if (filenames.length != 6) {
 			throw new IllegalArgumentException("Can't load a cubemap without 6 textures!");
 		}
@@ -252,7 +252,7 @@ public class TextureLoader {
 	 * @param directoryName The directory name contained in {@link ResourceConstants#TEXTURE_PATH}
 	 * @return
 	 */
-	protected static TextureAtlas loadCubemap(String directoryName, String fileType) {
+	protected static Cubemap loadCubemap(String directoryName, String fileType) {
 		String texturePathPrefix = directoryName + File.separator;
 		return loadCubemap(
 				texturePathPrefix + "right." + fileType,

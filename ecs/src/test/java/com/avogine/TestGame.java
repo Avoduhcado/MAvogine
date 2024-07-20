@@ -1,23 +1,24 @@
 package com.avogine;
 
-import com.avogine.game.Game;
-import com.avogine.game.scene.Scene;
-import com.avogine.game.ui.nuklear.NuklearUI;
-import com.avogine.io.*;
+import com.avogine.game.HotGame;
+import com.avogine.game.scene.*;
+import com.avogine.io.Window;
 
 /**
  *
  */
-public class TestGame extends Game {
+public class TestGame extends HotGame {
 
-	@Override
-	public void init(Window window, Audio audio, NuklearUI gui) {
-		// Not Implemented
+	/**
+	 * @param scene 
+	 */
+	public TestGame(SwappableScene scene) {
+		super(scene);
 	}
 
 	@Override
-	public Scene getCurrentScene() {
-		return null;
+	public void init(Window window) {
+		// Not implemented
 	}
 
 }

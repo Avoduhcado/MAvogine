@@ -7,9 +7,10 @@ import org.joml.Matrix4f;
 import com.avogine.ecs.*;
 import com.avogine.ecs.addons.ModelCache;
 import com.avogine.ecs.components.*;
-import com.avogine.game.Game;
+import com.avogine.game.HotGame;
 import com.avogine.game.scene.ECSScene;
 import com.avogine.game.util.*;
+import com.avogine.io.Window;
 import com.avogine.render.shader.BasicShader;
 
 /**
@@ -31,12 +32,12 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	}
 	
 	@Override
-	public void onRegister(Game game) {
+	public void onRegister(HotGame game) {
 		basicShader = new BasicShader("basicVertex.glsl", "basicFragment.glsl");
 	}
 	
 	@Override
-	public void onRender(SceneState sceneState) {
+	public void onRender(Window window, SceneState sceneState) {
 		if (sceneState.scene() instanceof ECSScene ecsScene) {
 			renderScene(ecsScene);
 		}
