@@ -2,11 +2,9 @@ package com.avogine.game.scene;
 
 import org.joml.Matrix4f;
 
-import com.avogine.game.Game;
-import com.avogine.io.Window;
-
 /**
- * 
+ * TODO Implement a custom Projection type to contain the projection matrix along with FOV, near/far planes.
+ * TODO Implement some sort of Camera type to encapsulate the view matrix.
  */
 public abstract class Scene {
 
@@ -27,25 +25,6 @@ public abstract class Scene {
 	}
 	
 	/**
-	 * @param game
-	 * @param window
-	 */
-	public abstract void init(Game game, Window window);
-	
-	/**
-	 * @param window The window this scene is being rendered to.
-	 */
-	public abstract void onRender(Window window);
-	
-	/**
-	 * TODO Make abstract
-	 * @param delta
-	 */
-	public void onUpdate(float delta) {
-		
-	}
-	
-	/**
 	 * @return the projection matrix
 	 */
 	public Matrix4f getProjection() {
@@ -58,5 +37,5 @@ public abstract class Scene {
 	public Matrix4f getView() {
 		return view;
 	}
-	
+
 }

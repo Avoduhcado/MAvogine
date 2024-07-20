@@ -10,20 +10,22 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.game.Game;
-import com.avogine.game.scene.Scene;
+import com.avogine.game.HotGame;
+import com.avogine.game.scene.SwappableScene;
 import com.avogine.game.ui.nuklear.audio.AudioConfigUI;
 import com.avogine.game.util.*;
+import com.avogine.io.Window;
 
 /**
  * TODO Investigate initializing with all elements hidden, and a key listener for ESC to unhide the menu
  */
 public class GameMenu implements UIElement, Renderable, Cleanupable {
 
-	private final Game game;
+	private HotGame game;
+	private NuklearUI gui;
 	
 	private boolean loadGameEnabled;
-	private Supplier<Scene> quitToTitleSupplier;
+	private Supplier<SwappableScene> quitToTitleSupplier;
 	
 	private String backgroundTitle;
 	private NkRect backgroundPosition;
@@ -43,9 +45,7 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 	 * @param quitToTitleSupplier 
 	 * 
 	 */
-	public GameMenu(Game game, Supplier<Scene> quitToTitleSupplier) {
-		this.game = game;
-		
+	public GameMenu(HotGame game, Supplier<SwappableScene> quitToTitleSupplier) {
 		loadGameEnabled = false;
 		this.quitToTitleSupplier = quitToTitleSupplier;
 		
@@ -61,26 +61,31 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 	}
 	
 	@Override
-	public void onRegister(Game game) {
-		NkContext context = game.getGUI().getContext();
+	public void onRegister(HotGame game) {
+		this.game = game;
+		gui = game.getGUI();
 		
-		backgroundPosition = NkRect.calloc();
-		nk_begin(context, backgroundTitle, backgroundPosition, 0);
-		nk_end(context);
-		nk_window_show(context, backgroundTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
-		nk_window_set_focus(context, backgroundTitle);
-		
-		position = NkRect.calloc();
-		nk_begin(context, windowTitle, position, 0);
-		nk_end(context);
-		nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
-		nk_window_set_focus(context, windowTitle);
-		
-		audioPosition = NkRect.calloc();
-		nk_begin(context, audioWindowTitle, audioPosition, 0);
-		nk_end(context);
-		nk_window_show(context, audioWindowTitle, NK_HIDDEN);
-		nk_window_set_focus(context, audioWindowTitle);
+		if (gui != null) {
+			NkContext context = gui.getContext();
+
+			backgroundPosition = NkRect.calloc();
+			nk_begin(context, backgroundTitle, backgroundPosition, 0);
+			nk_end(context);
+			nk_window_show(context, backgroundTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
+			nk_window_set_focus(context, backgroundTitle);
+
+			position = NkRect.calloc();
+			nk_begin(context, windowTitle, position, 0);
+			nk_end(context);
+			nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
+			nk_window_set_focus(context, windowTitle);
+
+			audioPosition = NkRect.calloc();
+			nk_begin(context, audioWindowTitle, audioPosition, 0);
+			nk_end(context);
+			nk_window_show(context, audioWindowTitle, NK_HIDDEN);
+			nk_window_set_focus(context, audioWindowTitle);
+		}
 	}
 	
 	@Override
@@ -89,18 +94,19 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 	}
 
 	@Override
-	public void onRender(SceneState sceneState) {
-		var context = game.getGUI().getContext();
-		prepare(context, game.getWindow().getId());
+	public void onRender(Window window, SceneState sceneState) {
+		if (gui != null) {
+			prepare(gui.getContext(), window);
+		}
 	}
 
 	@Override
-	public void prepare(NkContext context, long windowId) {
+	public void prepare(NkContext context, Window window) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer w = stack.mallocInt(1);
 			IntBuffer h = stack.mallocInt(1);
 
-			GLFW.glfwGetFramebufferSize(windowId, w, h);
+			GLFW.glfwGetFramebufferSize(window.getId(), w, h);
 			int displayWidth = w.get(0);
 			int displayHeight = h.get(0);
 
@@ -141,7 +147,7 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 				nk_window_show(context, windowTitle, NK_SHOWN);
 				nk_window_set_focus(context, windowTitle);
 				// Maybe move this back in to a regular keyboard listener?
-				glfwSetInputMode(windowId, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				glfwSetInputMode(window.getId(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			}
 			
 			backgroundPosition.x(0).y(0).w(displayWidth).h(displayHeight);
@@ -173,14 +179,14 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 				}
 				
 				if (nk_button_label(context, "Quit to Desktop")) {
-					GLFW.glfwSetWindowShouldClose(game.getWindow().getId(), true);
+					GLFW.glfwSetWindowShouldClose(window.getId(), true);
 				}
 				
 				if (nk_button_label(context, "Return to Game")) {
 					nk_window_show(context, backgroundTitle, NK_HIDDEN);
 					nk_window_show(context, windowTitle, NK_HIDDEN);
 					nk_window_set_focus(context, windowTitle);
-					glfwSetInputMode(windowId, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+					glfwSetInputMode(window.getId(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				}
 			}
 			nk_end(context);

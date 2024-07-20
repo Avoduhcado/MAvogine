@@ -9,20 +9,22 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.game.Game;
-import com.avogine.game.scene.Scene;
+import com.avogine.game.HotGame;
+import com.avogine.game.scene.SwappableScene;
 import com.avogine.game.ui.nuklear.audio.AudioConfigUI;
 import com.avogine.game.util.*;
+import com.avogine.io.Window;
 
 /**
  *
  */
 public class TitleMenu implements UIElement, Renderable, Cleanupable {
 
-	private final Game game;
+	private HotGame game;
+	private NuklearUI gui;
 	
 	private boolean loadGameEnabled;
-	private Supplier<Scene> loadNewGameSupplier;
+	private Supplier<SwappableScene> loadNewGameSupplier;
 	
 	private String windowTitle;
 	private NkRect position;
@@ -38,9 +40,7 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 	 * @param loadNewGameSupplier 
 	 * 
 	 */
-	public TitleMenu(Game game, Supplier<Scene> loadNewGameSupplier) {
-		this.game = game;
-		
+	public TitleMenu(HotGame game, Supplier<SwappableScene> loadNewGameSupplier) {
 		loadGameEnabled = saveGamesExist();
 		this.loadNewGameSupplier = loadNewGameSupplier;
 		
@@ -53,26 +53,32 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 	}
 
 	@Override
-	public void onRegister(Game game) {
-		NkContext context = game.getGUI().getContext();
+	public void onRegister(HotGame game) {
+		this.game = game;
+		gui = game.getGUI();
 		
-		position = NkRect.create();
-		nk_begin(context, windowTitle, position, 0);
-		nk_end(context);
-		nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
-		
-		audioPosition = NkRect.calloc();
-		nk_begin(context, audioWindowTitle, audioPosition, 0);
-		nk_end(context);
-		nk_window_show(context, audioWindowTitle, NK_HIDDEN);
+		if (gui != null) {
+			NkContext context = gui.getContext();
 
-		nk_window_set_focus(context, windowTitle);
+			position = NkRect.create();
+			nk_begin(context, windowTitle, position, 0);
+			nk_end(context);
+			nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
+
+			audioPosition = NkRect.calloc();
+			nk_begin(context, audioWindowTitle, audioPosition, 0);
+			nk_end(context);
+			nk_window_show(context, audioWindowTitle, NK_HIDDEN);
+
+			nk_window_set_focus(context, windowTitle);
+		}
 	}
 
 	@Override
-	public void onRender(SceneState sceneState) {
-		var context = game.getGUI().getContext();
-		prepare(context, game.getWindow().getId());
+	public void onRender(Window window, SceneState sceneState) {
+		if (gui != null) {
+			prepare(gui.getContext(), window);
+		}
 	}
 	
 	/**
@@ -80,12 +86,12 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 	 * @param windowId
 	 */
 	@Override
-	public void prepare(NkContext context, long windowId) {
+	public void prepare(NkContext context, Window window) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer w = stack.mallocInt(1);
 			IntBuffer h = stack.mallocInt(1);
 
-			GLFW.glfwGetFramebufferSize(windowId, w, h);
+			GLFW.glfwGetFramebufferSize(window.getId(), w, h);
 			int displayWidth = w.get(0);
 			int displayHeight = h.get(0);
 
@@ -135,7 +141,7 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 				}
 
 				if (nk_button_label(context, "Quit Game")) {
-					GLFW.glfwSetWindowShouldClose(game.getWindow().getId(), true);
+					GLFW.glfwSetWindowShouldClose(window.getId(), true);
 				}
 				// Interesting stuff. Probably better off used for a complete menu that's aware of the rest of the UI context so you can control tabbing between different windows.
 				// TODO Look more into keyboard navigable menus
@@ -178,6 +184,7 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 	}
 	
 	private boolean saveGamesExist() {
+		// TODO Add save games
 		return false;
 	}
 	

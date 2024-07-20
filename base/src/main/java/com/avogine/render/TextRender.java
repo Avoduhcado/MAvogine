@@ -14,8 +14,6 @@ import org.joml.Matrix4f;
 import org.lwjgl.stb.STBTTAlignedQuad;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.game.Game;
-import com.avogine.game.util.Cleanupable;
 import com.avogine.render.data.FontDetails;
 import com.avogine.render.loader.font.FontCache;
 import com.avogine.render.shader.FontShader;
@@ -23,7 +21,7 @@ import com.avogine.render.shader.FontShader;
 /**
  *
  */
-public class TextRenderer implements Cleanupable {
+public class TextRender {
 
 	private FontShader fontShader;
 	
@@ -34,13 +32,7 @@ public class TextRenderer implements Cleanupable {
 	
 	private FontDetails defaultFont;
 
-	@Override
-	public void onRegister(Game game) {
-		// TODO This may need to reference/create an ortho matrix if the currentScene is 3D
-		init(game.getCurrentScene().getProjection());
-	}
-	
-	private void init(Matrix4f projection) {
+	public void init(Matrix4f projection) {
 		fontShader = new FontShader("textVertex.glsl", "textFragment.glsl");
 		fontShader.bind();
 		fontShader.projection.loadMatrix(projection);
@@ -139,8 +131,10 @@ public class TextRenderer implements Cleanupable {
 		renderText(x, y, text, defaultFont);
 	}
 	
-	@Override
-	public void onCleanup() {
+	/**
+	 * 
+	 */
+	public void cleanup() {
 		if (fontShader != null) {
 			fontShader.cleanup();
 		}

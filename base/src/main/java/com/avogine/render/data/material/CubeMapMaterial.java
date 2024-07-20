@@ -12,7 +12,7 @@ public record CubeMapMaterial(TextureAtlas cube) implements Material {
 	@Override
 	public void bind() {
 		if (cube != null) {
-			GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, cube.getId());
+			GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, cube.id());
 		}
 	}
 

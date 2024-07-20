@@ -3,8 +3,7 @@ package com.avogine;
 import java.util.concurrent.*;
 
 import com.avogine.game.*;
-import com.avogine.game.ui.nuklear.NuklearUI;
-import com.avogine.io.*;
+import com.avogine.io.Window;
 import com.avogine.logging.AvoLog;
 import com.avogine.util.FrameProfiler;
 
@@ -12,16 +11,11 @@ import com.avogine.util.FrameProfiler;
  * This is the primary entry point into running a game.
  * <p>
  * To kick off the game loop, create a new {@link Avogine} and supply it with a {@link Window} to render
- * to and a {@link Game} to run, then call {@link #start()}.
+ * to and a {@link HotGame} to run, then call {@link #start()}.
  *
  */
 public class Avogine implements Runnable {
 
-	/**
-	 * Target updates per second. Controls how often game logic is run in a single second.
-	 */
-	public static final int TARGET_UPS = 60;
-	
 	/**
 	 * When sleeping the game loop thread per frame, the system will issue {@code Thread.sleep(1)} requests for as long as the
 	 * remaining frame time is greater than this value. Once it's below this value it will go into a busy wait until 
@@ -38,10 +32,7 @@ public class Avogine implements Runnable {
 	private final Window window;
 	private final Game game;
 	
-	private final Input input;
-	private final NuklearUI gui;
 	private final Timer timer;
-	private final Audio audio;
 	
 	private double updateInterval;
 	private double updateAccumulator;
@@ -53,13 +44,11 @@ public class Avogine implements Runnable {
 	public Avogine(Window window, Game game) {
 		gameLoopThread = new Thread(this, "GAME_LOOP_THREAD");
 		profiler = FrameProfiler.NO_OP;
+		
 		this.window = window;
 		this.game = game;
-		// TODO Add an additional constructor for custom Input implementations as well, maybe even Timer? But idc right now.
-		input = new Input();
-		gui = new NuklearUI();
+		
 		timer = new Timer();
-		audio = new Audio();
 	}
 	
 	/**
@@ -92,15 +81,13 @@ public class Avogine implements Runnable {
 	}
 	
 	private void init() {
-		window.init(input);
-		audio.init();
-		gui.init(window);
-		game.init(window, audio, gui);
+		window.init(game.getGLFWConfig(), game.getInputConfig());
+		game.init(window);
 		timer.init();
 	}
 	
 	private void loop() {
-		updateInterval = 1.0 / TARGET_UPS;
+		updateInterval = 1.0 / game.getTargetUps();
 		
 		double previousFrameTime = timer.getTime();
 		double loopTime = 0;
@@ -143,12 +130,7 @@ public class Avogine implements Runnable {
 	private void input() {
 		profiler.inputStart();
 
-		// TODO Where should this go?
-		game.drainRegistrationQueue();
-		
-		gui.inputBegin();
-		window.pollEvents();
-		gui.inputEnd();
+		game.input(window);
 		
 		profiler.inputEnd();
 	}
@@ -168,7 +150,7 @@ public class Avogine implements Runnable {
 	private void render() {
 		profiler.renderStart();
 		
-		game.render();
+		game.render(window);
 		window.swapBuffers();
 		
 		profiler.renderEnd();
@@ -208,10 +190,6 @@ public class Avogine implements Runnable {
 	
 	private void cleanup() {
 		game.cleanup();
-		
-		audio.cleanup();
-		
-		gui.cleanup();
 		
 		window.cleanup();
 		

@@ -1,8 +1,7 @@
 package com.avogine.ecs;
 
-import com.avogine.game.Game;
 import com.avogine.game.scene.ECSScene;
-import com.avogine.io.Window;
+import com.avogine.game.util.SceneState;
 
 /**
  *
@@ -17,13 +16,8 @@ public class TestECSScene extends ECSScene {
 	}
 
 	@Override
-	public void init(Game game, Window window) {
-		// Not implemented
-	}
-
-	@Override
-	public void onRender(Window window) {
-		// Not implemented
+	public SceneState getSceneState() {
+		return null;
 	}
 
 }

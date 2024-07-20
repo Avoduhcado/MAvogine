@@ -2,6 +2,8 @@ package com.avogine.game.ui.nuklear;
 
 import org.lwjgl.nuklear.NkContext;
 
+import com.avogine.io.Window;
+
 /**
  * TODO Further subclass this into a NuklearUIElement for prepare to take in specifically a NkContext
  */
@@ -13,7 +15,7 @@ public interface UIElement {
 	 * @param context
 	 * @param windowId 
 	 */
-	public void prepare(NkContext context, long windowId);
+	public void prepare(NkContext context, Window window);
 	
 	/**
 	 * @return whether this UI should immediately be rendered once initialized, otherwise it will start hidden.

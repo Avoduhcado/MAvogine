@@ -8,6 +8,7 @@ import org.joml.Vector2f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 
+import com.avogine.io.config.InputConfig;
 import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
 
@@ -19,10 +20,10 @@ import com.avogine.io.listener.*;
  * converting them into proper {@link AvoEvent}s and firing them off to any registered {@link InputListener}s.
  */
 public class Input {
-
+	
 	private Window registeredWindow;
 	private long windowID;
-		
+	
 	private final Set<InputListener> listeners;
 	// True if the key at index is currently pressed
 	private final boolean[] keys;
@@ -30,14 +31,20 @@ public class Input {
 	private float lastMouseX;
 	private float lastMouseY;
 	private final Vector2f lastMouseClick;
-	private final float clickDriftTolerance = 1f;
 	
 	private final Map<Integer, Double> clickTimes;
+	private float clickDriftTolerance;
+	private float doubleClickDelayTolerance;
 	
 	/**
-	 * Create a new {@link Input} and populate a {@code boolean} array to map all button presses.
+	 * Create a new {@link Input} and register it to a given {@link Window} to process {@link AvoEvent}s for.
+	 * <p>
+	 * Populates an initial {@code boolean} array to map all button presses along with click delay times for all mouse buttons.
+	 * @param window the {@code Window} to process {@code Event}s for.
 	 */
-	public Input() {
+	public Input(Window window) {
+		registeredWindow = window;
+		
 		listeners = new HashSet<>();
 		
 		keys = new boolean[GLFW.GLFW_KEY_LAST];
@@ -50,12 +57,14 @@ public class Input {
 	}
 	
 	/**
-	 * Register this {@code Input} to process {@link AvoEvent}s for a given {@link Window}.
-	 * @param registeredWindow the {@code Window} to process {@code Event}s for.
+	 * 
+	 * @param config
 	 */
-	public void init(Window registeredWindow) {
-		this.registeredWindow = registeredWindow;
-		this.windowID = registeredWindow.getId();
+	public void init(InputConfig config) {
+		clickDriftTolerance = config.clickDriftTolerance();
+		doubleClickDelayTolerance = config.doubleClickDelayTolerance();
+
+		windowID = registeredWindow.getId();
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			DoubleBuffer xPos = stack.mallocDouble(1);
@@ -66,6 +75,33 @@ public class Input {
 			lastMouseY = (float) yPos.get();
 		}
 		
+		configureKeyCallback();
+		configureCharCallback();
+		
+		configureMouseButtonCallback();
+		configureCursorPosCallback();
+		configureScrollCallback();
+	}
+	
+	/**
+	 * 
+	 */
+	public void update() {
+		// GLFW_REPEAT has god awful lag, so we're going to roll our own keyDown events
+		// Perhaps in the future we'll only update the array of specified key bindings rather than all accessible keys.
+		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
+			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
+				if (!keys[i]) {
+					fireKeyboardEvent(new KeyEvent(KeyEvent.KEY_TYPED, i, ' ', windowID));
+				}
+				keys[i] = true;
+			} else {
+				keys[i] = false;
+			}
+		}
+	}
+	
+	private void configureKeyCallback() {
 		GLFW.glfwSetKeyCallback(windowID, (window, key, scancode, action, mods) -> {
 			if (action == GLFW.GLFW_REPEAT) {
 				return;
@@ -77,12 +113,16 @@ public class Input {
 			}
 			
 			if (key == GLFW.GLFW_KEY_F3 && action == GLFW.GLFW_RELEASE) {
-				Window.debugMode = !Window.debugMode;
+				registeredWindow.setDebugMode(!registeredWindow.isDebugMode());
 			}
 		});
-		
+	}
+	
+	private void configureCharCallback() {
 		GLFW.glfwSetCharCallback(windowID, (window, codepoint) -> fireKeyboardEvent(new KeyEvent(KeyEvent.KEY_TYPED, -1, (char)codepoint, window)));
-		
+	}
+	
+	private void configureMouseButtonCallback() {
 		GLFW.glfwSetMouseButtonCallback(windowID, (window, button, action, mods) -> {
 			int clickCount = 1;
 			if (action == GLFW.GLFW_PRESS) {
@@ -92,14 +132,16 @@ public class Input {
 			fireMouseButtonEvent(new MouseEvent(getMouseEventId(action), button, clickCount, lastMouseX, lastMouseY, window));
 			if (action == GLFW.GLFW_RELEASE && lastMouseClick.distance(lastMouseX, lastMouseY) <= clickDriftTolerance) {
 				double time = GLFW.glfwGetTime();
-				if (time - clickTimes.replace(button, time) <= 0.5) {
+				if (time - clickTimes.replace(button, time) <= doubleClickDelayTolerance) {
 					clickCount += 1;
 				}
 				lastMouseClick.set(lastMouseX, lastMouseY);
 				fireMouseButtonEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, button, clickCount, lastMouseX, lastMouseY, window));
 			}
 		});
-		
+	}
+	
+	private void configureCursorPosCallback() {
 		GLFW.glfwSetCursorPosCallback(windowID, (window, xPos, yPos) -> {
 			boolean dragged = false;
 			for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
@@ -114,48 +156,19 @@ public class Input {
 			lastMouseX = (float) xPos;
 			lastMouseY = (float) yPos;
 		});
-		
-		GLFW.glfwSetScrollCallback(windowID, (window, xOffset, yOffset) ->
-			fireMouseScrollEvent(new MouseWheelEvent(xOffset, yOffset, window)));
+	}
+	
+	private void configureScrollCallback() {
+		GLFW.glfwSetScrollCallback(windowID, (window, xOffset, yOffset) -> fireMouseScrollEvent(new MouseWheelEvent(xOffset, yOffset, window)));
 	}
 	
 	/**
-	 * TODO This is all bad.
+	 * Register an {@link InputListener} to this {@link Input} and store
+	 * a reference to it for potential de-registering later.
+	 * @param l The {@code InputListener} to add.
+	 * @return 
 	 */
-	public void update() {
-		// GLFW_REPEAT has god awful lag, so we're going to roll our own keyDown events
-		// Perhaps in the future we'll only update the array of specified key bindings rather than all accessible keys.
-		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
-			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
-				if (!keys[i]) {
-					fireKeyboardEvent(new KeyEvent(KeyEvent.KEY_TYPED, i, ' ', windowID));
-				} else {
-					// TODO Is this necessary?
-//					fireKeyboardEvent(new KeyboardEvent(GLFW.GLFW_PRESS, i, windowID));
-				}
-				keys[i] = true;
-			} else {
-				keys[i] = false;
-			}
-		}
-		
-		// TODO Add a repeatable mouse held loop? Doesn't seem necessary?
-//		for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
-//			if (GLFW.glfwGetMouseButton(windowID, i) == GLFW.GLFW_PRESS) {
-//				// Should this be a different type of event? MouseHeldEvent?
-//				// TODO Does this cause issues elsewhere?
-				// XXX Yes, this does in fact cause issues. This behavior should be treated as a "Mouse Drag" event
-//				// TODO Add click count, detect how many clicks occur, probably new event type for CLICK
-//				fireMouseClickEvent(new MouseClickEvent(GLFW.GLFW_PRESS, i, 1, lastMouseX, lastMouseY, windowID));
-//			}
-//		}
-	}
-	
-	/**
-	 * @param l
-	 * @return the attached {@link InputListener}
-	 */
-	public InputListener add(InputListener l) {
+	public InputListener addInputListener(InputListener l) {
 		listeners.add(l);
 		return l;
 	}
@@ -164,7 +177,7 @@ public class Input {
 	 * @param listener
 	 * @return the removed {@link InputListener}
 	 */
-	public InputListener removeListener(InputListener listener) {
+	public InputListener removeInputListener(InputListener listener) {
 		listeners.remove(listener);
 		return listener;
 	}

@@ -7,7 +7,7 @@ import com.avogine.ecs.EntityManager;
 /**
  *
  */
-public abstract class ECSScene extends Scene {
+public abstract class ECSScene extends SwappableScene {
 
 	protected final EntityManager entityManager;
 	

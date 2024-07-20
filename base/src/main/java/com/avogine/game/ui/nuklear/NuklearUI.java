@@ -95,9 +95,9 @@ public class NuklearUI {
 		
 		mesh = new NuklearMesh(window.getWidth(), window.getHeight(), window.getWidth(), window.getHeight());
 		
-		window.getInput().add(new NuklearKeyboardHandler());
-		window.getInput().add(new NuklearScrollHandler());
-		window.getInput().add(new NuklearMouseHandler());
+		window.getInput().addInputListener(new NuklearKeyboardHandler());
+		window.getInput().addInputListener(new NuklearScrollHandler());
+		window.getInput().addInputListener(new NuklearMouseHandler());
 	}
 	
 	private void initFont() {
@@ -517,6 +517,6 @@ public class NuklearUI {
 		Objects.requireNonNull(ALLOCATOR.alloc()).free();
 		Objects.requireNonNull(ALLOCATOR.mfree()).free();
 		
-		// TODO Remove InputListeners
+		// TODO Remove InputListeners, would likely need to store a reference to the Window, otherwise need to rely on saving InputListeners to the corresponding Game and remove them there
 	}
 }
