@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.avogine</groupId>
   <artifactId>mavogine</artifactId>
-  <version>0.1.2-SNAPSHOT</version>
+  <version>0.1.2</version>
   <packaging>pom</packaging>
   
   <modules>
@@ -14,7 +14,7 @@
   <scm>
 	<connection>scm:git:https://github.com/avoduhcado/mavogine.git</connection>
 	<developerConnection>scm:git:https://github.com/avoduhcado/mavogine.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.1.2</tag>
   </scm>
   
   <distributionManagement>
@@ -27,7 +27,7 @@
   
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
-    <mavogine.version>0.1.2-SNAPSHOT</mavogine.version>
+    <mavogine.version>0.1.2</mavogine.version>
     <lwjgl.version>3.3.3</lwjgl.version>
     <joml.version>1.10.1</joml.version>
     <lwjgl.natives>natives-windows</lwjgl.natives>
