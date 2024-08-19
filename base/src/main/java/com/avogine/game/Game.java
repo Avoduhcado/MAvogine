@@ -37,6 +37,14 @@ public interface Game {
 	public void render(Window window);
 	
 	/**
+	 * @param width
+	 * @param height
+	 */
+	public default void resize(int width, int height) {
+		
+	}
+	
+	/**
 	 * Free up any allocated memory defined from this object.
 	 * <p>
 	 * Typically this just consists of calling {@code cleanup()} on any objects that were created
@@ -53,14 +61,20 @@ public interface Game {
 	}
 	
 	/**
-	 * @return
+	 * Return the {@link GLFWConfig} to apply when running this {@link Game}.
+	 * <p>
+	 * By default this returns {@link GLFWConfig#defaultConfig()} to setup a standardly acceptable configuration.
+	 * @return the {@link GLFWConfig} to apply when running this {@link Game}.
 	 */
 	public default GLFWConfig getGLFWConfig() {
 		return GLFWConfig.defaultConfig();
 	}
 	
 	/**
-	 * @return
+	 * Return the {@link InputConfig} to apply to the {@link Window} this {@link Game} is running in.
+	 * <p>
+	 * By default this returns {@link InputConfig#defaultConfig()} to setup a standardly acceptable configuration.
+	 * @return the {@link InputConfig} to apply to the {@link Window} this {@link Game} is running in.
 	 */
 	public default InputConfig getInputConfig() {
 		return InputConfig.defaultConfig();

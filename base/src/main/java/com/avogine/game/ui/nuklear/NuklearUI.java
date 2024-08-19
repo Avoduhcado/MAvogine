@@ -220,6 +220,7 @@ public class NuklearUI {
 	 * @param window
 	 */
 	public void onRender(Window window) {
+		// TODO Respond to window resizes
 		try (MemoryStack stack = stackPush()) {
 			IntBuffer w = stack.mallocInt(1);
 			IntBuffer h = stack.mallocInt(1);

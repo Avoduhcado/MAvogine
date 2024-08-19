@@ -4,10 +4,10 @@ import static com.avogine.util.MathUtil.clamp;
 
 import java.nio.IntBuffer;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
@@ -32,6 +32,7 @@ public class Window {
 	
 	private int width;
 	private int height;
+	private Callable<Void> resizeFunction;
 	
 	private boolean fullscreen;
 	
@@ -50,12 +51,14 @@ public class Window {
 	/**
 	 * @param title The window title
 	 * @param preferences 
+	 * @param resizeFunction 
 	 */
-	public Window(String title, WindowPreferences preferences) {
+	public Window(String title, WindowPreferences preferences, Callable<Void> resizeFunction) {
 		this.title = title;
 		
 		width = preferences.width();
 		height = preferences.height();
+		this.resizeFunction = resizeFunction;
 		
 		fullscreen = preferences.fullscreen();
 		monitorIndex = preferences.monitor();
@@ -92,11 +95,12 @@ public class Window {
 			throw new IllegalStateException("Failed to create window!");
 		}
 		
-		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> {
-			width = w;
-			height = h;
-			GL11.glViewport(0, 0, width, height);
-		});
+		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> resized(w, h));
+//		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> {
+//			width = w;
+//			height = h;
+//			GL11.glViewport(0, 0, width, height);
+//		});
 		
 		GLFW.glfwSetErrorCallback((int errorCode, long msgPtr) -> AvoLog.log().error("Error code [{}], msg [{}]", errorCode, MemoryUtil.memUTF8(msgPtr)));
 		
@@ -163,6 +167,16 @@ public class Window {
 		GLFW.glfwPollEvents();
 		
 		input.update();
+	}
+	
+	protected void resized(int width, int height) {
+		this.width = width;
+		this.height = height;
+		try {
+			resizeFunction.call();
+		} catch (Exception e) {
+			AvoLog.log().error("Error calling resize callback.", e);
+		}
 	}
 	
 	/**

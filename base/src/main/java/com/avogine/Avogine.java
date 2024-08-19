@@ -1,9 +1,12 @@
 package com.avogine;
 
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.avogine.game.*;
+import com.avogine.game.Timer;
 import com.avogine.io.Window;
+import com.avogine.io.config.WindowPreferences;
 import com.avogine.logging.AvoLog;
 import com.avogine.util.FrameProfiler;
 
@@ -29,8 +32,12 @@ public class Avogine implements Runnable {
 	private final Thread gameLoopThread;
 	private final FrameProfiler profiler;
 	
-	private final Window window;
+	/**
+	 * The main window should be initialized on the main thread and maintain initializing GLFW.
+	 */
+	private final Window mainWindow;
 	private final Game game;
+	private static final List<Window> WINDOW_CACHE = new ArrayList<>();
 	
 	private final Timer timer;
 	
@@ -38,14 +45,18 @@ public class Avogine implements Runnable {
 	private double updateAccumulator;
 	
 	/**
-	 * @param window The primary game {@link Window} to display to
+	 * @param title The title of the main {@link Window}.
+	 * @param preferences The {@link WindowPreferences} to apply to the main Window.
 	 * @param game An implementation of {@link Game} that contains the main game logic
 	 */
-	public Avogine(Window window, Game game) {
+	public Avogine(String title, WindowPreferences preferences, Game game) {
 		gameLoopThread = new Thread(this, "GAME_LOOP_THREAD");
 		profiler = FrameProfiler.NO_OP;
 		
-		this.window = window;
+		mainWindow = new Window(title, preferences, () -> {
+			resize();
+			return null;
+		});
 		this.game = game;
 		
 		timer = new Timer();
@@ -81,8 +92,8 @@ public class Avogine implements Runnable {
 	}
 	
 	private void init() {
-		window.init(game.getGLFWConfig(), game.getInputConfig());
-		game.init(window);
+		mainWindow.init(game.getGLFWConfig(), game.getInputConfig());
+		game.init(mainWindow);
 		timer.init();
 	}
 	
@@ -92,12 +103,12 @@ public class Avogine implements Runnable {
 		double previousFrameTime = timer.getTime();
 		double loopTime = 0;
 		
-		while (!window.shouldClose()) {
+		while (!mainWindow.shouldClose()) {
 			profiler.startFrame();
 			double frameStartTime = timer.getTime();
 			double elapsedTime = (frameStartTime - previousFrameTime);
 			previousFrameTime = frameStartTime;
-			window.setFps((int) (1 / elapsedTime));
+			mainWindow.setFps((int) (1 / elapsedTime));
 			updateAccumulator += elapsedTime;
 			
 			loopTime += elapsedTime;
@@ -115,7 +126,7 @@ public class Avogine implements Runnable {
 			profiler.endFrame();
 			// Get the time it took to actually process the entire frame (this should be counted as a segment of our overall time dictated by renderInterval)
 			double frameProcessTimeNanos = timer.getTime() - frameStartTime;
-			long sleepTime = (long) (Math.max(window.getTargetFps() - frameProcessTimeNanos, 0) * 1_000_000_000); // Convert to nanoseconds
+			long sleepTime = (long) (Math.max(mainWindow.getTargetFps() - frameProcessTimeNanos, 0) * 1_000_000_000); // Convert to nanoseconds
 			
 			try {
 				sleepNanos(sleepTime);
@@ -130,7 +141,7 @@ public class Avogine implements Runnable {
 	private void input() {
 		profiler.inputStart();
 
-		game.input(window);
+		game.input(mainWindow);
 		
 		profiler.inputEnd();
 	}
@@ -150,10 +161,16 @@ public class Avogine implements Runnable {
 	private void render() {
 		profiler.renderStart();
 		
-		game.render(window);
-		window.swapBuffers();
+		game.render(mainWindow);
+		mainWindow.swapBuffers();
 		
 		profiler.renderEnd();
+	}
+	
+	private void resize() {
+		int width = mainWindow.getWidth();
+		int height = mainWindow.getHeight();
+		game.resize(width, height);
 	}
 	
 	/**
@@ -188,10 +205,14 @@ public class Avogine implements Runnable {
 		}
 	}
 	
+	public static List<Window> getWindowCache() {
+		return WINDOW_CACHE;
+	}
+	
 	private void cleanup() {
 		game.cleanup();
 		
-		window.cleanup();
+		mainWindow.cleanup();
 		
 		// When using coroutines, the default context utilizes the commonPool, which needs to be manually stopped before the system exits.
 		ForkJoinPool.commonPool().awaitQuiescence(1000, TimeUnit.MILLISECONDS);
