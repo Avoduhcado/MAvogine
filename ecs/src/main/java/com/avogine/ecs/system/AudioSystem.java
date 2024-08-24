@@ -5,8 +5,7 @@ import java.util.UUID;
 import com.avogine.audio.data.*;
 import com.avogine.ecs.*;
 import com.avogine.ecs.components.*;
-import com.avogine.game.HotGame;
-import com.avogine.game.scene.ECSScene;
+import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 
 /**
@@ -28,14 +27,14 @@ public class AudioSystem extends EntitySystem implements Updateable {
 	}
 	
 	@Override
-	public void onRegister(HotGame game) {
+	public void onRegister(RegisterableGame game) {
 		// Nothing to register
 	}
 
 	@Override
-	public void onUpdate(GameState gameState) {
-		if (gameState.scene() instanceof ECSScene scene) {
-			updateSources(scene.getEntityManager());
+	public void onUpdate(Scene scene, float delta) {
+		if (scene instanceof ECSScene ecsScene) {
+			updateSources(ecsScene.getEntityManager());
 		}
 	}
 	
