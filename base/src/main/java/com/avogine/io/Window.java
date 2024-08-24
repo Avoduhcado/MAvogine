@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
+import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.io.config.*;
 import com.avogine.logging.AvoLog;
 import com.avogine.render.loader.texture.IconLoader;
@@ -47,6 +48,8 @@ public class Window {
 	
 	private final Input input;
 	
+	private final List<NuklearUI> guiContexts;
+	
 	/**
 	 * @param title The window title
 	 * @param preferences 
@@ -64,6 +67,8 @@ public class Window {
 		maxBackgroundFps = clamp(preferences.backgroundFps(), 1, maxFps);
 		
 		input = new Input(this);
+		
+		guiContexts = new ArrayList<>();
 	}
 	
 	/**
@@ -157,12 +162,33 @@ public class Window {
 	}
 	
 	/**
-	 * 
+	 * TODO Expose registerable callbacks for things like Nuklear to begin/end input polling around the glfwPollEvents call
 	 */
 	public void pollEvents() {
+		guiContexts.forEach(NuklearUI::inputBegin);
 		GLFW.glfwPollEvents();
+		guiContexts.forEach(NuklearUI::inputEnd);
 		
 		input.update();
+	}
+	
+	/**
+	 * Register a {@link NuklearUI} to this Window so that it's internal input state can be processed around calls to {@link #pollEvents()}.
+	 * @param gui The {@link NuklearUI} to register.
+	 * @return The {@link NuklearUI}.
+	 */
+	public NuklearUI registerGUIContext(NuklearUI gui) {
+		guiContexts.add(gui);
+		return gui;
+	}
+	
+	/**
+	 * Unregister a {@link NuklearUI} from this Window.
+	 * @param gui The {@link NuklearUI} to remove.
+	 * @return {@code true} if the {@link NuklearUI} was removed.
+	 */
+	public boolean removeGUIContext(NuklearUI gui) {
+		return guiContexts.remove(gui);
 	}
 	
 	/**

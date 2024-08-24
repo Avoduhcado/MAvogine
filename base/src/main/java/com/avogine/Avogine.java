@@ -82,6 +82,7 @@ public class Avogine implements Runnable {
 	
 	private void init() {
 		window.init(game.getGLFWConfig(), game.getInputConfig());
+		game.initRender();
 		game.init(window);
 		timer.init();
 	}
@@ -130,6 +131,7 @@ public class Avogine implements Runnable {
 	private void input() {
 		profiler.inputStart();
 
+		window.pollEvents();
 		game.input(window);
 		
 		profiler.inputEnd();

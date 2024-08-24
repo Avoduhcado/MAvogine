@@ -61,6 +61,10 @@ public class NuklearUI {
 	
 	private NuklearMesh mesh;
 	
+	private InputListener keyboardHandler;
+	private InputListener scrollHandler;
+	private InputListener mouseHandler;
+	
 	/**
 	 * 
 	 */
@@ -95,9 +99,11 @@ public class NuklearUI {
 		
 		mesh = new NuklearMesh(window.getWidth(), window.getHeight(), window.getWidth(), window.getHeight());
 		
-		window.getInput().addInputListener(new NuklearKeyboardHandler());
-		window.getInput().addInputListener(new NuklearScrollHandler());
-		window.getInput().addInputListener(new NuklearMouseHandler());
+		keyboardHandler = window.getInput().addInputListener(new NuklearKeyboardHandler());
+		scrollHandler = window.getInput().addInputListener(new NuklearScrollHandler());
+		mouseHandler = window.getInput().addInputListener(new NuklearMouseHandler());
+		
+		window.registerGUIContext(this);
 	}
 	
 	private void initFont() {
@@ -248,7 +254,8 @@ public class NuklearUI {
 		GL11.glViewport(0, 0, displayWidth, displayHeight);
 
 		mesh.render(context, commands);
-		
+
+		nuklearShader.unbind();
 		nk_clear(context);
 		
 		teardownUIState();
@@ -266,7 +273,6 @@ public class NuklearUI {
 	}
 	
 	private void teardownUIState() {
-		nuklearShader.unbind();
 		glDisable(GL_BLEND);
 		glDisable(GL_SCISSOR_TEST);
 		// TODO Re-enable these based on some global render settings
@@ -504,9 +510,9 @@ public class NuklearUI {
 	}
 	
 	/**
-	 * 
+	 * @param window 
 	 */
-	public void cleanup() {
+	public void cleanup(Window window) {
 		nk_free(context);
 		mesh.cleanup();
 		nuklearShader.cleanup();
@@ -517,6 +523,9 @@ public class NuklearUI {
 		Objects.requireNonNull(ALLOCATOR.alloc()).free();
 		Objects.requireNonNull(ALLOCATOR.mfree()).free();
 		
-		// TODO Remove InputListeners, would likely need to store a reference to the Window, otherwise need to rely on saving InputListeners to the corresponding Game and remove them there
+		window.getInput().removeInputListener(keyboardHandler);
+		window.getInput().removeInputListener(scrollHandler);
+		window.getInput().removeInputListener(mouseHandler);
+		window.removeGUIContext(this);
 	}
 }
