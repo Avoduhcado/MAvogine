@@ -9,7 +9,7 @@ import com.avogine.game.state.*;
 import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.game.util.*;
 import com.avogine.io.*;
-import com.avogine.util.experimental.Result;
+import com.avogine.util.Result;
 
 /**
  * A {@link Game} implementation that allows dynamic processing of {@link GameListener}s.
