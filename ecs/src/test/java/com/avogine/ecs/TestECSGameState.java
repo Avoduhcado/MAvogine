@@ -8,10 +8,15 @@ import com.avogine.io.Window;
  */
 public class TestECSGameState extends GameState<TestECSScene, TestECSRender> {
 
+	/**
+	 * 
+	 */
+	public TestECSGameState() {
+		scene = new TestECSScene();
+	}
+	
 	@Override
 	public void init(Window window) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
