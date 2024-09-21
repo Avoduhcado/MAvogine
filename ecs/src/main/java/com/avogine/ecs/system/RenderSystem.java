@@ -45,8 +45,8 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	private void renderScene(ECSScene scene) {
 		basicShader.bind();
 		
-		basicShader.projection.loadMatrix(scene.getProjection());
-		basicShader.view.loadMatrix(scene.getView());
+		basicShader.projection.loadMatrix(scene.getProjectionMatrix());
+		basicShader.view.loadMatrix(scene.getViewMatrix());
 		
 		var modelCache = scene.getEntityManager().getAddon(ModelCache.class)
 				.orElseGet(ModelCache.registerModelCache(scene.getEntityManager()));
