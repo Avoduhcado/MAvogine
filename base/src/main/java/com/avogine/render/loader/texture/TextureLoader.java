@@ -8,7 +8,8 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.render.data.*;
+import com.avogine.render.data.FrameBuffer;
+import com.avogine.render.data.texture.*;
 import com.avogine.util.resource.ResourceFileReader;
 
 /**
@@ -75,15 +76,15 @@ public class TextureLoader {
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
 		
-		return new Texture(textureID);
+		return new Texture2D(textureID);
 	}
 	
 	/**
 	 * Load six image files into memory and bind each to a singular OpenGL texture cube map.
-	 * @param filePaths The images to construct a cubemap from, these should consist of 6 images, and be ordered from {@link GL13#GL_TEXTURE_CUBE_MAP_POSITIVE_X} to {@link GL13#GL_TEXTURE_CUBE_MAP_NEGATIVE_Z}
-	 * @return A {@link CubemapTexture} for the images
+	 * @param filePaths The images to construct a cube map from, these should consist of 6 images, and be ordered from {@link GL13#GL_TEXTURE_CUBE_MAP_POSITIVE_X} to {@link GL13#GL_TEXTURE_CUBE_MAP_NEGATIVE_Z}
+	 * @return A {@link TextureCubeMap} for the images
 	 */
-	protected static CubemapTexture loadCubemap(String... filePaths) {
+	protected static TextureCubeMap loadCubemap(String... filePaths) {
 		if (filePaths.length != 6) {
 			throw new IllegalArgumentException("Can't load a cubemap without 6 textures!");
 		}
@@ -119,7 +120,7 @@ public class TextureLoader {
 		
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		
-		return new CubemapTexture(textureID);
+		return new TextureCubeMap(textureID);
 	}
 	
 	/**
@@ -138,7 +139,7 @@ public class TextureLoader {
 	 * @param fileTime The file extension of the images to load. This should be the same for all images.
 	 * @return
 	 */
-	protected static CubemapTexture loadCubemap(String directoryName, String fileType) {
+	protected static TextureCubeMap loadCubemap(String directoryName, String fileType) {
 		String texturePathPrefix = directoryName + File.separator;
 		return loadCubemap(
 				texturePathPrefix + "right." + fileType,
@@ -171,7 +172,7 @@ public class TextureLoader {
 		
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		
-		return new Texture(textureID);
+		return new Texture2D(textureID);
 	}
 	
 }

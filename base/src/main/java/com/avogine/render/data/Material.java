@@ -2,6 +2,8 @@ package com.avogine.render.data;
 
 import org.joml.Vector4f;
 
+import com.avogine.render.data.texture.Texture;
+
 /**
  *
  */

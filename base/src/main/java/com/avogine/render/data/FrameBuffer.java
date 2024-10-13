@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import com.avogine.experimental.annotation.MemoryManaged;
 import com.avogine.io.Window;
 import com.avogine.logging.AvoLog;
+import com.avogine.render.data.texture.*;
 
 /**
  * @author Dominus
@@ -75,7 +76,7 @@ public class FrameBuffer {
 		// Attach the color texture to this framebuffer
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachment, 0);
 		
-		colorTexture = new Texture(colorAttachment);
+		colorTexture = new Texture2D(colorAttachment);
 		
 		// Create a depth and stencil renderbuffer
 		rbo = glGenRenderbuffers();

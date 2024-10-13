@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import org.lwjgl.BufferUtils;
 
-import com.avogine.render.data.*;
+import com.avogine.render.data.texture.*;
 
 /**
  *
@@ -34,9 +34,9 @@ public class TextureCache {
 	 * @param textureFiles
 	 * @return
 	 */
-	public CubemapTexture getCubemap(String...textureFiles) {
+	public TextureCubeMap getCubemap(String...textureFiles) {
 		// XXX Might be better to standardize cubemap loading and instead reference a singular directory to load generic file names from for each side of the cube
-		return (CubemapTexture) textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().collect(Collectors.joining(" ")), v -> TextureLoader.loadCubemap(textureFiles));
+		return (TextureCubeMap) textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().collect(Collectors.joining(" ")), v -> TextureLoader.loadCubemap(textureFiles));
 	}
 	
 	/**
@@ -44,8 +44,8 @@ public class TextureCache {
 	 * @param fileType
 	 * @return
 	 */
-	public CubemapTexture getCubemap(String directory, String fileType) {
-		return (CubemapTexture) textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory, fileType));
+	public TextureCubeMap getCubemap(String directory, String fileType) {
+		return (TextureCubeMap) textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory, fileType));
 	}
 	
 	/**
