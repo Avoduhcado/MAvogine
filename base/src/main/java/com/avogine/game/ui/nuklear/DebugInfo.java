@@ -5,7 +5,7 @@ import static org.lwjgl.nuklear.Nuklear.*;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.game.HotGame;
+import com.avogine.game.scene.Scene;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
 
@@ -14,18 +14,23 @@ import com.avogine.io.Window;
  */
 public class DebugInfo implements UIElement, Renderable {
 
-	private NuklearUI gui;
+	private final NkContext context;
+	
+	/**
+	 * @param context
+	 */
+	public DebugInfo(NkContext context) {
+		this.context = context;
+	}
 	
 	@Override
-	public void onRegister(HotGame game) {
-		gui = game.getGUI();
+	public void onRegister(RegisterableGame game) {
+		// Nothing to do
 	}
 
 	@Override
-	public void onRender(Window window, SceneState sceneState) {
-		if (gui != null) {
-			prepare(gui.getContext(), window);
-		}
+	public void onRender(Window window, Scene scene) {
+		prepare(context, window);
 	}
 
 	@Override

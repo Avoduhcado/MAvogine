@@ -1,5 +1,7 @@
 package com.avogine.game;
 
+import org.lwjgl.opengl.GL;
+
 import com.avogine.io.Window;
 import com.avogine.io.config.*;
 
@@ -50,6 +52,16 @@ public interface Game {
 	 */
 	public default int getTargetUps() {
 		return 30;
+	}
+	
+	/**
+	 * Initialize any render API specific configurations prior to launching the game loop.
+	 * <p>
+	 * Presently, this just calls {@link GL#createCapabilities()} to set up an OpenGL capable environment. Exercise caution when 
+	 * overriding this method.
+	 */
+	public default void initRender() {
+		GL.createCapabilities();
 	}
 	
 	/**

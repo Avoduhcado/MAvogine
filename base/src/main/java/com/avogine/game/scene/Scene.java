@@ -3,39 +3,51 @@ package com.avogine.game.scene;
 import org.joml.Matrix4f;
 
 /**
- * TODO Implement a custom Projection type to contain the projection matrix along with FOV, near/far planes.
- * TODO Implement some sort of Camera type to encapsulate the view matrix.
+ * 
  */
 public abstract class Scene {
 
-	protected final Matrix4f projection;
-	
-	protected final Matrix4f view;
+	protected final Projection projection;
+	protected final Camera camera;
 	
 	/**
 	 * 
 	 */
-	protected Scene() {
-		this(new Matrix4f(), new Matrix4f());
+	protected Scene(int width, int height) {
+		this(new Projection(width, height), new Camera());
 	}
 	
-	protected Scene(Matrix4f projection, Matrix4f view) {
+	protected Scene(Projection projection, Camera camera) {
 		this.projection = projection;
-		this.view = view;
+		this.camera = camera;
+	}
+	
+	/**
+	 * @return the projection
+	 */
+	public Projection getProjection() {
+		return projection;
 	}
 	
 	/**
 	 * @return the projection matrix
 	 */
-	public Matrix4f getProjection() {
-		return projection;
+	public Matrix4f getProjectionMatrix() {
+		return projection.getProjectionMatrix();
+	}
+	
+	/**
+	 * @return the camera
+	 */
+	public Camera getCamera() {
+		return camera;
 	}
 	
 	/**
 	 * @return the view matrix
 	 */
-	public Matrix4f getView() {
-		return view;
+	public Matrix4f getViewMatrix() {
+		return camera.getView();
 	}
 
 }

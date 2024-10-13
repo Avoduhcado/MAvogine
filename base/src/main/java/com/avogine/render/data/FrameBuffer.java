@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import com.avogine.experimental.annotation.MemoryManaged;
 import com.avogine.io.Window;
 import com.avogine.logging.AvoLog;
+import com.avogine.render.data.texture.*;
 
 /**
  * @author Dominus
@@ -24,7 +25,7 @@ public class FrameBuffer {
 	
 	protected Window window;
 	
-	protected TextureAtlas colorTexture;
+	protected Texture colorTexture;
 	protected int colorAttachment;
 	protected int rbo;
 	
@@ -75,7 +76,7 @@ public class FrameBuffer {
 		// Attach the color texture to this framebuffer
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachment, 0);
 		
-		colorTexture = new TextureAtlas(colorAttachment, width.get(), height.get());
+		colorTexture = new Texture2D(colorAttachment);
 		
 		// Create a depth and stencil renderbuffer
 		rbo = glGenRenderbuffers();
@@ -123,7 +124,7 @@ public class FrameBuffer {
 	/**
 	 * @return The texture containing the color buffer 
 	 */
-	public TextureAtlas getColorTexture() {
+	public Texture getColorTexture() {
 		return colorTexture;
 	}
 	

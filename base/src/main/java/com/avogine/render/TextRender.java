@@ -32,6 +32,9 @@ public class TextRender {
 	
 	private FontDetails defaultFont;
 
+	/**
+	 * @param projection
+	 */
 	public void init(Matrix4f projection) {
 		fontShader = new FontShader("textVertex.glsl", "textFragment.glsl");
 		fontShader.bind();
@@ -60,6 +63,7 @@ public class TextRender {
 	 * @param x 
 	 * @param y 
 	 * @param text
+	 * @param font 
 	 */
 	public void renderText(float x, float y, String text, FontDetails font) {
 		fontShader.bind();

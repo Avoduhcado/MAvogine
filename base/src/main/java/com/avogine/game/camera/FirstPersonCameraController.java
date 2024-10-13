@@ -10,7 +10,7 @@ import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
 
 /**
- *
+ * TODO Delete or update to use scene.Camera
  */
 public class FirstPersonCameraController implements KeyListener, MouseMotionListener, MouseButtonListener {
 

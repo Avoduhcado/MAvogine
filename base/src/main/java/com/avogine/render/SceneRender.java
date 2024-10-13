@@ -1,6 +1,6 @@
 package com.avogine.render;
 
-import org.lwjgl.opengl.GL;
+import static org.lwjgl.opengl.GL11C.glClearColor;
 
 import com.avogine.game.scene.Scene;
 import com.avogine.io.Window;
@@ -12,24 +12,23 @@ import com.avogine.io.Window;
 public interface SceneRender<T extends Scene> {
 
 	/**
-	 * Configure settings necessary to perform rendering.
-	 * 
-	 * Take caution that if you override this method you will either need to configure these OpenGL settings yourself
-	 * or will at least need to call super.init().
+	 * Initialize render specific state.
+	 * @param window 
 	 */
-	public default void init() {
-		GL.createCapabilities();
+	public default void init(Window window) {
+		// Set a nice Avocado green default color
+		glClearColor(177f / 255f, 193f / 255f, 71f / 255f, 1.0f);
 	}
 	
 	/**
 	 * @param window
 	 * @param scene
 	 */
-	public abstract void render(Window window, T scene);
+	public void render(Window window, T scene);
 	
 	/**
 	 * 
 	 */
-	public abstract void cleanup();
+	public void cleanup();
 	
 }

@@ -2,18 +2,18 @@ package com.avogine.render.loader.parshapes;
 
 import java.nio.*;
 
+import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.par.*;
 
-import com.avogine.render.data.InstancedMesh;
-import com.avogine.render.data.mesh.Mesh;
+import com.avogine.render.data.*;
 
 /**
  * TODO Implement a scaleAroundCenter method, which will likely require the ParShapesBuilder instance to store current transform values to pass along for context.
  */
 public class ParShapesBuilder {
 
-	private ParShapesMesh parMesh;
+	protected ParShapesMesh parMesh;
 	
 	/**
 	 * {@link ParShapes#par_shapes_create_plane(int, int)}
@@ -136,30 +136,56 @@ public class ParShapesBuilder {
 	 * @return a new {@code Mesh}
 	 */
 	public Mesh build() {
-		FloatBuffer positions = parMesh.points(parMesh.npoints() * 3);
-		FloatBuffer normals = !parMesh.isNull(ParShapesMesh.NORMALS) ? parMesh.normals(parMesh.npoints() * 3) : null;
-		FloatBuffer textureCoordinates = !parMesh.isNull(ParShapesMesh.TCOORDS) ? parMesh.tcoords(parMesh.npoints() * 2) : null;
-
-		FloatBuffer vertexBuffer = MemoryUtil.memCallocFloat(parMesh.npoints() * 8);
-		for (int i = 0; i < parMesh.npoints(); i++) {
-			vertexBuffer.put(i * 8, positions, i * 3, 3);
-			if (normals != null) {
-				vertexBuffer.put((i * 8) + 3, normals, i * 3, 3);
+		float[] vertices = new float[parMesh.npoints() * 3];
+		float[] normals = new float[parMesh.npoints() * 3];
+		float[] tangents = new float[parMesh.npoints() * 3];
+		float[] bitangents = new float[parMesh.npoints() * 3];
+		float[] textureCoordinates = new float[parMesh.npoints() * 2];
+		parMesh.points(parMesh.npoints() * 3).get(vertices);
+		if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
+			parMesh.normals(parMesh.npoints() * 3).get(normals);
+		}
+		if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
+			parMesh.tcoords(parMesh.npoints() * 2).get(textureCoordinates);
+		}
+		
+		int[] indices = new int[parMesh.ntriangles() * 3];
+		parMesh.triangles(parMesh.ntriangles() * 3).get(indices);
+		
+		Vector3f aabbMin = new Vector3f();
+		Vector3f aabbMax = new Vector3f();
+		for (int i = 0; i < vertices.length; i += 3) {
+			float x = vertices[i];
+			float y = vertices[i + 1];
+			float z = vertices[i + 2];
+			if (x < aabbMin.x) {
+				aabbMin.x = x;
+			} else if (x > aabbMax.x) {
+				aabbMax.x = x;
 			}
-			if (textureCoordinates != null) {
-				vertexBuffer.put((i * 8) + 6, textureCoordinates, i * 2, 2);
+			if (y < aabbMin.y) {
+				aabbMin.y = y;
+			} else if (y > aabbMax.y) {
+				aabbMax.y = y;
+			}
+			if (z < aabbMin.z) {
+				aabbMin.z = z;
+			} else if (z > aabbMax.z) {
+				aabbMax.z = z;
 			}
 		}
 
-		IntBuffer indexBuffer = parMesh.triangles(parMesh.ntriangles() * 3);
-
-		var mesh = new Mesh(vertexBuffer, indexBuffer, 0);
+		var mesh = new Mesh(vertices, normals, tangents, bitangents, textureCoordinates, indices, 0, aabbMin, aabbMax);
 
 		parMesh.free();
-		MemoryUtil.memFree(vertexBuffer);
 		return mesh;
 	}
 	
+	/**
+	 * @param <T>
+	 * @param builder
+	 * @return
+	 */
 	public <T> T build(BuildFunction<T> builder) {
 		return builder.build(parMesh);
 	}

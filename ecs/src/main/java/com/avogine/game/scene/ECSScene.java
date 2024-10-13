@@ -1,21 +1,19 @@
 package com.avogine.game.scene;
 
-import org.joml.Matrix4f;
-
 import com.avogine.ecs.EntityManager;
 
 /**
  *
  */
-public abstract class ECSScene extends SwappableScene {
+public abstract class ECSScene extends Scene {
 
 	protected final EntityManager entityManager;
 	
 	protected ECSScene() {
-		this(new Matrix4f(), new Matrix4f());
+		this(new Projection(640, 480), new Camera());
 	}
 	
-	protected ECSScene(Matrix4f projection, Matrix4f view) {
+	protected ECSScene(Projection projection, Camera view) {
 		super(projection, view);
 		entityManager = new EntityManager();
 	}

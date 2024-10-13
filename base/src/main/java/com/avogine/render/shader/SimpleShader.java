@@ -17,12 +17,15 @@ public class SimpleShader extends ShaderProgram {
 	public final UniformMat4 viewMatrix = new UniformMat4();
 	public final UniformMat4 modelMatrix = new UniformMat4();
 	
-	public final UniformMat3 normalMatrix = new UniformMat3();
+	public final UniformMat4 normalMatrix = new UniformMat4();
+	public final UniformVec3 viewPosition = new UniformVec3();
 
 	public final UniformVec3 lightPosition = new UniformVec3();
 	public final UniformVec3 lightColor = new UniformVec3();
 	
+	public final UniformBoolean hasTexture = new UniformBoolean();
 	public final UniformVec3 objectColor = new UniformVec3();
+	public final UniformSampler objectTexture = new UniformSampler();
 
 	/**
 	 * @param vertexShaderFile
@@ -30,7 +33,14 @@ public class SimpleShader extends ShaderProgram {
 	 */
 	public SimpleShader(String vertexShaderFile, String fragmentShaderFile) {
 		super(vertexShaderFile, fragmentShaderFile);
-		storeAllUniformLocations(projectionMatrix, viewMatrix, modelMatrix, normalMatrix, lightPosition, lightColor, objectColor);
+		storeAllUniformLocations(projectionMatrix, viewMatrix, modelMatrix, normalMatrix, viewPosition, lightPosition, lightColor, hasTexture, objectColor, objectTexture);
+		linkTextureUnits();
+	}
+	
+	private void linkTextureUnits() {
+		bind();
+		objectTexture.loadTexUnit(0);
+		unbind();
 	}
 
 }
