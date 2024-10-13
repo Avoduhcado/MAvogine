@@ -3,7 +3,7 @@ package com.avogine.ecs.components;
 import java.util.Arrays;
 
 import com.avogine.ecs.EntityComponent;
-import com.avogine.render.data.mesh.Mesh;
+import com.avogine.render.data.Mesh;
 
 /**
  * @param meshIndices an array of {@link Mesh} IDs used in rendering this component.

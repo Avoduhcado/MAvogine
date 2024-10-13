@@ -4,8 +4,9 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.avogine.ecs.*;
-import com.avogine.render.data.mesh.Model;
+import com.avogine.render.data.Model;
 import com.avogine.render.loader.assimp.StaticModelLoader;
+import com.avogine.render.loader.texture.TextureCache;
 
 /**
  * TODO Should this be a singleton? Could be possible to support multiple model caches, but I'm not sure why.
@@ -13,12 +14,14 @@ import com.avogine.render.loader.assimp.StaticModelLoader;
 public class ModelCache implements EntitySystemAddon {
 
 	private final Map<String, Model> modelMap;
+	private final TextureCache textureCache;
 	
 	/**
 	 * 
 	 */
 	public ModelCache() {
 		modelMap = new HashMap<>();
+		textureCache = new TextureCache();
 	}
 	
 	/**
@@ -38,7 +41,7 @@ public class ModelCache implements EntitySystemAddon {
 	 * @return
 	 */
 	public Model getModel(String modelFile, String texturePath) {
-		return modelMap.computeIfAbsent(modelFile, v -> StaticModelLoader.load(modelFile, texturePath));
+		return modelMap.computeIfAbsent(modelFile, v -> StaticModelLoader.loadModel(modelFile, texturePath, textureCache));
 	}
 	
 	/**

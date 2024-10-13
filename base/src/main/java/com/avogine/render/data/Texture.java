@@ -5,25 +5,36 @@ import org.lwjgl.opengl.GL11;
 /**
  *
  */
-public interface Texture {
+public class Texture {
+	
+	protected int id;
+	
+	/**
+	 * @param id
+	 */
+	public Texture(int id) {
+		this.id = id;
+	}
 
 	/**
 	 * @return
 	 */
-	public int id();
-	
-	/**
-	 * 
-	 */
-	public default void bind() {
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, id());
+	public int getId() {
+		return id;
 	}
 	
 	/**
 	 * 
 	 */
-	public default void cleanup() {
-		GL11.glDeleteTextures(id());
+	public void bind() {
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, id);
+	}
+	
+	/**
+	 * 
+	 */
+	public void cleanup() {
+		GL11.glDeleteTextures(id);
 	}
 	
 }

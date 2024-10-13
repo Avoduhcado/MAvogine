@@ -63,6 +63,7 @@ public class TextRender {
 	 * @param x 
 	 * @param y 
 	 * @param text
+	 * @param font 
 	 */
 	public void renderText(float x, float y, String text, FontDetails font) {
 		fontShader.bind();

@@ -15,6 +15,7 @@ import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.io.config.*;
 import com.avogine.logging.AvoLog;
 import com.avogine.render.loader.texture.IconLoader;
+import com.avogine.util.resource.ResourceConstants;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.
@@ -135,7 +136,7 @@ public class Window {
 			GLFW.glfwSetWindowOpacity(id, 1.0f);
 		}
 		
-		IconLoader.loadAndSetIcons(id, "icon");
+		IconLoader.loadAndSetIcons(id, ResourceConstants.TEXTURE_PATH + "icon");
 		
 		// TODO Customizable by WindowConfig?
 		if (GLFW.glfwRawMouseMotionSupported()) {

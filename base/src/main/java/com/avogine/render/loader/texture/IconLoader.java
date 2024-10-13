@@ -9,7 +9,7 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.util.resource.*;
+import com.avogine.util.resource.ResourceFileReader;
 
 /**
  * TODO Move this into a more suitable module? It not only deals with loading, which is necessary to have {@code STB}, but also handles setting the actual icons to avoid memory cleanup issues.
@@ -31,18 +31,17 @@ public class IconLoader {
 	
 	/**
 	 * 
-	 * @param filename
+	 * @param filePath 
 	 * @param stack
 	 * @return
 	 */
-	public static GLFWImage loadIcon(String filename, MemoryStack stack) {
+	public static GLFWImage loadIcon(String filePath, MemoryStack stack) {
 		GLFWImage icon = null;
 		
 		IntBuffer width = stack.mallocInt(1);
 		IntBuffer height = stack.mallocInt(1);
 		IntBuffer nrChannels = stack.mallocInt(1);
 
-		String filePath = ResourceConstants.TEXTURE_PATH + filename;
 		ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 1024);
 		ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 4);
 		if (imageData != null) {
@@ -62,7 +61,7 @@ public class IconLoader {
 	 */
 	public static void loadAndSetIcons(long window, String directoryName) {
 		//Set<Path> files = ResourceFileReader.listResourcePaths(ResourceConstants.TEXTURE_PATH + directoryName);
-		Set<String> files = ResourceFileReader.listFileNames(ResourceConstants.TEXTURE_PATH + directoryName);
+		Set<String> files = ResourceFileReader.listFileNames(directoryName);
 		if (files == null || files.isEmpty()) {
 			return;
 		}

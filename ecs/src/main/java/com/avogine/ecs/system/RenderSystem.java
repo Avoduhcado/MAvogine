@@ -1,5 +1,9 @@
 package com.avogine.ecs.system;
 
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+
 import java.util.UUID;
 
 import org.joml.Matrix4f;
@@ -59,14 +63,27 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	}
 	
 	private void renderEntity(Renderable entity, ModelCache modelCache) {
-		model.identity().translationRotateScale(
-				entity.transform.position().x, entity.transform.position().y, entity.transform.position().z,
-				entity.transform.orientation().x, entity.transform.orientation().y, entity.transform.orientation().z, entity.transform.orientation().w,
-				entity.transform.scale().x, entity.transform.scale().y, entity.transform.scale().z);
-		basicShader.model.loadMatrix(model);
-
 		var realModel = modelCache.getModel(entity.modelComponent.model(), "");
-		realModel.render();
+		realModel.getMaterials().forEach(material -> {
+			glActiveTexture(GL_TEXTURE0);
+			material.getDiffuseTexture().bind();
+			
+			realModel.getMeshes().stream()
+			.filter(mesh -> mesh.getMaterialIndex() == realModel.getMaterials().indexOf(material))
+			.forEach(mesh -> {
+				glBindVertexArray(mesh.getVaoId());
+
+				model.identity().translationRotateScale(
+						entity.transform.position().x, entity.transform.position().y, entity.transform.position().z,
+						entity.transform.orientation().x, entity.transform.orientation().y, entity.transform.orientation().z, entity.transform.orientation().w,
+						entity.transform.scale().x, entity.transform.scale().y, entity.transform.scale().z);
+				basicShader.model.loadMatrix(model);
+				
+				glDrawElements(GL_TRIANGLES, mesh.getNumVertices(), GL_UNSIGNED_INT, 0);
+			});
+		});
+		
+		glBindVertexArray(0);
 	}
 	
 	@Override

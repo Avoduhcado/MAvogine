@@ -7,14 +7,14 @@ import org.joml.*;
  */
 public class Camera {
 
-	private final Vector3f direction;
-	private final Vector3f position;
-	private final Vector2f rotation;
-	private final Vector3f right;
-	private final Vector3f up;
+	protected final Vector3f direction;
+	protected final Vector3f position;
+	protected final Vector2f rotation;
+	protected final Vector3f right;
+	protected final Vector3f up;
 	
-	private final Matrix4f viewMatrix;
-	private final Matrix4f invertedViewMatrix;
+	protected final Matrix4f viewMatrix;
+	protected final Matrix4f invertedViewMatrix;
 	
 	/**
 	 * 
@@ -100,7 +100,7 @@ public class Camera {
 		recalculate();
 	}
 
-	private void recalculate() {
+	protected void recalculate() {
 		viewMatrix.identity()
 		.rotateX(rotation.x)
 		.rotateY(rotation.y)

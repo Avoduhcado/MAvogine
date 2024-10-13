@@ -1,7 +1,10 @@
 package com.avogine.render.loader.texture;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import org.lwjgl.BufferUtils;
 
 import com.avogine.render.data.*;
 
@@ -10,34 +13,61 @@ import com.avogine.render.data.*;
  */
 public class TextureCache {
 
-	private Map<String, Texture> textureMap = new HashMap<>();
+	private final Map<String, Texture> textureMap;
 	
-	private static TextureCache cache;
-	
-	public static TextureCache getInstance() {
-		if (cache == null) {
-			cache = new TextureCache();
-		}
-		return cache;
+	/**
+	 * 
+	 */
+	public TextureCache() {
+		textureMap = new HashMap<>();
 	}
 
+	/**
+	 * @param textureFile
+	 * @return
+	 */
 	public Texture getTexture(String textureFile) {
 		return textureMap.computeIfAbsent(textureFile, v -> TextureLoader.loadTexture(textureFile));
 	}
 	
-	public TextureAtlas getTextureAtlas(String textureFile, int columns, int rows) {
-		return (TextureAtlas) textureMap.computeIfAbsent(textureFile, v -> TextureLoader.loadTextureAtlas(textureFile, columns, rows));
-	}
-	
-	public Cubemap getCubemap(String...textureFiles) {
+	/**
+	 * @param textureFiles
+	 * @return
+	 */
+	public CubemapTexture getCubemap(String...textureFiles) {
 		// XXX Might be better to standardize cubemap loading and instead reference a singular directory to load generic file names from for each side of the cube
-		return (Cubemap) textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().collect(Collectors.joining(" ")), v -> TextureLoader.loadCubemap(textureFiles));
+		return (CubemapTexture) textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().collect(Collectors.joining(" ")), v -> TextureLoader.loadCubemap(textureFiles));
 	}
 	
-	public Cubemap getCubemap(String directory, String fileType) {
-		return (Cubemap) textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory, fileType));
+	/**
+	 * @param directory
+	 * @param fileType
+	 * @return
+	 */
+	public CubemapTexture getCubemap(String directory, String fileType) {
+		return (CubemapTexture) textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory, fileType));
+	}
+	
+	/**
+	 * @return
+	 */
+	public Texture getDefaultTexture() {
+		return textureMap.computeIfAbsent("DEFAULT__", v -> {
+			ByteBuffer pixelBuffer = BufferUtils.createByteBuffer(64 * 64 * 4);
+			while (pixelBuffer.hasRemaining()) {
+				pixelBuffer.put((byte) 255);
+				pixelBuffer.put((byte) 0);
+				pixelBuffer.put((byte) 0);
+				pixelBuffer.put((byte) 255);
+			}
+			pixelBuffer.flip();
+			return TextureLoader.createEmptyTexture(64, 64, pixelBuffer);
+		});
 	}
 
+	/**
+	 * 
+	 */
 	public void cleanup() {
 		textureMap.values().forEach(Texture::cleanup);
 		textureMap.clear();

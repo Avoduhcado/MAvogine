@@ -9,17 +9,13 @@ import org.lwjgl.system.MemoryStack;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.data.*;
-import com.avogine.util.resource.*;
+import com.avogine.util.resource.ResourceFileReader;
 
 /**
- * TODO Add some default textures if anything fails to load
- * <p>
- * Utility class for loading image files into usable OpenGL textures.
+ * Utility class for loading image files into usable OpenGL {@link Texture}s.
  * <p>
  * This class has protected access methods and as such should be used through the {@link TextureCache} to avoid
  * loading duplicate assets.
- * @author Dominus
- *
  */
 public class TextureLoader {
 
@@ -29,70 +25,10 @@ public class TextureLoader {
 	
 	/**
 	 * Load a single image file into memory and bind it to an OpenGL texture ID.
-	 * @param filename The file to be loaded.
+	 * @param filePath The file to be loaded.
 	 * @return A {@link TextureAtlas} for the image
 	 */
-	protected static TextureAtlas loadTexture(String filename) {
-		int textureID = GL11.glGenTextures();
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
-		
-		int width;
-		int height;
-		int channels;
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			IntBuffer widthBuffer = stack.mallocInt(1);
-			IntBuffer heightBuffer = stack.mallocInt(1);
-			IntBuffer nrChannels = stack.mallocInt(1);
-			
-//			STBImage.stbi_set_flip_vertically_on_load(true);
-			String filePath = ResourceConstants.TEXTURE_PATH + filename;
-			ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
-			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
-			if (imageData != null) {
-				width = widthBuffer.get();
-				height = heightBuffer.get();
-				channels = nrChannels.get();
-				int format = 0;
-				if (channels == 1) {
-					format = GL11.GL_RED;
-				} else if (channels == 3) {
-					format = GL11.GL_RGB;
-				} else if (channels == 4) {
-					format = GL11.GL_RGBA;
-				}
-//				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, imageData);
-				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, format, width, height, 0, format, GL11.GL_UNSIGNED_BYTE, imageData);
-				// TODO Add check to some sort of Options object for mipmaps/anisotropic filtering
-				GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
-				// TODO Add customizable options for these when loading textures
-				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);
-				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
-				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
-				if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
-					// XXX: Extract some global Anisotropic filtering value
-					float amount = Math.min(4f, GL11.glGetFloat(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT));
-					GL11.glTexParameterf(GL11.GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
-				}
-				STBImage.stbi_image_free(imageData);
-			} else {
-				AvoLog.log().error("Texture failed to load at path: {}", filePath);
-				return null;
-			}
-		} finally {
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		}
-		
-		return new TextureAtlas(textureID, width, height);
-	}
-	
-	/**
-	 * XXX TODO Refactor this garbage
-	 * This entire method should probably be wrapped in the try/catch and have some sort of error handling for when the texture fails to load.
-	 * @param filename
-	 * @return
-	 */
-	public static int loadTexturePro(String filename) {
+	protected static Texture loadTexture(String filePath) {
 		int textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
 		
@@ -101,10 +37,9 @@ public class TextureLoader {
 			IntBuffer heightBuffer = stack.mallocInt(1);
 			IntBuffer nrChannels = stack.mallocInt(1);
 			
-			String filePath = ResourceConstants.TEXTURE_PATH + filename;
+//			STBImage.stbi_set_flip_vertically_on_load(true);
 			ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
 			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
-//			STBImage.stbi_set_flip_vertically_on_load(true);
 			if (imageData != null) {
 				int width = widthBuffer.get();
 				int height = heightBuffer.get();
@@ -134,72 +69,22 @@ public class TextureLoader {
 				STBImage.stbi_image_free(imageData);
 			} else {
 				AvoLog.log().error("Texture failed to load at path: {}", filePath);
-				return -1;
-			}
-		} finally {
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		}
-		
-		return textureID;
-	}
-	
-	/**
-	 * 
-	 * @param filename
-	 * @param columns
-	 * @param rows
-	 * @return
-	 */
-	protected static TextureAtlas loadTextureAtlas(String filename, int columns, int rows) {
-		int textureID = GL11.glGenTextures();
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
-		
-		int width;
-		int height;
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			IntBuffer widthBuffer = stack.mallocInt(1);
-			IntBuffer heightBuffer = stack.mallocInt(1);
-			IntBuffer nrChannels = stack.mallocInt(1);
-			
-			String filePath = ResourceConstants.TEXTURE_PATH + filename;
-			ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
-			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, nrChannels, 0);
-//			STBImage.stbi_set_flip_vertically_on_load(true);
-			if (imageData != null) {
-				width = widthBuffer.get();
-				height = heightBuffer.get();
-				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, imageData);
-				// TODO Add check to some sort of Options object for mipmaps/anisotropic filtering
-				GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
-				// TODO Add customizable options for these when loading textures
-				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
-				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
-				if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
-					// XXX: Extract some global Anisotropic filtering value
-					float amount = Math.min(4f, GL11.glGetFloat(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT));
-					GL11.glTexParameterf(GL11.GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
-				}
-			} else {
-				AvoLog.log().error("Texture failed to load at path: {}", filePath);
 				return null;
 			}
-			STBImage.stbi_image_free(imageData);
 		} finally {
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
 		
-		return new TextureAtlas(textureID, width, height, columns, rows);
+		return new Texture(textureID);
 	}
 	
 	/**
 	 * Load six image files into memory and bind each to a singular OpenGL texture cube map.
-	 * @param filenames The images to construct a cubemap from, these should consist of 6 images, and be ordered from {@link GL13#GL_TEXTURE_CUBE_MAP_POSITIVE_X} to {@link GL13#GL_TEXTURE_CUBE_MAP_NEGATIVE_Z}
-	 * @return A {@link Cubemap} for the images
+	 * @param filePaths The images to construct a cubemap from, these should consist of 6 images, and be ordered from {@link GL13#GL_TEXTURE_CUBE_MAP_POSITIVE_X} to {@link GL13#GL_TEXTURE_CUBE_MAP_NEGATIVE_Z}
+	 * @return A {@link CubemapTexture} for the images
 	 */
-	protected static Cubemap loadCubemap(String... filenames) {
-		if (filenames.length != 6) {
+	protected static CubemapTexture loadCubemap(String... filePaths) {
+		if (filePaths.length != 6) {
 			throw new IllegalArgumentException("Can't load a cubemap without 6 textures!");
 		}
 		
@@ -210,12 +95,12 @@ public class TextureLoader {
 		IntBuffer height;
 		IntBuffer nrChannels;
 		// Load an image for each side of the cube, reallocating the IntBuffers each time
-		for (int i = 0; i < filenames.length; i++) {
+		for (int i = 0; i < filePaths.length; i++) {
 			try (MemoryStack stack = MemoryStack.stackPush()) {
 				width = stack.mallocInt(1);
 				height = stack.mallocInt(1);
 				nrChannels = stack.mallocInt(1);
-				String filePath = ResourceConstants.TEXTURE_PATH + filenames[i];
+				String filePath = filePaths[i];
 				ByteBuffer fileData = ResourceFileReader.ioResourceToByteBuffer(filePath, 8 * 1024);
 				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 0);
 				if (imageData != null) {
@@ -234,7 +119,7 @@ public class TextureLoader {
 		
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		
-		return new Cubemap(textureID);
+		return new CubemapTexture(textureID);
 	}
 	
 	/**
@@ -249,10 +134,11 @@ public class TextureLoader {
 	 * <li>front
 	 * <li>back
 	 * </ul>
-	 * @param directoryName The directory name contained in {@link ResourceConstants#TEXTURE_PATH}
+	 * @param directoryName The directory name
+	 * @param fileTime The file extension of the images to load. This should be the same for all images.
 	 * @return
 	 */
-	protected static Cubemap loadCubemap(String directoryName, String fileType) {
+	protected static CubemapTexture loadCubemap(String directoryName, String fileType) {
 		String texturePathPrefix = directoryName + File.separator;
 		return loadCubemap(
 				texturePathPrefix + "right." + fileType,
@@ -271,20 +157,21 @@ public class TextureLoader {
 	 * containing object creates this {@code Texture}.
 	 * @param width the width of the Texture
 	 * @param height the height of the Texture
-	 * @return a new {@code Texture} with a specified size that does not contain any actual data.
+	 * @param pixels the buffer containing raw pixel data, or null for an empty texture
+	 * @return a new {@code Texture} with a specified size that contains data specified in pixels.
 	 */
-	public static TextureAtlas createEmptyTexture(int width, int height) {
+	public static Texture createEmptyTexture(int width, int height, ByteBuffer pixels) {
 		int textureID = GL11.glGenTextures();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
 		
-		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, pixels);
 		
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
 		
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		
-		return new TextureAtlas(textureID, width, height);
+		return new Texture(textureID);
 	}
 	
 }
