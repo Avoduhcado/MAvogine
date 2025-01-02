@@ -18,7 +18,7 @@ out vec4 fragColor;
 void main() {
 	
 	// Ambient
-	vec3 ambient = 0.3f * lightColor;
+	vec3 ambient = 0.8f * lightColor;
 	
 	// Diffuse
 	vec3 normal = normalize(vertNormal);
