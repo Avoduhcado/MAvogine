@@ -47,7 +47,7 @@ public class FontLoader {
 	 * @return A {@link FontDetails} containing the loaded font.
 	 */
 	public static FontDetails loadFont(String fontFile, int height) {
-		ByteBuffer ttfBuffer = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONT_PATH + fontFile, 1024);
+		ByteBuffer ttfBuffer = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONTS.with(fontFile), 1024);
 		
 		final int BITMAP_WIDTH = 1024;
 		final int BITMAP_HEIGHT = 1024;
@@ -100,7 +100,7 @@ public class FontLoader {
 	 * @param fontName The font to render
 	 */
 	public static void debugPrintFontBitmap(String fontName) {
-		ByteBuffer ttfBuffer = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONT_PATH + fontName, 1024);
+		ByteBuffer ttfBuffer = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONTS.with(fontName), 1024);
 		
 		STBTTFontinfo info = STBTTFontinfo.create();
 		if (!STBTruetype.stbtt_InitFont(info, ttfBuffer)) {

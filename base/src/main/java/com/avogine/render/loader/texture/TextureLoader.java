@@ -1,6 +1,5 @@
 package com.avogine.render.loader.texture;
 
-import java.io.File;
 import java.nio.*;
 
 import org.lwjgl.opengl.*;
@@ -140,14 +139,14 @@ public class TextureLoader {
 	 * @return
 	 */
 	protected static TextureCubeMap loadCubemap(String directoryName, String fileType) {
-		String texturePathPrefix = directoryName + File.separator;
+		String texturePathPrefix = directoryName;
 		return loadCubemap(
-				texturePathPrefix + "right." + fileType,
-				texturePathPrefix + "left." + fileType,
-				texturePathPrefix + "top." + fileType,
-				texturePathPrefix + "bottom." + fileType,
-				texturePathPrefix + "front." + fileType,
-				texturePathPrefix + "back." + fileType);
+				texturePathPrefix + "/right." + fileType,
+				texturePathPrefix + "/left." + fileType,
+				texturePathPrefix + "/top." + fileType,
+				texturePathPrefix + "/bottom." + fileType,
+				texturePathPrefix + "/front." + fileType,
+				texturePathPrefix + "/back." + fileType);
 	}
 	
 	/**

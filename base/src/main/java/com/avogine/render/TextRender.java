@@ -60,6 +60,7 @@ public class TextRender {
 	}
 	
 	/**
+	 * TODO This can crash the JVM, probably doing way too many unnecessary allocations
 	 * @param x 
 	 * @param y 
 	 * @param text

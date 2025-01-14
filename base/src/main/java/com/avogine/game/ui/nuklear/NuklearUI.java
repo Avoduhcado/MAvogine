@@ -69,7 +69,7 @@ public class NuklearUI {
 	 * 
 	 */
 	public NuklearUI() {
-		ttf = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONT_PATH + "Roboto-Regular.ttf", 512 * 1024);
+		ttf = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 512 * 1024);
 		projectionMatrix = new Matrix4f();
 		
 		// Create a Nuklear context, it is used everywhere.

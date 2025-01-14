@@ -2,7 +2,6 @@ package com.avogine.render.loader.assimp;
 
 import static org.lwjgl.system.MemoryUtil.*;
 
-import java.io.File;
 import java.lang.Math;
 import java.nio.*;
 import java.util.*;
@@ -87,7 +86,7 @@ public class StaticModelLoader {
 			throw new IllegalStateException(Assimp.aiGetErrorString());
 		}
 		
-		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf(File.separator) + 1);
+		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
 		
 		int numMaterials = aiScene.mNumMaterials();
 		List<Material> materials = new ArrayList<>();

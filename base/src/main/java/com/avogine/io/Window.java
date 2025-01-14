@@ -136,7 +136,7 @@ public class Window {
 			GLFW.glfwSetWindowOpacity(id, 1.0f);
 		}
 		
-		IconLoader.loadAndSetIcons(id, ResourceConstants.TEXTURE_PATH + "icon");
+		IconLoader.loadAndSetIcons(id, ResourceConstants.TEXTURES.with("icon"));
 		
 		// TODO Customizable by WindowConfig?
 		if (GLFW.glfwRawMouseMotionSupported()) {

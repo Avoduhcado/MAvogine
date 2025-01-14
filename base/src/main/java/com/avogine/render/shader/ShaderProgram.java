@@ -112,7 +112,7 @@ public abstract class ShaderProgram {
 	 * @throws Exception If there are any errors reading, creating, or compiling the shader
 	 */
 	protected int createShader(String shaderFile, int shaderType) {
-		CharSequence shaderCode = ResourceFileReader.readTextFile(ResourceConstants.SHADER_PATH + shaderFile);
+		CharSequence shaderCode = ResourceFileReader.readTextFile(ResourceConstants.SHADERS.with(shaderFile));
 		
 		int shaderId = glCreateShader(shaderType);
 		if (shaderId == 0) {
@@ -123,7 +123,8 @@ public abstract class ShaderProgram {
 		glShaderSource(shaderId, shaderCode);
 		glCompileShader(shaderId);
 		if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {
-			AvoLog.log().error("Error compiling shader: {}\n{}", shaderFile, glGetShaderInfoLog(shaderId, 500));
+			String shaderErrorMessage = glGetShaderInfoLog(shaderId, 500);
+			AvoLog.log().error("Error compiling shader: {}\n{}", shaderFile, shaderErrorMessage);
 			System.exit(-1);
 		}
 		
@@ -135,13 +136,15 @@ public abstract class ShaderProgram {
 	protected void link() {
 		glLinkProgram(programId);
 		if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
-			AvoLog.log().error("Error linking shader code: {}", glGetProgramInfoLog(programId));
+			String shaderErrorMessage = glGetProgramInfoLog(programId);
+			AvoLog.log().error("Error linking shader code: {}", shaderErrorMessage);
 			System.exit(-1);
 		}
 		
 		glValidateProgram(programId);
 		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
-			AvoLog.log().warn("Warning validating shader code: {}", glGetProgramInfoLog(programId));
+			String shaderErrorMessage = glGetProgramInfoLog(programId);
+			AvoLog.log().warn("Warning validating shader code: {}", shaderErrorMessage);
 		}
 		
 		// Detaching shaders will delete the source code of the shader itself, which may make debugging difficult for minimal performance gain

@@ -16,8 +16,6 @@ import com.avogine.logging.AvoLog;
 
 /**
  * Static utility for reading resource files.
- * @author Dominus
- *
  */
 public class ResourceFileReader {
 		
@@ -52,6 +50,7 @@ public class ResourceFileReader {
 	 * Read a properties file and return the loaded {@link Properties} or an empty one if no file was found.
 	 * <p>
 	 * TODO Create file if no file is found
+	 * TODO This method is unused
 	 * @param filePath The name of the file without an extension.
 	 * @return The loaded {@link Properties} or an empty one if no file was found.
 	 */
