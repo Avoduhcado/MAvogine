@@ -24,7 +24,8 @@ import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
 import com.avogine.render.data.nuklear.NuklearMesh;
 import com.avogine.render.shader.NuklearShader;
-import com.avogine.util.resource.*;
+import com.avogine.util.ResourceUtil;
+import com.avogine.util.resource.ResourceConstants;
 
 /**
  * Wrapper implementation for {@link Nuklear}.
@@ -44,9 +45,6 @@ public class NuklearUI {
 				.mfree((handle, ptr) -> nmemFree(ptr));
 	}
 	
-	// Storage for font data
-	private final ByteBuffer ttf;
-
 	private final Matrix4f projectionMatrix;
 	
 	private NkContext context;
@@ -69,7 +67,6 @@ public class NuklearUI {
 	 * 
 	 */
 	public NuklearUI() {
-		ttf = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 512 * 1024);
 		projectionMatrix = new Matrix4f();
 		
 		// Create a Nuklear context, it is used everywhere.
@@ -107,6 +104,8 @@ public class NuklearUI {
 	}
 	
 	private void initFont() {
+		ByteBuffer ttfBuffer = ResourceUtil.readResourceToBuffer(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 512 * 1024);
+		
 		final int BITMAP_W = 1024;
 		final int BITMAP_H = 1024;
 
@@ -120,7 +119,7 @@ public class NuklearUI {
 		float descent;
 
 		try (MemoryStack stack = stackPush()) {
-			stbtt_InitFont(fontInfo, ttf);
+			stbtt_InitFont(fontInfo, ttfBuffer);
 			scale = stbtt_ScaleForPixelHeight(fontInfo, FONT_HEIGHT);
 
 			IntBuffer d = stack.mallocInt(1);
@@ -132,7 +131,7 @@ public class NuklearUI {
 			STBTTPackContext pc = STBTTPackContext.malloc(stack);
 			stbtt_PackBegin(pc, bitmap, BITMAP_W, BITMAP_H, 0, 1, NULL);
 			stbtt_PackSetOversampling(pc, 4, 4);
-			stbtt_PackFontRange(pc, ttf, 0, FONT_HEIGHT, 32, cdata);
+			stbtt_PackFontRange(pc, ttfBuffer, 0, FONT_HEIGHT, 32, cdata);
 			stbtt_PackEnd(pc);
 
 			// Convert R8 to RGBA8
@@ -240,7 +239,7 @@ public class NuklearUI {
 
 			float halfWidth = displayWidth / 2.0f;
 			float halfHeight = displayHeight / 2.0f;
-			projectionMatrix.identity().ortho2D(-halfWidth, halfWidth, halfHeight, -halfHeight).translate(-halfWidth, -halfHeight, 0);
+			projectionMatrix.setOrtho2D(-halfWidth, halfWidth, halfHeight, -halfHeight).translate(-halfWidth, -halfHeight, 0);
 			
 			// TODO Currently setting width/height and display values to just the framebuffer value, not ideal.
 			mesh.setSize(displayWidth, displayHeight);

@@ -7,11 +7,12 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.*;
 
-import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.shader.uniform.Uniform;
-import com.avogine.util.resource.*;
+import com.avogine.util.ResourceUtil;
+import com.avogine.util.resource.ResourceConstants;
 
 /**
  * TODO The System.exit(-1) calls should likely just be throwing exceptions instead
@@ -24,33 +25,23 @@ public abstract class ShaderProgram {
 	 * @param vertexShaderFile
 	 * @param fragmentShaderFile
 	 */
-	public ShaderProgram(String vertexShaderFile, String fragmentShaderFile) {
-		programId = glCreateProgram();
-		int vertexShaderId = createShader(vertexShaderFile, GL_VERTEX_SHADER);
-		int fragmentShaderId = createShader(fragmentShaderFile, GL_FRAGMENT_SHADER);
-		link();
-		
-		glDetachShader(programId, vertexShaderId);
-		glDetachShader(programId, fragmentShaderId);
-		glDeleteShader(vertexShaderId);
-		glDeleteShader(fragmentShaderId);
+	protected ShaderProgram(String vertexShaderFile, String fragmentShaderFile) {
+		this(new ShaderModuleData(vertexShaderFile, GL_VERTEX_SHADER), new ShaderModuleData(fragmentShaderFile, GL_FRAGMENT_SHADER));
 	}
 	
 	/**
 	 * Create a ShaderProgram from an arbitrary set of shader files.
 	 * <p>
 	 * <b>Note:</b> This makes no assertion that the supplied files constitute a complete shader. 
-	 * @param files A list of {@link ShaderFileType}s to construct the ShaderProgram from.
+	 * @param shaders A list of {@link ShaderModuleData}s to construct the ShaderProgram from.
 	 */
-	public ShaderProgram(ShaderFileType...files) {
+	protected ShaderProgram(ShaderModuleData...shaders) {
 		programId = glCreateProgram();
-		int[] shaderIds = new int[files.length];
-		for (int i = 0; i < files.length; i++) {
-			shaderIds[i] = createShader(files[i].fileName(), files[i].shaderType());
+		List<Integer> shaderIds = new ArrayList<>();
+		for (ShaderModuleData shader : shaders) {
+			shaderIds.add(createShader(shader.fileName, shader.type));
 		}
-		link();
-		
-		Arrays.stream(shaderIds).forEach(GL20::glDeleteShader);
+		link(shaderIds);
 	}
 	
 	/**
@@ -105,14 +96,14 @@ public abstract class ShaderProgram {
 	}
 	
 	/**
-	 * Read in the shader file provided into a {@code CharSequence} so it can be compiled into GLSL shader code.
+	 * Read in the shader file contents provided into a String so it can be compiled into GLSL shader code.
 	 * @param shaderFile The file name of the shader file to be created, including file extension
 	 * @param shaderType The type of shader being loaded
 	 * @return An integer address to the shader in memory
 	 * @throws Exception If there are any errors reading, creating, or compiling the shader
 	 */
 	protected int createShader(String shaderFile, int shaderType) {
-		CharSequence shaderCode = ResourceFileReader.readTextFile(ResourceConstants.SHADERS.with(shaderFile));
+		String shaderCode = ResourceUtil.readResource(ResourceConstants.SHADERS.with(shaderFile));
 		
 		int shaderId = glCreateShader(shaderType);
 		if (shaderId == 0) {
@@ -123,7 +114,7 @@ public abstract class ShaderProgram {
 		glShaderSource(shaderId, shaderCode);
 		glCompileShader(shaderId);
 		if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {
-			String shaderErrorMessage = glGetShaderInfoLog(shaderId, 500);
+			String shaderErrorMessage = glGetShaderInfoLog(shaderId, 1024);
 			AvoLog.log().error("Error compiling shader: {}\n{}", shaderFile, shaderErrorMessage);
 			System.exit(-1);
 		}
@@ -133,35 +124,47 @@ public abstract class ShaderProgram {
 		return shaderId;
 	}
 	
-	protected void link() {
+	protected void link(List<Integer> shaderIds) {
 		glLinkProgram(programId);
 		if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
-			String shaderErrorMessage = glGetProgramInfoLog(programId);
+			String shaderErrorMessage = glGetProgramInfoLog(programId, 1024);
 			AvoLog.log().error("Error linking shader code: {}", shaderErrorMessage);
 			System.exit(-1);
 		}
 		
-		glValidateProgram(programId);
-		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
-			String shaderErrorMessage = glGetProgramInfoLog(programId);
-			AvoLog.log().warn("Warning validating shader code: {}", shaderErrorMessage);
-		}
-		
-		// Detaching shaders will delete the source code of the shader itself, which may make debugging difficult for minimal performance gain
-//		if (vertexShaderId != 0) {
-//			GL20.glDetachShader(programId, vertexShaderId);
-//		}
-//		if (fragmentShaderId != 0) {
-//			GL20.glDetachShader(programId, fragmentShaderId);
-//		}
+		shaderIds.forEach(shader -> glDetachShader(programId, shader));
+		shaderIds.forEach(GL20::glDeleteShader);
 	}
 	
 	/**
-	 * Unbind and delete this program from memory.
+	 * Validate the shader program.
+	 * </p>
+	 * This method should be reserved for debugging purposes as it's dependent on the current OpenGL state
+	 * which may not be fully complete when actually running the full application.
+	 */
+	public void validate() {
+		glValidateProgram(programId);
+		if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
+			String shaderErrorMessage = glGetProgramInfoLog(programId, 1024);
+			AvoLog.log().warn("Warning validating shader code: {}", shaderErrorMessage);
+		}
+	}
+	
+	/**
+	 * Un-bind and delete this program from memory.
 	 */
 	public void cleanup() {
 		unbind();
 		glDeleteProgram(programId);
+	}
+	
+	/**
+	 * A tuple of a shader file name and its shader type.
+	 * @param fileName The name of the file to load the shader code from.
+	 * @param type The type of the shader. One of:<br><table><tr><td>{@link GL20C#GL_VERTEX_SHADER VERTEX_SHADER}</td><td>{@link GL20C#GL_FRAGMENT_SHADER FRAGMENT_SHADER}</td><td>{@link GL32#GL_GEOMETRY_SHADER GEOMETRY_SHADER}</td><td>{@link GL40#GL_TESS_CONTROL_SHADER TESS_CONTROL_SHADER}</td></tr><tr><td>{@link GL40#GL_TESS_EVALUATION_SHADER TESS_EVALUATION_SHADER}</td></tr></table>
+	 */
+	public record ShaderModuleData(String fileName, int type) {
+		
 	}
 	
 }

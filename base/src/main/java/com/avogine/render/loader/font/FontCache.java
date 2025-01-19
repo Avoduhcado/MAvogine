@@ -9,23 +9,21 @@ import com.avogine.render.data.FontDetails;
  */
 public class FontCache {
 
-	private final Map<String, FontDetails> fontMap = new HashMap<>();
-	
-	private static final FontCache cache = new FontCache();
+	private final Map<String, FontDetails> fontMap;
 	
 	/**
-	 * @return
+	 * 
 	 */
-	public static FontCache getInstance() {
-		return cache;
+	public FontCache() {
+		fontMap = new HashMap<>();
 	}
 	
 	/**
-	 * @param fontName The name and file extension of the file in the {@code fonts} resource folder to load.
+	 * @param filePath The file path to the resource file containing the Font data to load.
 	 * @return
 	 */
-	public FontDetails getFont(String fontName) {
-		return fontMap.computeIfAbsent(fontName, FontLoader::loadFont);
+	public FontDetails getFont(String filePath) {
+		return fontMap.computeIfAbsent(filePath, FontDetails::new);
 	}
 	
 	/**
@@ -34,5 +32,4 @@ public class FontCache {
 	public void cleanup() {
 		fontMap.values().forEach(FontDetails::cleanup);
 	}
-	
 }

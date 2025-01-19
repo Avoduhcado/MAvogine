@@ -12,11 +12,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.joml.Matrix4f;
 import org.lwjgl.stb.STBTTAlignedQuad;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.*;
 
+import com.avogine.logging.AvoLog;
 import com.avogine.render.data.FontDetails;
 import com.avogine.render.loader.font.FontCache;
 import com.avogine.render.shader.FontShader;
+import com.avogine.util.resource.ResourceConstants;
 
 /**
  *
@@ -24,6 +26,8 @@ import com.avogine.render.shader.FontShader;
 public class TextRender {
 
 	private FontShader fontShader;
+	
+	private final Matrix4f modelMatrix;
 	
 	private int textVao;
 	private int textVbo;
@@ -33,16 +37,24 @@ public class TextRender {
 	private FontDetails defaultFont;
 
 	/**
-	 * @param projection
+	 * 
 	 */
-	public void init(Matrix4f projection) {
+	public TextRender() {
+		modelMatrix = new Matrix4f();
+	}
+	
+	/**
+	 * @param projection
+	 * @param fontCache 
+	 */
+	public void init(Matrix4f projection, FontCache fontCache) {
 		fontShader = new FontShader("textVertex.glsl", "textFragment.glsl");
 		fontShader.bind();
 		fontShader.projection.loadMatrix(projection);
 		fontShader.unbind();
 		
-		textBufferCapacity = 20 * 4 * 6;
-		var textVertices = new float[textBufferCapacity];
+		textBufferCapacity = 1024 * 4 * 6;
+		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
 		
 		textVao = glGenVertexArrays();
 		
@@ -56,7 +68,9 @@ public class TextRender {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 		
-		defaultFont = FontCache.getInstance().getFont("Roboto-Regular.ttf");
+		MemoryUtil.memFree(textVertices);
+		
+		defaultFont = fontCache.getFont(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
 	}
 	
 	/**
@@ -73,16 +87,18 @@ public class TextRender {
 		glBindBuffer(GL_ARRAY_BUFFER, textVbo);
 		
 		int length = text.length() * 4 * 6;
+		// TODO Allocate multiple textBuffers of preset sizes to avoid resizing just this one? That probably isn't worth the effort.
 		if (textBufferCapacity < length) {
-			textBufferCapacity = length;
-			glBufferData(GL_ARRAY_BUFFER, new float[textBufferCapacity], GL_DYNAMIC_DRAW);
+			AvoLog.log().warn("Woah nelly that's a big text string! {}", length);
+			throw new IllegalArgumentException();
+//			textBufferCapacity = length;
+//			glBufferData(GL_ARRAY_BUFFER, new float[textBufferCapacity], GL_DYNAMIC_DRAW);
 		}
 		
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, font.textureID());
+		glBindTexture(GL_TEXTURE_2D, font.getTextureId());
 		
-		Matrix4f modelMatrix = new Matrix4f();
-		modelMatrix.translate(x, y + font.fontSize() + font.descent(), 0);
+		modelMatrix.translation(x, y + font.getSize() + font.getDescent(), 0);
 		fontShader.model.loadMatrix(modelMatrix);
 		
 		fontShader.textColor.loadVec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -100,11 +116,11 @@ public class TextRender {
 			.forEach(c -> {
 				if (c == '\n') {
 					xpos.put(0, 0.0f);
-					ypos.put(0, ypos.get(0) + font.fontSize() + font.descent());
+					ypos.put(0, ypos.get(0) + font.getSize() + font.getDescent());
 				} else if (c < 32 || c > 128) {
 					// Only concerned with rendering the ASCII character set
 				} else {
-					stbtt_GetPackedQuad(font.cdata(), 1024, 1024, c - 32, xpos, ypos, q, false);
+					stbtt_GetPackedQuad(font.getCharData(), 1024, 1024, c - 32, xpos, ypos, q, false);
 					
 					vertexData.put(q.x0()).put(q.y1()).put(q.s0()).put(q.t1());
 					vertexData.put(q.x1()).put(q.y0()).put(q.s1()).put(q.t0());

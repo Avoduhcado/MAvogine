@@ -2,19 +2,20 @@ package com.avogine.io;
 
 import static com.avogine.util.MathUtil.clamp;
 
-import java.nio.IntBuffer;
+import java.nio.*;
 import java.util.*;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
 import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.io.config.*;
 import com.avogine.logging.AvoLog;
-import com.avogine.render.loader.texture.IconLoader;
+import com.avogine.util.ResourceUtil;
 import com.avogine.util.resource.ResourceConstants;
 
 /**
@@ -77,7 +78,7 @@ public class Window {
 	 * @param inputConfig 
 	 */
 	public void init(GLFWConfig windowConfig, InputConfig inputConfig) {
-		GLFWErrorCallback.createPrint().set();
+		GLFW.glfwSetErrorCallback((int errorCode, long msgPtr) -> AvoLog.log().error("Error code [{}], msg [{}]", errorCode, MemoryUtil.memUTF8(msgPtr)));
 		
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Could not initialize GLFW!");
@@ -103,8 +104,6 @@ public class Window {
 			height = h;
 			GL11.glViewport(0, 0, width, height);
 		});
-		
-		GLFW.glfwSetErrorCallback((int errorCode, long msgPtr) -> AvoLog.log().error("Error code [{}], msg [{}]", errorCode, MemoryUtil.memUTF8(msgPtr)));
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -136,7 +135,27 @@ public class Window {
 			GLFW.glfwSetWindowOpacity(id, 1.0f);
 		}
 		
-		IconLoader.loadAndSetIcons(id, ResourceConstants.TEXTURES.with("icon"));
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			IntBuffer iconWidth = stack.mallocInt(1);
+			IntBuffer iconHeight = stack.mallocInt(1);
+			IntBuffer iconChannels = stack.mallocInt(1);
+			
+			// TODO Support loading multiple icons into a single GLFWImage.Buffer
+			ByteBuffer fileData = ResourceUtil.readResourceToBuffer(ResourceConstants.TEXTURES.with("icon", "AGDG Logo.png"), 1024);
+			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, iconWidth, iconHeight, iconChannels, 0);
+			if (imageData != null) {
+				GLFWImage icon = GLFWImage.malloc(stack);
+				var iconBuffer = GLFWImage.malloc(1, stack);
+				iconBuffer.put(icon.set(iconWidth.get(), iconHeight.get(), imageData));
+				iconBuffer.flip();
+				
+				GLFW.glfwSetWindowIcon(id, iconBuffer);
+				
+				STBImage.stbi_image_free(imageData);
+			} else {
+				AvoLog.log().warn("Icon failed to load.");
+			}
+		}
 		
 		// TODO Customizable by WindowConfig?
 		if (GLFW.glfwRawMouseMotionSupported()) {
@@ -221,7 +240,7 @@ public class Window {
 		close();
 		
 		GLFW.glfwTerminate();
-		GLFW.glfwSetErrorCallback(null).free();
+		Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
 	}
 	
 	/**

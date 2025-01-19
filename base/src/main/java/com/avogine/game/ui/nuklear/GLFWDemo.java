@@ -24,7 +24,8 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
-import com.avogine.util.resource.ResourceFileReader;
+import com.avogine.util.ResourceUtil;
+import com.avogine.util.resource.ResourceConstants;
 
 /**
  * Nuklear demo using GLFW, OpenGL and stb_truetype for rendering.
@@ -60,8 +61,6 @@ public class GLFWDemo {
 		new GLFWDemo().run();
 	}
 	
-	private final ByteBuffer ttf;
-
 	private long win;
 
 	private int
@@ -87,10 +86,6 @@ public class GLFWDemo {
 
 	private final Demo       demo = new Demo();
 	private final Calculator calc = new Calculator();
-
-	public GLFWDemo() {
-		this.ttf = ResourceFileReader.ioResourceToByteBuffer("/demo/alagard.ttf", 512 * 1024);
-	}
 
 	private void run() {
 		GLFWErrorCallback.createPrint().set();
@@ -148,6 +143,7 @@ public class GLFWDemo {
 		float scale;
 		float descent;
 
+		ByteBuffer ttf = ResourceUtil.readResourceToBuffer(ResourceConstants.FONTS.with("demo", "alagard.ttf"), 512 * 1024);
 		try (MemoryStack stack = stackPush()) {
 			stbtt_InitFont(fontInfo, ttf);
 			scale = stbtt_ScaleForPixelHeight(fontInfo, FONT_HEIGHT);

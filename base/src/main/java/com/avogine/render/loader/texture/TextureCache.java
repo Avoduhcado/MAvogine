@@ -27,16 +27,16 @@ public class TextureCache {
 	 * @return
 	 */
 	public Texture getTexture(String textureFile) {
-		return textureMap.computeIfAbsent(textureFile, v -> TextureLoader.loadTexture(textureFile));
+		return textureMap.computeIfAbsent(textureFile, v -> new Texture(textureFile));
 	}
 	
 	/**
 	 * @param textureFiles
 	 * @return
 	 */
-	public TextureCubeMap getCubemap(String...textureFiles) {
+	public Cubemap getCubemap(String...textureFiles) {
 		// XXX Might be better to standardize cubemap loading and instead reference a singular directory to load generic file names from for each side of the cube
-		return (TextureCubeMap) textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().collect(Collectors.joining(" ")), v -> TextureLoader.loadCubemap(textureFiles));
+		return (Cubemap) textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().collect(Collectors.joining(";")), v -> new Cubemap(textureFiles));
 	}
 	
 	/**
@@ -44,8 +44,8 @@ public class TextureCache {
 	 * @param fileType
 	 * @return
 	 */
-	public TextureCubeMap getCubemap(String directory, String fileType) {
-		return (TextureCubeMap) textureMap.computeIfAbsent(directory, v -> TextureLoader.loadCubemap(directory, fileType));
+	public Cubemap getCubemap(String directory, String fileType) {
+		return (Cubemap) textureMap.computeIfAbsent(directory, v -> new Cubemap(directory, fileType));
 	}
 	
 	/**
@@ -61,7 +61,7 @@ public class TextureCache {
 				pixelBuffer.put((byte) 255);
 			}
 			pixelBuffer.flip();
-			return TextureLoader.createEmptyTexture(64, 64, pixelBuffer);
+			return new Texture(64, 64, pixelBuffer);
 		});
 	}
 
