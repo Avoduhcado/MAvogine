@@ -10,19 +10,20 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.MemoryStack;
 
+import com.avogine.audio.Audio;
 import com.avogine.game.scene.Scene;
-import com.avogine.game.state.*;
+import com.avogine.game.state.GameState;
 import com.avogine.game.ui.nuklear.audio.AudioConfigUI;
 import com.avogine.game.util.*;
 import com.avogine.io.*;
 
 /**
  * TODO Investigate initializing with all elements hidden, and a key listener for ESC to unhide the menu
+ * @param <T> 
  */
 public class GameMenu<T extends GameState<?, ?>> implements UIElement, Renderable, Cleanupable {
 
 	private final NkContext context;
-	private final StateSwappable<T> stateSwapper;
 	
 	private boolean loadGameEnabled;
 	private Supplier<Class<T>> quitToTitleSupplier;
@@ -47,9 +48,8 @@ public class GameMenu<T extends GameState<?, ?>> implements UIElement, Renderabl
 	 * @param quitToTitleSupplier 
 	 * 
 	 */
-	public GameMenu(NkContext context, Audio audio, StateSwappable<T> stateSwapper, Supplier<Class<T>> quitToTitleSupplier) {
+	public GameMenu(NkContext context, Audio audio, Supplier<Class<T>> quitToTitleSupplier) {
 		this.context = context;
-		this.stateSwapper = stateSwapper;
 		
 		loadGameEnabled = false;
 		this.quitToTitleSupplier = quitToTitleSupplier;
@@ -218,7 +218,7 @@ public class GameMenu<T extends GameState<?, ?>> implements UIElement, Renderabl
 	}
 
 	private void loadTitleScene() {
-		stateSwapper.queueGameState(quitToTitleSupplier.get());
+		// Not implemented
 	}
 	
 	private void showOptions(NkContext context) {

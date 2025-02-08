@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 /**
  *
  */
-public class AudioSource {
+public class SoundSource {
 
 	private final int sourceId;
 
@@ -18,10 +18,27 @@ public class AudioSource {
 	 * Note that 3D audio will only work with mono (single channel) sounds. Any stereo sounds will ignore all
 	 * source relative/distance fall-off settings.
 	 */
-	public AudioSource(boolean loop, boolean relative) {
+	public SoundSource(boolean loop, boolean relative) {
 		this.sourceId = alGenSources();
 		alSourcei(sourceId, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
 		alSourcei(sourceId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
+	}
+
+	public void play() {
+		alSourcePlay(sourceId);
+	}
+	
+	public void pause() {
+		alSourcePause(sourceId);
+	}
+
+	public void stop() {
+		alSourceStop(sourceId);
+	}
+
+	public void cleanup() {
+		stop();
+		alDeleteSources(sourceId);
 	}
 
 	public void setBuffer(int bufferId) {
@@ -55,28 +72,6 @@ public class AudioSource {
 	
 	public boolean isStopped() {
 		return alGetSourcei(sourceId, AL_SOURCE_STATE) == AL_STOPPED;
-	}
-
-	public void play() {
-		alSourcePlay(sourceId);
-	}
-	
-	public void play(AudioBuffer buffer) {
-		alSourcei(sourceId, AL_BUFFER, buffer.getBufferID());
-		alSourcePlay(sourceId);
-	}
-
-	public void pause() {
-		alSourcePause(sourceId);
-	}
-
-	public void stop() {
-		alSourceStop(sourceId);
-	}
-
-	public void cleanup() {
-		stop();
-		alDeleteSources(sourceId);
 	}
 
 }

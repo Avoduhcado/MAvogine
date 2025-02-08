@@ -16,7 +16,6 @@ import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.data.FontDetails;
-import com.avogine.render.loader.font.FontCache;
 import com.avogine.render.shader.FontShader;
 import com.avogine.util.resource.ResourceConstants;
 

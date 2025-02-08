@@ -1,4 +1,4 @@
-package com.avogine.render.loader.texture;
+package com.avogine.render;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -27,7 +27,7 @@ public class TextureCache {
 	 * @return
 	 */
 	public Texture getTexture(String textureFile) {
-		return textureMap.computeIfAbsent(textureFile, v -> new Texture(textureFile));
+		return textureMap.computeIfAbsent(textureFile, Texture::new);
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public class TextureCache {
 	 */
 	public Cubemap getCubemap(String...textureFiles) {
 		// XXX Might be better to standardize cubemap loading and instead reference a singular directory to load generic file names from for each side of the cube
-		return (Cubemap) textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().collect(Collectors.joining(";")), v -> new Cubemap(textureFiles));
+		return (Cubemap) textureMap.computeIfAbsent(Arrays.asList(textureFiles).stream().collect(Collectors.joining(";")), Cubemap::new);
 	}
 	
 	/**

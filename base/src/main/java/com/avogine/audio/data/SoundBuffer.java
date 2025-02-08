@@ -2,16 +2,20 @@ package com.avogine.audio.data;
 
 import static org.lwjgl.stb.STBVorbis.*;
 
+import java.io.IOException;
 import java.nio.*;
 
 import org.lwjgl.openal.AL10;
 import org.lwjgl.stb.STBVorbisInfo;
 import org.lwjgl.system.*;
 
+import com.avogine.logging.AvoLog;
+import com.avogine.util.ResourceUtil;
+
 /**
  *
  */
-public class AudioBuffer {
+public class SoundBuffer {
 
 	private final int bufferID;
 	
@@ -20,13 +24,15 @@ public class AudioBuffer {
 	/**
 	 * @param filePath 
 	 */
-	public AudioBuffer(String filePath) {
+	public SoundBuffer(String filePath) {
 		this.bufferID = AL10.alGenBuffers();
 		try (STBVorbisInfo info = STBVorbisInfo.malloc()) {
 			pcm = readVorbis(filePath, info);
 			
 			// Copy to buffer
 			AL10.alBufferData(bufferID, info.channels() == 1 ? AL10.AL_FORMAT_MONO16 : AL10.AL_FORMAT_STEREO16, pcm, info.sample_rate());
+		} catch (IOException e) {
+			AvoLog.log().error("Failed to load sound file: {}", filePath, e);
 		}
 	}
 
@@ -40,19 +46,14 @@ public class AudioBuffer {
 		}
 	}
 	
-	/**
-	 * @return the bufferID
-	 */
-	public int getBufferID() {
-		return bufferID;
-	}
-	
-	private ShortBuffer readVorbis(String filePath, STBVorbisInfo info) {
+	private ShortBuffer readVorbis(String filePath, STBVorbisInfo info) throws IOException {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer error = stack.mallocInt(1);
-			long decoder = stb_vorbis_open_filename(filePath, error, null);
+			
+			ByteBuffer fileBuffer = ResourceUtil.readResourceToBuffer(filePath);
+			long decoder = stb_vorbis_open_memory(fileBuffer, error, null);
 			if (decoder == MemoryUtil.NULL) {
-				throw new RuntimeException("Failed to open Ogg Vorbis file. Error: " + error.get(0));
+				throw new IOException("Failed to open Ogg Vorbis file. Error: " + error.get(0));
 			}
 			
 			stb_vorbis_get_info(decoder, info);
@@ -68,6 +69,13 @@ public class AudioBuffer {
 			
 			return result;
 		}
+	}
+	
+	/**
+	 * @return the bufferID
+	 */
+	public int getBufferID() {
+		return bufferID;
 	}
 	
 }

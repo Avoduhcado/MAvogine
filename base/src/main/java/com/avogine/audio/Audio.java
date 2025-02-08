@@ -1,10 +1,9 @@
-package com.avogine.io;
+package com.avogine.audio;
 
 import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.openal.ALC10.*;
 import static org.lwjgl.openal.ALC11.*;
 
-import java.io.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -12,18 +11,21 @@ import java.util.concurrent.TimeUnit;
 import org.lwjgl.openal.*;
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.audio.data.AudioBuffer;
-import com.avogine.audio.loader.AudioCache;
-import com.avogine.io.serializer.JsonMapper;
+import com.avogine.audio.data.*;
 import com.avogine.logging.AvoLog;
 
 /**
  * XXX For some reason ALC_DEVICE_SPECIFIER and ALC_DEFAULT_DEVICE_SPECIFIER only ever return the start of the device specifier, ie. OpenAL Soft, 
  * but it appears to be safe to just use ALC_ALL_DEVICES_SPECIFIER and ALC_DEFAULT_ALL_DEVICES_SPECIFIER either as a string list for all
- * values or as just alGetString for the first value.
+ * values or as just alGetString for the first value. The _ALL_ constants appear to be from an extension, so more caution may need to be taken.
  */
 public class Audio {
 
+	private final List<SoundBuffer> soundBuffers;
+	private final Map<String, SoundSource> soundSourceCache;
+	
+	private SoundListener listener;
+	
 	private long device;
 	private long context;
 	
@@ -37,7 +39,10 @@ public class Audio {
 	 * Instantiate a new Audio system and initialize configuration properties from disk.
 	 */
 	public Audio() {
-		initProperties();
+		soundBuffers = new ArrayList<>();
+		soundSourceCache = new HashMap<>();
+		
+		properties = new AudioProperties();
 	}
 	
 	/**
@@ -79,6 +84,107 @@ public class Audio {
 			// This might cause issues?
 			alDisable(SOFTXHoldOnDisconnect.AL_STOP_SOURCES_ON_DISCONNECT_SOFT);
 		}
+	}
+	
+	/**
+	 * @param soundBuffer
+	 */
+	public void addSoundBuffer(SoundBuffer soundBuffer) {
+		soundBuffers.add(soundBuffer);
+	}
+	
+	/**
+	 * @param name
+	 * @param soundSource
+	 */
+	public void addSoundSource(String name, SoundSource soundSource) {
+		soundSourceCache.put(name, soundSource);
+	}
+	
+	/**
+	 * @param name
+	 * @return
+	 */
+	public SoundSource removeSoundSource(String name) {
+		return soundSourceCache.remove(name);
+	}
+	
+	/**
+	 * @param name
+	 */
+	public void playSoundSource(String name) {
+		SoundSource soundSource = getSoundSource(name);
+		if (soundSource != null && !soundSource.isPlaying()) {
+			soundSource.play();
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	public void clearSources() {
+		soundSourceCache.values().forEach(SoundSource::cleanup);
+		soundSourceCache.clear();
+	}
+	
+	/**
+	 * 
+	 */
+	public void clearBuffers() {
+		soundBuffers.forEach(SoundBuffer::cleanup);
+		soundBuffers.clear();
+	}
+	
+	/**
+	 * Free all {@link SoundBuffer}s and {@link SoundSource}s, then destroy the context
+	 * and close the device if they were properly allocated.
+	 */
+	public void cleanup() {
+		clearSources();
+		clearBuffers();
+		if (context != MemoryUtil.NULL) {
+			alcDestroyContext(context);
+		}
+		if (device != MemoryUtil.NULL) {
+			alcCloseDevice(device);
+		}
+	}
+	
+	/**
+	 * @return the soundBuffers
+	 */
+	public List<SoundBuffer> getSoundBuffers() {
+		return soundBuffers;
+	}
+	
+	/**
+	 * TODO Handle missing values, should this attempt to computeIfAbsent?
+	 * @param name
+	 * @return
+	 */
+	public SoundSource getSoundSource(String name) {
+		return soundSourceCache.get(name);
+	}
+	
+	/**
+	 * @param model
+	 */
+	public void setAttenuationModel(int model) {
+		alDistanceModel(model);
+	}
+	
+	/**
+	 * @return the listener
+	 */
+	public SoundListener getListener() {
+		return listener;
+	}
+	
+	/**
+	 * @param listener the listener to set
+	 */
+	public void setListener(SoundListener listener) {
+		this.listener = listener;
 	}
 	
 	/**
@@ -128,7 +234,6 @@ public class Audio {
 
 	/**
 	 * @return 
-	 * 
 	 */
 	public List<String> enumerateAudioDevices() {
 		return ALUtil.getStringList(0, ALC_ALL_DEVICES_SPECIFIER);
@@ -166,41 +271,6 @@ public class Audio {
 		}, (ByteBuffer) null);
 		int[] eventTypes = new int[] { SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT };
 		SOFTEvents.alEventControlSOFT(eventTypes, true);
-	}
-	
-	private void initProperties() {
-		AudioProperties loadedProperties = new AudioProperties();
-		try (var fis = new FileInputStream("audio.json")) {
-			loadedProperties = JsonMapper.defaultMapper().readValue(fis, AudioProperties.class);
-		} catch (IOException e) {
-			AvoLog.log().error("Failed to load app properties.", e);
-		}
-		
-		properties = loadedProperties;
-	}
-	
-	private void saveProperties() {
-		try (var fos = new FileOutputStream("audio.json")) {
-			JsonMapper.defaultMapper().writeValue(fos, properties);
-		} catch (IOException e) {
-			AvoLog.log().error("Failed to save audio properties.", e);
-		}
-	}
-	
-	/**
-	 * Save the {@link AudioProperties}, free all {@link AudioBuffer}s in the {@link AudioCache} and then destroy the context
-	 * and close the device if they were properly allocated.
-	 */
-	public void cleanup() {
-		saveProperties();
-		
-		AudioCache.getInstance().cleanup();
-		if (context != MemoryUtil.NULL) {
-			alcDestroyContext(context);
-		}
-		if (device != MemoryUtil.NULL) {
-			alcCloseDevice(device);
-		}
 	}
 	
 	private class DefaultDeviceReopenTask extends TimerTask {

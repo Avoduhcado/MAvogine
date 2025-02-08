@@ -10,8 +10,8 @@ import org.joml.*;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryStack;
 
+import com.avogine.render.TextureCache;
 import com.avogine.render.data.*;
-import com.avogine.render.loader.texture.TextureCache;
 import com.avogine.util.ResourceUtil;
 
 /**

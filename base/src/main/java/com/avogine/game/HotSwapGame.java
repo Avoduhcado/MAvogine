@@ -2,14 +2,15 @@ package com.avogine.game;
 
 import java.util.*;
 
-import com.avogine.audio.data.AudioSource;
-import com.avogine.audio.loader.AudioCache;
+import com.avogine.audio.Audio;
+import com.avogine.audio.data.*;
 import com.avogine.game.scene.Scene;
 import com.avogine.game.state.*;
 import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.game.util.*;
 import com.avogine.io.*;
 import com.avogine.util.Result;
+import com.avogine.util.resource.ResourceConstants;
 
 /**
  * A {@link Game} implementation that allows dynamic processing of {@link GameListener}s.
@@ -31,7 +32,7 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 	private static final int TARGET_UPS = 60;
 	
 	// TODO Move this to a cache in Audio or something
-	protected final Set<AudioSource> audioSources;
+	protected final Set<SoundSource> audioSources;
 	
 	protected GameState<?, ?> gameState;
 	protected Class<? extends GameState<? ,?>> queuedGameStateClass;
@@ -67,7 +68,7 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 	
 	@Override
 	public void update(float interval) {
-		audioSources.removeIf(AudioSource::isStopped);
+		audioSources.removeIf(SoundSource::isStopped);
 		
 		updateables.forEach(update -> update.onUpdate(getCurrentScene(), interval));
 	}
@@ -89,9 +90,9 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 	 * @param loop
 	 */
 	public void playAudio(String audioFile, boolean loop) {
-		var bgmSource = new AudioSource(loop, false);
+		var bgmSource = new SoundSource(loop, false);
 		audioSources.add(bgmSource);
-		var bgmBuffer = AudioCache.getInstance().getSound(audioFile);
+		var bgmBuffer = new SoundBuffer(ResourceConstants.SOUNDS.with(audioFile));
 		
 		bgmSource.setBuffer(bgmBuffer.getBufferID());
 		// TODO Use a real gain value
@@ -101,10 +102,8 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 	}
 	
 	@Override
-	public void queueGameState(Class<GameState<?, ?>> gameStateClass) {
-		Objects.requireNonNull(gameStateClass);
-		
-		queuedGameStateClass = gameStateClass;
+	public boolean hasQueuedGameState() {
+		return queuedGameStateClass != null;
 	}
 	
 	@Override
@@ -117,7 +116,7 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 		updateables.clear();
 		renderables.clear();
 		
-		audioSources.forEach(AudioSource::stop);
+		audioSources.forEach(SoundSource::stop);
 		audioSources.clear();
 		removeSceneInputListeners(window);
 		registrationQueue.clear();

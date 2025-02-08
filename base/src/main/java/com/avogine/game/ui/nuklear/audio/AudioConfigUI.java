@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import org.lwjgl.nuklear.*;
 
-import com.avogine.io.Audio;
+import com.avogine.audio.Audio;
 
 /**
  *

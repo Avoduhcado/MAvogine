@@ -9,19 +9,20 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.MemoryStack;
 
+import com.avogine.audio.Audio;
 import com.avogine.game.scene.Scene;
-import com.avogine.game.state.*;
+import com.avogine.game.state.GameState;
 import com.avogine.game.ui.nuklear.audio.AudioConfigUI;
 import com.avogine.game.util.*;
 import com.avogine.io.*;
 
 /**
+ * @param <T> 
  *
  */
 public class TitleMenu<T extends GameState<?, ?>> implements UIElement, Renderable, Cleanupable {
 
 	private final NkContext context;
-	private final StateSwappable<T> stateSwapper;
 	
 	private boolean loadGameEnabled;
 	private Supplier<Class<T>> loadNewGameSupplier;
@@ -38,13 +39,11 @@ public class TitleMenu<T extends GameState<?, ?>> implements UIElement, Renderab
 	/**
 	 * @param context 
 	 * @param audio 
-	 * @param stateSwapper 
 	 * @param loadNewGameSupplier 
 	 * 
 	 */
-	public TitleMenu(NkContext context, Audio audio, StateSwappable<T> stateSwapper, Supplier<Class<T>> loadNewGameSupplier) {
+	public TitleMenu(NkContext context, Audio audio, Supplier<Class<T>> loadNewGameSupplier) {
 		this.context = context;
-		this.stateSwapper = stateSwapper;
 		
 		loadGameEnabled = saveGamesExist();
 		this.loadNewGameSupplier = loadNewGameSupplier;
@@ -176,7 +175,7 @@ public class TitleMenu<T extends GameState<?, ?>> implements UIElement, Renderab
 	}
 	
 	private void loadNewGame() {
-		stateSwapper.queueGameState(loadNewGameSupplier.get());
+		// Not implemented
 	}
 	
 	private boolean saveGamesExist() {

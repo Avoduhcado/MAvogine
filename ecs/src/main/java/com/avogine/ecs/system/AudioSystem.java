@@ -17,13 +17,13 @@ public class AudioSystem extends EntitySystem implements Updateable {
 	private static record SourcesArchetype(UUID id, AudioComponent audio, TransformComponent transform) implements EntityArchetype {}
 	private static record ListenerArchetype(UUID id, AudioListenerTag tag, TransformComponent transform) implements EntityArchetype {}
 	
-	private final AudioListener audioListener;
+	private final SoundListener audioListener;
 	
 	/**
 	 * 
 	 */
 	public AudioSystem() {
-		audioListener = new AudioListener();
+		audioListener = new SoundListener();
 	}
 	
 	@Override
@@ -55,7 +55,7 @@ public class AudioSystem extends EntitySystem implements Updateable {
 					audioSource.cleanup();
 				}
 			});
-			source.audio.sources().removeIf(AudioSource::isStopped);
+			source.audio.sources().removeIf(SoundSource::isStopped);
 		});
 	}
 

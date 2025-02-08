@@ -1,4 +1,4 @@
-package com.avogine.render.loader.font;
+package com.avogine.render;
 
 import java.util.*;
 

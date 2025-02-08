@@ -2,7 +2,7 @@ package com.avogine.ecs.components;
 
 import java.util.*;
 
-import com.avogine.audio.data.AudioSource;
+import com.avogine.audio.data.SoundSource;
 import com.avogine.ecs.EntityComponent;
 
 /**
@@ -14,7 +14,7 @@ import com.avogine.ecs.EntityComponent;
  * worth while to add a limit to how many sources can be added here.
  * @param sources 
  */
-public record AudioComponent(List<AudioSource> sources) implements EntityComponent {
+public record AudioComponent(List<SoundSource> sources) implements EntityComponent {
 	
 	/**
 	 * 
@@ -25,7 +25,7 @@ public record AudioComponent(List<AudioSource> sources) implements EntityCompone
 	
 	@Override
 	public void cleanup() {
-		sources.forEach(AudioSource::cleanup);
+		sources.forEach(SoundSource::cleanup);
 	}
 
 }

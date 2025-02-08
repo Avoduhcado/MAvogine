@@ -65,7 +65,7 @@ public class Window {
 		fullscreen = preferences.fullscreen();
 		monitorIndex = preferences.monitor();
 		
-		maxFps = clamp(preferences.fps(), 0, 1000);
+		maxFps = clamp(preferences.fpsCap(), 0, 1000);
 		maxBackgroundFps = clamp(preferences.backgroundFps(), 1, maxFps);
 		
 		input = new Input(this);
