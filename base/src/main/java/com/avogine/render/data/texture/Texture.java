@@ -60,7 +60,6 @@ public class Texture {
 			IntBuffer channelsBuffer = stack.mallocInt(1);
 			
 			ByteBuffer fileBuffer = ResourceUtil.readResourceToBuffer(texturePath);
-//			STBImage.stbi_set_flip_vertically_on_load(true);
 			ByteBuffer imageBuffer = STBImage.stbi_load_from_memory(fileBuffer, widthBuffer, heightBuffer, channelsBuffer, 0);
 			if (imageBuffer == null) {
 				AvoLog.log().error("Texture failed to load at path: {}", texturePath);
@@ -88,22 +87,23 @@ public class Texture {
 		}
 	}
 	
+	/**
+	 * <a href="https://github.com/Avoduhcado/MAvogine/issues/40">Configurable texture loading options #40</a>
+	 */
 	private void generateTexture(int width, int height, int format, ByteBuffer buffer) {
 		id = glGenTextures();
 		
 		bind();
-//		glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-		// TODO Add customizable options for these when loading textures?
+		// TODO#40 Add customizable options for these when loading textures
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, buffer);
-		// TODO Add check to some sort of Options object for mipmaps/anisotropic filtering
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, buffer); // internalFormat and format here are using the same value, which seems to work in most cases.
+		// TODO#40 Add check to some sort of Options object for mipmaps/anisotropic filtering
 		GL30.glGenerateMipmap(GL_TEXTURE_2D);
 		if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
-			// TODO: Extract some global Anisotropic filtering value
+			// TODO#40: Extract some global Anisotropic filtering value
 			float amount = Math.min(4f, glGetFloat(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT));
 			glTexParameterf(GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
 		}

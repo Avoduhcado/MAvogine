@@ -15,7 +15,9 @@ public class FreeCamController {
 	private final Vector3f position;
 	private final Vector3f direction;
 	private final Vector3f target;
+	private final Vector3f up;
 	private final Quaternionf orientation;
+	private final Quaternionf rotationDelta;
 	
 	/**
 	 * @param camera 
@@ -26,8 +28,10 @@ public class FreeCamController {
 		this.camera = camera;
 		this.position = new Vector3f().set(position);
 		this.orientation = new Quaternionf().set(orientation);
+		rotationDelta = new Quaternionf();
 		direction = orientation.transformPositiveZ(new Vector3f());
 		target = new Vector3f();
+		up = orientation.transformPositiveY(new Vector3f());
 		
 		updateViewMatrix();
 	}
@@ -48,19 +52,10 @@ public class FreeCamController {
 	}
 	
 	/**
-	 * 
+	 * Apply a lookAt transformation to the camera with the current position and orientation.
 	 */
 	public void updateViewMatrix() {
-//		camera.getView().rotation(orientation).translate(position);
-//		camera.getView().translation(position).rotate(orientation);
-		
-//		Vector3f euler = orientation.getEulerAnglesXYZ(new Vector3f());
-//		camera.getView().identity().rotateX(euler.x).rotateY(euler.y).translate(-position.x, -position.y, -position.z);
-//		camera.getView().rotationXYZ(euler.x, euler.y, euler.z);
-		
-//		camera.getView().translationRotateScale(position, orientation, 1);
-		// TODO
-		camera.getView().setLookAt(position, position.sub(orientation.transformPositiveZ(new Vector3f()), target), orientation.transformPositiveY(new Vector3f()));
+		camera.getView().setLookAt(position, orientation.transformPositiveZ(target).add(position), orientation.transformPositiveY(up));
 		camera.invert();
 	}
 	
@@ -99,14 +94,10 @@ public class FreeCamController {
 		float newZ = Math.toRadians(z % 360);
 
 		//Create a quaternion with the delta rotation values
-		Quaternionf rotationDelta = new Quaternionf();
 		rotationDelta.rotationXYZ(newX, newY, newZ).conjugate();
 
-		//Calculate the inverse of the delta quaternion
-//		Quaternionf conjugate = rotationDelta.conjugate();
-
 		//Multiply this transform by the rotation delta quaternion and its inverse
-		orientation.mul(rotationDelta);//.mul(conjugate);
+		orientation.mul(rotationDelta);
 		
 		updateViewMatrix();
 	}

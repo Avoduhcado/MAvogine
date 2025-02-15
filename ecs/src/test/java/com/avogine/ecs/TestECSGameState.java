@@ -21,8 +21,6 @@ public class TestECSGameState extends GameState<TestECSScene, TestECSRender> {
 
 	@Override
 	public void cleanup() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

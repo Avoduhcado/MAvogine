@@ -4,30 +4,27 @@ import org.joml.Math;
 import org.joml.Vector3f;
 
 import com.avogine.game.scene.Camera;
-import com.avogine.util.MathUtil;
 
 /**
  *
  */
-public class FPSCameraController {
+public class FirstPersonCameraController {
 
+	private final Camera camera;
+	
 	private final Vector3f position;
 	private final Vector3f target;
 	
 	private final Vector3f forward;
+	private final Vector3f direction;
 	private final Vector3f right;
 	private final Vector3f up;
 	private final Vector3f worldUp;
-
-	/**
-	 * x = Yaw
-	 * y = Pitch
-	 * z = Roll
-	 */
-	private final Vector3f rotation;
-	private boolean constrainPitch;
 	
-	private final Camera camera;
+	private float yaw;
+	private float pitch;
+	private float roll;
+	private boolean constrainPitch;
 	
 	/**
 	 * @param camera 
@@ -36,19 +33,23 @@ public class FPSCameraController {
 	 * @param yaw 
 	 * @param pitch 
 	 */
-	public FPSCameraController(Camera camera, Vector3f position, Vector3f up, float yaw, float pitch) {
+	public FirstPersonCameraController(Camera camera, Vector3f position, Vector3f up, float yaw, float pitch) {
 		this.camera = camera;
+		
 		this.position = new Vector3f().set(position);
-		worldUp = up;
 		target = new Vector3f();
+		
 		forward = new Vector3f();
+		direction = new Vector3f();
 		right = new Vector3f();
 		this.up = new Vector3f();
+		worldUp = up;
 		
-		rotation = new Vector3f(yaw, pitch, 0);
+		this.yaw = yaw;
+		this.pitch = pitch;
 		constrainPitch = true;
-		updateVectors();
 		
+		updateVectors();
 		updateViewMatrix();
 	}
 	
@@ -56,22 +57,22 @@ public class FPSCameraController {
 	 * @param camera 
 	 * @param position 
 	 */
-	public FPSCameraController(Camera camera, Vector3f position) {
+	public FirstPersonCameraController(Camera camera, Vector3f position) {
 		this(camera, position, new Vector3f(0, 1, 0), 0f, 0f);
 	}
 	
 	/**
 	 * @param camera 
 	 */
-	public FPSCameraController(Camera camera) {
+	public FirstPersonCameraController(Camera camera) {
 		this(camera, new Vector3f());
 	}
 
 	private void updateVectors() {
 		forward.set(
-				Math.cos(Math.toRadians(rotation.x)) * Math.cos(Math.toRadians(rotation.y)),
-				Math.sin(Math.toRadians(rotation.y)),
-				Math.sin(Math.toRadians(rotation.x)) * Math.cos(Math.toRadians(rotation.y)))
+				Math.cos(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)),
+				Math.sin(Math.toRadians(pitch)),
+				Math.sin(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)))
 		.normalize();
 		
 		forward.cross(worldUp, right).normalize();
@@ -143,10 +144,24 @@ public class FPSCameraController {
 	}
 	
 	/**
-	 * @return the rotation
+	 * @return the yaw
 	 */
-	public Vector3f getRotation() {
-		return rotation;
+	public float getYaw() {
+		return yaw;
+	}
+	
+	/**
+	 * @return the pitch
+	 */
+	public float getPitch() {
+		return pitch;
+	}
+	
+	/**
+	 * @return the roll
+	 */
+	public float getRoll() {
+		return roll;
 	}
 	
 	/**
@@ -156,9 +171,11 @@ public class FPSCameraController {
 	 */
 	public void setRotation(float x, float y, float z) {
 		if (constrainPitch) {
-			y = MathUtil.clamp(y, -89.0f, 89.0f);
+			y = Math.clamp(y, -89.0f, 89.0f);
 		}
-		rotation.set(x, y, z);
+		yaw = x;
+		pitch = y;
+		roll = z;
 		
 		updateVectors();
 	}
@@ -178,13 +195,15 @@ public class FPSCameraController {
 	 */
 	public void addRotation(float x, float y, float z) {
 		if (constrainPitch) {
-			if (rotation.y + y > 89.0f) {
-				y = 89.0f - rotation.y;
-			} else if (rotation.y + y < -89.0f) {
-				y = -89.0f - rotation.y;
+			if (pitch + y > 89.0f) {
+				y = 89.0f - pitch;
+			} else if (pitch + y < -89.0f) {
+				y = -89.0f - pitch;
 			}
 		}
-		rotation.add(x, y, z);
+		yaw = x;
+		pitch = y;
+		roll = z;
 		
 		updateVectors();
 	}
@@ -201,28 +220,28 @@ public class FPSCameraController {
 	 * @param delta
 	 */
 	public void moveForwards(float delta) {
-		position.add(forward.mul(delta, new Vector3f()));
+		position.add(forward.mul(delta, direction));
 	}
 
 	/**
 	 * @param delta
 	 */
 	public void moveBackwards(float delta) {
-		position.sub(forward.mul(delta, new Vector3f()));
+		position.sub(forward.mul(delta, direction));
 	}
 
 	/**
 	 * @param delta
 	 */
 	public void strafeRight(float delta) {
-		position.add(right.mul(delta, new Vector3f()));
+		position.add(right.mul(delta, direction));
 	}
 
 	/**
 	 * @param delta
 	 */
 	public void strafeLeft(float delta) {
-		position.sub(right.mul(delta, new Vector3f()));
+		position.sub(right.mul(delta, direction));
 	}
 	
 }

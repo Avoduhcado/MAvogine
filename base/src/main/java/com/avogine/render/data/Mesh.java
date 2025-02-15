@@ -14,6 +14,8 @@ import org.lwjgl.system.MemoryUtil;
 
 /**
  * Used by {@link Model}.
+ * <p>
+ * TODO#39 <a href="https://github.com/Avoduhcado/MAvogine/issues/39">Animated models #39</a>
  */
 public class Mesh {
 	
@@ -25,31 +27,20 @@ public class Mesh {
 	private int materialIndex;
 	
 	/**
-	 * @param positions
-	 * @param normals
-	 * @param tangents
-	 * @param bitangents
-	 * @param textureCoordinates
-	 * @param indices
+	 * @param vertexData 
 	 * @param materialIndex 
 	 */
-	public Mesh(float[] positions, float[] normals, float[] tangents, float[] bitangents, float[] textureCoordinates, int[] indices, int materialIndex) {
-		this(positions, normals, tangents, bitangents, textureCoordinates, indices, materialIndex, new Vector3f(), new Vector3f());
+	public Mesh(VertexData vertexData, int materialIndex) {
+		this(vertexData, materialIndex, new Vector3f(), new Vector3f());
 	}
 	
 	/**
-	 * TODO Add animation vertex data
-	 * @param positions
-	 * @param normals
-	 * @param tangents
-	 * @param bitangents
-	 * @param textureCoordinates
-	 * @param indices
+	 * @param vertexData
 	 * @param materialIndex 
 	 * @param aabbMin 
 	 * @param aabbMax 
 	 */
-	public Mesh(float[] positions, float[] normals, float[] tangents, float[] bitangents, float[] textureCoordinates, int[] indices, int materialIndex, Vector3f aabbMin, Vector3f aabbMax) {
+	public Mesh(VertexData vertexData, int materialIndex, Vector3f aabbMin, Vector3f aabbMax) {
 		FloatBuffer positionsBuffer = null;
 		FloatBuffer normalsBuffer = null;
 		FloatBuffer tangentsBuffer = null;
@@ -59,7 +50,7 @@ public class Mesh {
 		try {
 			this.aabbMin = aabbMin;
 			this.aabbMax = aabbMax;
-			numVertices = indices.length;
+			numVertices = vertexData.indices().length;
 			vboIdList = new ArrayList<>();
 			this.materialIndex = materialIndex;
 
@@ -69,8 +60,8 @@ public class Mesh {
 			// Positions VBO
 			int vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			positionsBuffer = MemoryUtil.memCallocFloat(positions.length);
-			positionsBuffer.put(0, positions);
+			positionsBuffer = MemoryUtil.memCallocFloat(vertexData.positions().length);
+			positionsBuffer.put(0, vertexData.positions());
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, positionsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(0);
@@ -79,8 +70,8 @@ public class Mesh {
 			// Normals VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			normalsBuffer = MemoryUtil.memCallocFloat(normals.length);
-			normalsBuffer.put(0, normals);
+			normalsBuffer = MemoryUtil.memCallocFloat(vertexData.normals().length);
+			normalsBuffer.put(0, vertexData.normals());
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(1);
@@ -89,8 +80,8 @@ public class Mesh {
 			// Tangents VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			tangentsBuffer = MemoryUtil.memCallocFloat(tangents.length);
-			tangentsBuffer.put(0, tangents);
+			tangentsBuffer = MemoryUtil.memCallocFloat(vertexData.tangents().length);
+			tangentsBuffer.put(0, vertexData.tangents());
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, tangentsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(2);
@@ -99,8 +90,8 @@ public class Mesh {
 			// Bitangents VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			bitangentsBuffer = MemoryUtil.memCallocFloat(bitangents.length);
-			bitangentsBuffer.put(0, bitangents);
+			bitangentsBuffer = MemoryUtil.memCallocFloat(vertexData.bitangents().length);
+			bitangentsBuffer.put(0, vertexData.bitangents());
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, bitangentsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(3);
@@ -109,8 +100,8 @@ public class Mesh {
 			// Texture coordinates VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			textCoordsBuffer = MemoryUtil.memCallocFloat(textureCoordinates.length);
-			textCoordsBuffer.put(0, textureCoordinates);
+			textCoordsBuffer = MemoryUtil.memCallocFloat(vertexData.textureCoordinates().length);
+			textCoordsBuffer.put(0, vertexData.textureCoordinates());
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, textCoordsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(4);
@@ -119,8 +110,8 @@ public class Mesh {
 			// Index VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			indicesBuffer = MemoryUtil.memCallocInt(indices.length);
-			indicesBuffer.put(0, indices);
+			indicesBuffer = MemoryUtil.memCallocInt(vertexData.indices().length);
+			indicesBuffer.put(0, vertexData.indices());
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
 

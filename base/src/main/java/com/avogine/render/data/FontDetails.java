@@ -27,7 +27,7 @@ import com.avogine.logging.AvoLog;
 import com.avogine.util.ResourceUtil;
 
 /**
- * TODO Customizable font sizes, scalable bitmap sizes to match, customizable character sets (may require multiple textures and some sort of texture sheet indexing to fit everything)
+ * TODO#38 <a href="https://github.com/Avoduhcado/MAvogine/issues/38">FontDetails improvements #38</a>
  */
 public class FontDetails {
 

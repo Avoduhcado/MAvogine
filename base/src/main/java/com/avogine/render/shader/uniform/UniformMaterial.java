@@ -22,7 +22,7 @@ public class UniformMaterial extends Uniform {
 	 * @param material
 	 */
 	public void loadMaterial(Material material) {
-		// TODO Do we want to handle loading the tex unit here, or handle activating/binding textures here? Or neither
+		// TODO#41 Do we want to handle loading the tex unit here, or handle activating/binding textures here? Or neither
 //		shininess.loadFloat(material.shininess());
 	}
 	

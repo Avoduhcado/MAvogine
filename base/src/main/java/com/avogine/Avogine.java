@@ -3,7 +3,6 @@ package com.avogine;
 import java.util.concurrent.*;
 
 import com.avogine.game.*;
-import com.avogine.game.state.StateSwappable;
 import com.avogine.io.Window;
 import com.avogine.logging.AvoLog;
 import com.avogine.util.FrameProfiler;
@@ -133,9 +132,6 @@ public class Avogine implements Runnable {
 
 		window.pollEvents();
 		game.input(window);
-		if (game instanceof StateSwappable swapGame && swapGame.hasQueuedGameState()) {
-			swapGame.swapGameState(window);
-		}
 		
 		profiler.inputEnd();
 	}

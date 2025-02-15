@@ -2,11 +2,11 @@ package com.avogine.render.loader.assimp;
 
 import static org.lwjgl.system.MemoryUtil.*;
 
-import java.lang.Math;
 import java.nio.*;
 import java.util.*;
 
 import org.joml.*;
+import org.joml.Math;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryStack;
 
@@ -43,7 +43,7 @@ public class StaticModelLoader {
 	 * @return
 	 */
 	public static Model loadModel(String id, String modelPath, TextureCache textureCache, int flags) {
-		AIFileIO fileIo = AIFileIO.create()
+		try (AIFileIO fileIo = AIFileIO.create()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					String fileNameUtf8 = memUTF8(fileName);
 					ByteBuffer data = ResourceUtil.readResourceToBuffer(fileNameUtf8);
@@ -74,35 +74,39 @@ public class StaticModelLoader {
 					aiFile.ReadProc().free();
 					aiFile.SeekProc().free();
 					aiFile.FileSizeProc().free();
-				});
+				});) {
 
-		AIScene aiScene = Assimp.aiImportFileEx(modelPath, flags, fileIo);
-		
-		fileIo.OpenProc().free();
-		fileIo.CloseProc().free();
-		
-		if (aiScene == null) {
-			throw new IllegalStateException(Assimp.aiGetErrorString());
+			AIScene aiScene = Assimp.aiImportFileEx(modelPath, flags, fileIo);
+
+			fileIo.OpenProc().free();
+			fileIo.CloseProc().free();
+
+			if (aiScene == null) {
+				throw new IllegalStateException(Assimp.aiGetErrorString());
+			}
+
+			String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
+
+			int numMaterials = aiScene.mNumMaterials();
+			List<Material> materials = new ArrayList<>();
+			for (int i = 0; i < numMaterials; ++i) {
+				AIMaterial aiMaterial = AIMaterial.create(aiScene.mMaterials().get(i));
+				materials.add(processMaterial(aiMaterial, modelDirectory, textureCache));
+			}
+
+			List<Mesh> meshes = processNode(aiScene.mRootNode(), aiScene);
+
+			Assimp.aiReleaseImport(aiScene);
+
+			return new Model(id, meshes, materials);
 		}
-		
-		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
-		
-		int numMaterials = aiScene.mNumMaterials();
-		List<Material> materials = new ArrayList<>();
-		for (int i = 0; i < numMaterials; ++i) {
-			AIMaterial aiMaterial = AIMaterial.create(aiScene.mMaterials().get(i));
-			materials.add(processMaterial(aiMaterial, modelDirectory, textureCache));
-		}
-		
-		List<Mesh> meshes = processNode(aiScene.mRootNode(), aiScene);
-		
-		Assimp.aiReleaseImport(aiScene);
-		
-		return new Model(id, meshes, materials);
 	}
 
+	/**
+	 * <a href="https://github.com/Avoduhcado/MAvogine/issues/41">PBR materials #41</a>
+	 */
 	protected static Material processMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
-		// TODO Use a real default
+		// TODO#41 Use a real default
 		Material material = new Material(textureCache.getDefaultTexture());
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			AIColor4D color = AIColor4D.create();
@@ -121,15 +125,15 @@ public class StaticModelLoader {
 			if (result == Assimp.aiReturn_SUCCESS) {
 				material.setSpecularColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
 			}
-			
-			float reflectance = 0.0f;
-			float[] shininessFactor = new float[] { 0.0f };
-			int[] pMax = new int[] { 1 };
-			result = Assimp.aiGetMaterialFloatArray(aiMaterial, Assimp.AI_MATKEY_SHININESS_STRENGTH, Assimp.aiTextureType_NONE, 0, shininessFactor, pMax);
-			if (result != Assimp.aiReturn_SUCCESS) {
-				reflectance = shininessFactor[0];
-			}
-			// TODO Add reflectance to Material
+
+			// TODO#41 Add reflectance to Material
+//			float reflectance = 0.0f;
+//			float[] shininessFactor = new float[] { 0.0f };
+//			int[] pMax = new int[] { 1 };
+//			result = Assimp.aiGetMaterialFloatArray(aiMaterial, Assimp.AI_MATKEY_SHININESS_STRENGTH, Assimp.aiTextureType_NONE, 0, shininessFactor, pMax);
+//			if (result != Assimp.aiReturn_SUCCESS) {
+//				reflectance = shininessFactor[0];
+//			}
 //			material.setReflectance(reflectance);
 			
 			AIString aiTexturePath = AIString.calloc(stack);
@@ -140,7 +144,7 @@ public class StaticModelLoader {
 				material.setDiffuseColor(Material.DEFAULT_COLOR);
 			}
 			
-			// TODO Add normal maps and potentially ambient/specular mapping
+			// TODO#41 Add normal maps and potentially ambient/specular mapping
 			
 			return material;
 		}
@@ -162,20 +166,13 @@ public class StaticModelLoader {
 	}
 	
 	protected static Mesh processMesh(AIMesh aiMesh) {
-		float[] vertices = processVertices(aiMesh);
-		float[] normals = processNormals(aiMesh);
-		float[] tangents = processTangents(aiMesh);
-		float[] bitangents = processBitangents(aiMesh);
-		float[] textureCoordinates = processTextureCoordinates(aiMesh);
-		int[] indices = processIndices(aiMesh);
-
+		var vertexData = new VertexData(processVertices(aiMesh), processNormals(aiMesh), processTangents(aiMesh), processBitangents(aiMesh), processTextureCoordinates(aiMesh), processIndices(aiMesh));
 		int materialIndex = aiMesh.mMaterialIndex();
-
 		AIAABB aabb = aiMesh.mAABB();
 		Vector3f aabbMin = new Vector3f(aabb.mMin().x(), aabb.mMin().y(), aabb.mMin().z());
 		Vector3f aabbMax = new Vector3f(aabb.mMax().x(), aabb.mMax().y(), aabb.mMax().z());
 
-		return new Mesh(vertices, normals, tangents, bitangents, textureCoordinates, indices, materialIndex, aabbMin, aabbMax);
+		return new Mesh(vertexData, materialIndex, aabbMin, aabbMax);
 	}
 	
 	private static float[] processVertices(AIMesh aiMesh) {

@@ -175,7 +175,7 @@ public class ParShapesBuilder {
 			}
 		}
 
-		var mesh = new Mesh(vertices, normals, tangents, bitangents, textureCoordinates, indices, 0, aabbMin, aabbMax);
+		var mesh = new Mesh(new VertexData(vertices, normals, tangents, bitangents, textureCoordinates, indices), 0, aabbMin, aabbMax);
 
 		parMesh.free();
 		return mesh;

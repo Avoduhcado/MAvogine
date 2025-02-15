@@ -1,7 +1,5 @@
 package com.avogine.io;
 
-import static com.avogine.util.MathUtil.clamp;
-
 import java.nio.*;
 import java.util.*;
 
@@ -65,8 +63,8 @@ public class Window {
 		fullscreen = preferences.fullscreen();
 		monitorIndex = preferences.monitor();
 		
-		maxFps = clamp(preferences.fpsCap(), 0, 1000);
-		maxBackgroundFps = clamp(preferences.backgroundFps(), 1, maxFps);
+		maxFps = Math.clamp(preferences.fpsCap(), 0, 1000);
+		maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
 		
 		input = new Input(this);
 		
@@ -135,27 +133,7 @@ public class Window {
 			GLFW.glfwSetWindowOpacity(id, 1.0f);
 		}
 		
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			IntBuffer iconWidth = stack.mallocInt(1);
-			IntBuffer iconHeight = stack.mallocInt(1);
-			IntBuffer iconChannels = stack.mallocInt(1);
-			
-			// TODO Support loading multiple icons into a single GLFWImage.Buffer
-			ByteBuffer fileData = ResourceUtil.readResourceToBuffer(ResourceConstants.TEXTURES.with("icon", "AGDG Logo.png"), 1024);
-			ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, iconWidth, iconHeight, iconChannels, 0);
-			if (imageData != null) {
-				GLFWImage icon = GLFWImage.malloc(stack);
-				var iconBuffer = GLFWImage.malloc(1, stack);
-				iconBuffer.put(icon.set(iconWidth.get(), iconHeight.get(), imageData));
-				iconBuffer.flip();
-				
-				GLFW.glfwSetWindowIcon(id, iconBuffer);
-				
-				STBImage.stbi_image_free(imageData);
-			} else {
-				AvoLog.log().warn("Icon failed to load.");
-			}
-		}
+		loadAndSetIcons(ResourceConstants.TEXTURES.with("icon", "AGDG Logo.png"));
 		
 		// TODO Customizable by WindowConfig?
 		if (GLFW.glfwRawMouseMotionSupported()) {
@@ -241,6 +219,38 @@ public class Window {
 		
 		GLFW.glfwTerminate();
 		Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
+	}
+	
+	/**
+	 * Read in image file data as {@link GLFWImage}s and load them as a Buffer to the Window icon.
+	 * @param filePaths a list of image file resource paths to load as application icons.
+	 */
+	private void loadAndSetIcons(String...filePaths) {
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			List<GLFWImage> iconList = new ArrayList<>();
+			
+			for (String filePath : filePaths) {
+				GLFWImage icon = GLFWImage.malloc(stack);
+
+				IntBuffer width = stack.mallocInt(1);
+				IntBuffer height = stack.mallocInt(1);
+				IntBuffer nrChannels = stack.mallocInt(1);
+
+				ByteBuffer fileData = ResourceUtil.readResourceToBuffer(filePath, 1024);
+				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 0);
+				if (imageData != null) {
+					icon.set(width.get(), height.get(), imageData);
+					iconList.add(icon);
+				} else {
+					AvoLog.log().warn("Icon failed to load: {}", filePath);
+				}
+			}
+			
+			GLFWImage.Buffer iconBuffer = GLFWImage.malloc(iconList.size(), stack);
+			iconList.forEach(iconBuffer::put);
+			iconBuffer.flip();
+			GLFW.glfwSetWindowIcon(id, iconBuffer);
+		}
 	}
 	
 	/**

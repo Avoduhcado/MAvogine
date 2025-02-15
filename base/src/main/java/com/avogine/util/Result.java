@@ -1,106 +1,131 @@
 package com.avogine.util;
 
-import java.util.Objects;
-import java.util.function.*;
+import java.util.function.Function;
 
 /**
- *
- * @param <T>
- * @param success
- * @param failure
+ * @param <T> The type of value in the event of a successful {@link Result}.
+ * @param value
  */
-public record Result<T>(T success, Exception failure) {
-
+public record Result<T>(Object value) {
+	
 	/**
-	 * Validate that at least one, but only one field has been set.
+	 * Construct a {@link Result} containing a successful value.
+	 * @param <T> The type of value.
+	 * @param value The successful result value.
+	 * @return a {@link Result} containing a successful value.
 	 */
-	public Result {
-		if (Objects.isNull(success)) {
-			Objects.requireNonNull(failure);
-		} else if (Objects.nonNull(failure)) {
-			throw new IllegalStateException("Cannot construct a successful Result with a failure.");
-		}
+	public static <T> Result<T> success(T value) {
+		return new Result<>(value);
 	}
-
+	
 	/**
-	 * Construct a {@link Result} containing the successful value of the wrapped operation.
-	 * @param success The successful result value of the wrapped operation.
+	 * Construct a {@link Result} containing a caught {@link Throwable}.
+	 * @param <T> The type of a would be successful value.
+	 * @param exception The failure result {@link Throwable}.
+	 * @return a {@link Result} containing an encapsulated {@link Throwable}.
 	 */
-	public Result(T success) {
-		this(success, null);
+	public static <T> Result<T> failure(Throwable exception) {
+		return new Result<>(new Failure(exception));
 	}
-
+	
 	/**
-	 * Construct a {@link Result} containing the caught {@link Exception} of the wrapped operation.
-	 * @param failure The failure result {@link Exception} of the wrapped operation.
-	 */
-	public Result(Exception failure) {
-		this(null, failure);
-	}
-
-	/**
-	 * @return true if this {@link Result} represents a successful operation.
+	 * @return true if this {@link Result} represents a successful outcome.
 	 */
 	public boolean isSuccess() {
-		return Objects.nonNull(success);
+		return !(value instanceof Failure);
 	}
-
+	
 	/**
-	 * @return true if this {@link Result} represents a failed operation.
+	 * @return true if this {@link Result} represents a failed outcome.
 	 */
 	public boolean isFailure() {
-		return !isSuccess();
+		return value instanceof Failure;
 	}
 	
 	/**
 	 * @return The successful result value if {@link Result#isSuccess()} is true, otherwise returns {@code null}.
 	 */
+	@SuppressWarnings("unchecked")
 	public T getOrNull() {
-		if (failure != null) {
-			return null;
-		}
-		return success;
+		return isFailure() ? null : (T) value;
 	}
 	
 	/**
-	 * @return The successful result value if {@link Result#isSuccess()} is true, otherwise throws {@link Result#failure()}.
-	 * @throws Exception The caught {@link Exception} if this Result failed.
+	 * @return The encapsulated {@link Throwable} if {@link Result#isFailure()} is true, otherwise returns {@code null}.
 	 */
-	public T getOrThrow() throws Exception {
-		if (failure != null) {
-			throw failure;
-		}
-		return success;
+	public Throwable exceptionOrNull() {
+		return value instanceof Failure(Throwable exception) ? exception : null;
 	}
 	
-	public T getOrElse(Function<Exception, T> failedAction) {
-		if (failure != null) {
-			return failedAction.apply(failure);
-		}
-		return success;
+	/**
+	 * @return The successful result value if {@link Result#isSuccess()} is true, otherwise throws the encapsulated {@link Throwable}.
+	 * @throws Throwable The encapsulated {@link Throwable} if this Result failed.
+	 */
+	@SuppressWarnings("unchecked")
+	public T getOrThrow() throws Throwable {
+		throwOnFailure();
+		return (T) value;
 	}
-
-	public void ifPresent(Consumer<? super T> action) {
-		if (success != null) {
-			action.accept(success);
+	
+	/**
+	 * @param onFailure
+	 * @return The successful result value if {@link Result#isSuccess()} is true, otherwise returns the result of {@code onFailure}.
+	 */
+	@SuppressWarnings("unchecked")
+	public T getOrElse(Function<Throwable, T> onFailure) {
+		return switch (exceptionOrNull()) {
+			case null -> (T) value;
+			case Throwable exception -> onFailure.apply(exception);
+		};
+	}
+	
+	/**
+	 * @param defaultValue
+	 * @return The successful result value if {@link Result#isSuccess()} is true, otherwise returns {@code defaultValue}.
+	 */
+	@SuppressWarnings("unchecked")
+	public T getOrDefault(T defaultValue) {
+		if (isFailure()) {
+			return defaultValue;
+		}
+		return (T) value;
+	}
+	
+	@SuppressWarnings("squid:S112") // Result is intended to enhance "known" cases of error handling and _should not_ be a total replacement for try/catch in any instances of the code.
+	private void throwOnFailure() throws Throwable {
+		if (value instanceof Failure(Throwable exception)) {
+			throw exception;
 		}
 	}
-
+	
+	private static record Failure(Throwable exception) {
+		
+	}
+	
+	/**
+	 *
+	 * @param <T>
+	 * @param <E>
+	 */
 	@FunctionalInterface
-	public interface ThrowingSupplier<T, E extends Exception> {
+	public interface ThrowingSupplier<T, E extends Throwable> {
+		/**
+		 * @return a result
+		 * @throws E
+		 */
 		T get() throws E;
 	}
 	
 	/**
 	 * @param <T>
 	 * @param block
-	 * @return
+	 * @return a {@link Result} containing either a successful value or an encapsulated {@link Throwable}.
 	 */
-	public static <T> Result<T> runCatching(ThrowingSupplier<T, ? extends Exception> block) {
+	public static <T> Result<T> runCatching(ThrowingSupplier<T, Throwable> block) {
 		try {
-			return new Result<>(block.get());
-		} catch (Exception e) {
-			return new Result<>(e);
+			return Result.success(block.get());
+		} catch (Throwable e) {
+			return Result.failure(e);
 		}
 	}
 }
