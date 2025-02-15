@@ -14,8 +14,6 @@ import java.util.stream.Stream;
 
 import org.lwjgl.system.*;
 
-import com.avogine.render.data.material.Material;
-
 /**
  * TODO Potentially include multiple VBOs for instanced meshes, one for static data, and one for dynamic data that is streamed in as the scene updates and meshes transform themselves
  * Cleanup all this code, presently this is pretty hardcoded just for rendering 2D sprites with a texture atlas

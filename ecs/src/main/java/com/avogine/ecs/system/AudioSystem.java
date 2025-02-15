@@ -5,8 +5,7 @@ import java.util.UUID;
 import com.avogine.audio.data.*;
 import com.avogine.ecs.*;
 import com.avogine.ecs.components.*;
-import com.avogine.game.HotGame;
-import com.avogine.game.scene.ECSScene;
+import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 
 /**
@@ -18,24 +17,24 @@ public class AudioSystem extends EntitySystem implements Updateable {
 	private static record SourcesArchetype(UUID id, AudioComponent audio, TransformComponent transform) implements EntityArchetype {}
 	private static record ListenerArchetype(UUID id, AudioListenerTag tag, TransformComponent transform) implements EntityArchetype {}
 	
-	private final AudioListener audioListener;
+	private final SoundListener audioListener;
 	
 	/**
 	 * 
 	 */
 	public AudioSystem() {
-		audioListener = new AudioListener();
+		audioListener = new SoundListener();
 	}
 	
 	@Override
-	public void onRegister(HotGame game) {
+	public void onRegister(RegisterableGame game) {
 		// Nothing to register
 	}
 
 	@Override
-	public void onUpdate(GameState gameState) {
-		if (gameState.scene() instanceof ECSScene scene) {
-			updateSources(scene.getEntityManager());
+	public void onUpdate(Scene scene, float delta) {
+		if (scene instanceof ECSScene ecsScene) {
+			updateSources(ecsScene.getEntityManager());
 		}
 	}
 	
@@ -56,7 +55,7 @@ public class AudioSystem extends EntitySystem implements Updateable {
 					audioSource.cleanup();
 				}
 			});
-			source.audio.sources().removeIf(AudioSource::isStopped);
+			source.audio.sources().removeIf(SoundSource::isStopped);
 		});
 	}
 

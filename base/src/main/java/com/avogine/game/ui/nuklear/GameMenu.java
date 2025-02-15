@@ -10,22 +10,23 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.game.HotGame;
-import com.avogine.game.scene.SwappableScene;
+import com.avogine.audio.Audio;
+import com.avogine.game.scene.Scene;
+import com.avogine.game.state.GameState;
 import com.avogine.game.ui.nuklear.audio.AudioConfigUI;
 import com.avogine.game.util.*;
-import com.avogine.io.Window;
+import com.avogine.io.*;
 
 /**
  * TODO Investigate initializing with all elements hidden, and a key listener for ESC to unhide the menu
+ * @param <T> 
  */
-public class GameMenu implements UIElement, Renderable, Cleanupable {
+public class GameMenu<T extends GameState<?, ?>> implements UIElement, Renderable, Cleanupable {
 
-	private HotGame game;
-	private NuklearUI gui;
+	private final NkContext context;
 	
 	private boolean loadGameEnabled;
-	private Supplier<SwappableScene> quitToTitleSupplier;
+	private Supplier<Class<T>> quitToTitleSupplier;
 	
 	private String backgroundTitle;
 	private NkRect backgroundPosition;
@@ -41,11 +42,15 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 	private int audioWindowOpts;
 	
 	/**
-	 * @param game 
+	 * @param context 
+	 * @param audio 
+	 * @param stateSwapper 
 	 * @param quitToTitleSupplier 
 	 * 
 	 */
-	public GameMenu(HotGame game, Supplier<SwappableScene> quitToTitleSupplier) {
+	public GameMenu(NkContext context, Audio audio, Supplier<Class<T>> quitToTitleSupplier) {
+		this.context = context;
+		
 		loadGameEnabled = false;
 		this.quitToTitleSupplier = quitToTitleSupplier;
 		
@@ -55,37 +60,30 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 		windowOpts = NK_WINDOW_NO_SCROLLBAR;
 		windowTitle = "GAME_MENU";
 		
-		audioConfig = new AudioConfigUI(game.getAudio());
+		audioConfig = new AudioConfigUI(audio);
 		audioWindowTitle = "AUDIO_GAME_SETTINGS";
 		audioWindowOpts = NK_WINDOW_BORDER;
 	}
 	
 	@Override
-	public void onRegister(HotGame game) {
-		this.game = game;
-		gui = game.getGUI();
-		
-		if (gui != null) {
-			NkContext context = gui.getContext();
+	public void onRegister(RegisterableGame game) {
+		backgroundPosition = NkRect.calloc();
+		nk_begin(context, backgroundTitle, backgroundPosition, 0);
+		nk_end(context);
+		nk_window_show(context, backgroundTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
+		nk_window_set_focus(context, backgroundTitle);
 
-			backgroundPosition = NkRect.calloc();
-			nk_begin(context, backgroundTitle, backgroundPosition, 0);
-			nk_end(context);
-			nk_window_show(context, backgroundTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
-			nk_window_set_focus(context, backgroundTitle);
+		position = NkRect.calloc();
+		nk_begin(context, windowTitle, position, 0);
+		nk_end(context);
+		nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
+		nk_window_set_focus(context, windowTitle);
 
-			position = NkRect.calloc();
-			nk_begin(context, windowTitle, position, 0);
-			nk_end(context);
-			nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
-			nk_window_set_focus(context, windowTitle);
-
-			audioPosition = NkRect.calloc();
-			nk_begin(context, audioWindowTitle, audioPosition, 0);
-			nk_end(context);
-			nk_window_show(context, audioWindowTitle, NK_HIDDEN);
-			nk_window_set_focus(context, audioWindowTitle);
-		}
+		audioPosition = NkRect.calloc();
+		nk_begin(context, audioWindowTitle, audioPosition, 0);
+		nk_end(context);
+		nk_window_show(context, audioWindowTitle, NK_HIDDEN);
+		nk_window_set_focus(context, audioWindowTitle);
 	}
 	
 	@Override
@@ -94,10 +92,8 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 	}
 
 	@Override
-	public void onRender(Window window, SceneState sceneState) {
-		if (gui != null) {
-			prepare(gui.getContext(), window);
-		}
+	public void onRender(Window window, Scene scene) {
+		prepare(context, window);
 	}
 
 	@Override
@@ -222,7 +218,7 @@ public class GameMenu implements UIElement, Renderable, Cleanupable {
 	}
 
 	private void loadTitleScene() {
-		game.queueSceneSwap(quitToTitleSupplier.get());
+		// Not implemented
 	}
 	
 	private void showOptions(NkContext context) {

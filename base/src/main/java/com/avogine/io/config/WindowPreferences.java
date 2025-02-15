@@ -6,9 +6,9 @@ package com.avogine.io.config;
  * @param height 
  * @param fullscreen 
  * @param monitor 
- * @param fps A value of 0 indicates enabling VSync
+ * @param fpsCap A value of 0 indicates enabling VSync.
  * @param backgroundFps
  */
-public record WindowPreferences(int width, int height, boolean fullscreen, int monitor, int fps, int backgroundFps) {
+public record WindowPreferences(int width, int height, boolean fullscreen, int monitor, int fpsCap, int backgroundFps) {
 
 }

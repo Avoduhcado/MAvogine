@@ -24,7 +24,6 @@ public class FrameBuffer {
 	
 	protected Window window;
 	
-	protected TextureAtlas colorTexture;
 	protected int colorAttachment;
 	protected int rbo;
 	
@@ -62,7 +61,6 @@ public class FrameBuffer {
 		bind();
 		
 		// Create a color texture
-		// TODO Reorganize project so that this can be called from TextureLoader
 		colorAttachment = glGenTextures();
 		glBindTexture(GL_TEXTURE_2D, colorAttachment);
 		
@@ -74,8 +72,6 @@ public class FrameBuffer {
 		
 		// Attach the color texture to this framebuffer
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachment, 0);
-		
-		colorTexture = new TextureAtlas(colorAttachment, width.get(), height.get());
 		
 		// Create a depth and stencil renderbuffer
 		rbo = glGenRenderbuffers();
@@ -121,10 +117,10 @@ public class FrameBuffer {
 	}
 	
 	/**
-	 * @return The texture containing the color buffer 
+	 * @return The texture ID containing the color buffer 
 	 */
-	public TextureAtlas getColorTexture() {
-		return colorTexture;
+	public int getColorAttachment() {
+		return colorAttachment;
 	}
 	
 	/**

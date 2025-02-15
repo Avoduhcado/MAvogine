@@ -21,11 +21,11 @@ class ECSWorldTest {
 	
 	@BeforeEach
 	void setup() {
-		scene = new TestECSScene();
+		var gameState = new TestECSGameState();
 		
-		game = new TestGame(scene);
+		game = new TestGame(gameState);
 		game.init(null);
-		
+		scene = gameState.getScene();
 		
 		world = scene.getEntityManager();
 	}

@@ -1,19 +1,20 @@
 package com.avogine.io;
 
-import static com.avogine.util.MathUtil.clamp;
-
-import java.nio.IntBuffer;
+import java.nio.*;
 import java.util.*;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
+import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.io.config.*;
 import com.avogine.logging.AvoLog;
-import com.avogine.render.loader.texture.IconLoader;
+import com.avogine.util.ResourceUtils;
+import com.avogine.util.resource.ResourceConstants;
 
 /**
  * {@link Window} provides the primary entry point into OpenGL and GLFW.
@@ -47,6 +48,8 @@ public class Window {
 	
 	private final Input input;
 	
+	private final List<NuklearUI> guiContexts;
+	
 	/**
 	 * @param title The window title
 	 * @param preferences 
@@ -60,10 +63,14 @@ public class Window {
 		fullscreen = preferences.fullscreen();
 		monitorIndex = preferences.monitor();
 		
-		maxFps = clamp(preferences.fps(), 0, 1000);
-		maxBackgroundFps = clamp(preferences.backgroundFps(), 1, maxFps);
+		maxFps = Math.clamp(preferences.fpsCap(), 0, 1000);
+		if (maxFps > 0) {
+			maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
+		}
 		
 		input = new Input(this);
+		
+		guiContexts = new ArrayList<>();
 	}
 	
 	/**
@@ -71,7 +78,7 @@ public class Window {
 	 * @param inputConfig 
 	 */
 	public void init(GLFWConfig windowConfig, InputConfig inputConfig) {
-		GLFWErrorCallback.createPrint().set();
+		GLFW.glfwSetErrorCallback((int errorCode, long msgPtr) -> AvoLog.log().error("Error code [{}], msg [{}]", errorCode, MemoryUtil.memUTF8(msgPtr)));
 		
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Could not initialize GLFW!");
@@ -98,8 +105,6 @@ public class Window {
 			GL11.glViewport(0, 0, width, height);
 		});
 		
-		GLFW.glfwSetErrorCallback((int errorCode, long msgPtr) -> AvoLog.log().error("Error code [{}], msg [{}]", errorCode, MemoryUtil.memUTF8(msgPtr)));
-		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
 			IntBuffer pHeight = stack.mallocInt(1);
@@ -125,14 +130,14 @@ public class Window {
 			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFPS = 1.0 / (focused ? maxFps : maxBackgroundFps));
 		}
 
-		// TODO Customize by WindowConfig?
+		// XXX Customize by WindowConfig?
 		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
 			GLFW.glfwSetWindowOpacity(id, 1.0f);
 		}
 		
-		IconLoader.loadAndSetIcons(id, "icon");
+		loadAndSetIcons(ResourceConstants.TEXTURES.with("icon", "AGDG Logo.png"));
 		
-		// TODO Customizable by WindowConfig?
+		// XXX Customizable by WindowConfig?
 		if (GLFW.glfwRawMouseMotionSupported()) {
 			GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
 		}
@@ -157,12 +162,33 @@ public class Window {
 	}
 	
 	/**
-	 * 
+	 * Poll GLFW for events and process them in {@link Input}.
 	 */
 	public void pollEvents() {
+		guiContexts.forEach(NuklearUI::inputBegin);
 		GLFW.glfwPollEvents();
+		guiContexts.forEach(NuklearUI::inputEnd);
 		
 		input.update();
+	}
+	
+	/**
+	 * Register a {@link NuklearUI} to this Window so that it's internal input state can be processed around calls to {@link #pollEvents()}.
+	 * @param gui The {@link NuklearUI} to register.
+	 * @return The {@link NuklearUI}.
+	 */
+	public NuklearUI registerGUIContext(NuklearUI gui) {
+		guiContexts.add(gui);
+		return gui;
+	}
+	
+	/**
+	 * Unregister a {@link NuklearUI} from this Window.
+	 * @param gui The {@link NuklearUI} to remove.
+	 * @return {@code true} if the {@link NuklearUI} was removed.
+	 */
+	public boolean removeGUIContext(NuklearUI gui) {
+		return guiContexts.remove(gui);
 	}
 	
 	/**
@@ -194,7 +220,39 @@ public class Window {
 		close();
 		
 		GLFW.glfwTerminate();
-		GLFW.glfwSetErrorCallback(null).free();
+		Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
+	}
+	
+	/**
+	 * Read in image file data as {@link GLFWImage}s and load them as a Buffer to the Window icon.
+	 * @param filePaths a list of image file resource paths to load as application icons.
+	 */
+	private void loadAndSetIcons(String...filePaths) {
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			List<GLFWImage> iconList = new ArrayList<>();
+			
+			for (String filePath : filePaths) {
+				GLFWImage icon = GLFWImage.malloc(stack);
+
+				IntBuffer iconWidth = stack.mallocInt(1);
+				IntBuffer iconHeight = stack.mallocInt(1);
+				IntBuffer nrChannels = stack.mallocInt(1);
+
+				ByteBuffer fileData = ResourceUtils.readResourceToBuffer(filePath, 1024);
+				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, iconWidth, iconHeight, nrChannels, 0);
+				if (imageData != null) {
+					icon.set(iconWidth.get(), iconHeight.get(), imageData);
+					iconList.add(icon);
+				} else {
+					AvoLog.log().warn("Icon failed to load: {}", filePath);
+				}
+			}
+			
+			GLFWImage.Buffer iconBuffer = GLFWImage.malloc(iconList.size(), stack);
+			iconList.forEach(iconBuffer::put);
+			iconBuffer.flip();
+			GLFW.glfwSetWindowIcon(id, iconBuffer);
+		}
 	}
 	
 	/**

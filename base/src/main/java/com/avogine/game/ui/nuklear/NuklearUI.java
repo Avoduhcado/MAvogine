@@ -24,7 +24,8 @@ import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
 import com.avogine.render.data.nuklear.NuklearMesh;
 import com.avogine.render.shader.NuklearShader;
-import com.avogine.util.resource.*;
+import com.avogine.util.ResourceUtils;
+import com.avogine.util.resource.ResourceConstants;
 
 /**
  * Wrapper implementation for {@link Nuklear}.
@@ -44,9 +45,6 @@ public class NuklearUI {
 				.mfree((handle, ptr) -> nmemFree(ptr));
 	}
 	
-	// Storage for font data
-	private final ByteBuffer ttf;
-
 	private final Matrix4f projectionMatrix;
 	
 	private NkContext context;
@@ -61,11 +59,14 @@ public class NuklearUI {
 	
 	private NuklearMesh mesh;
 	
+	private InputListener keyboardHandler;
+	private InputListener scrollHandler;
+	private InputListener mouseHandler;
+	
 	/**
 	 * 
 	 */
 	public NuklearUI() {
-		ttf = ResourceFileReader.ioResourceToByteBuffer(ResourceConstants.FONT_PATH + "Roboto-Regular.ttf", 512 * 1024);
 		projectionMatrix = new Matrix4f();
 		
 		// Create a Nuklear context, it is used everywhere.
@@ -95,12 +96,16 @@ public class NuklearUI {
 		
 		mesh = new NuklearMesh(window.getWidth(), window.getHeight(), window.getWidth(), window.getHeight());
 		
-		window.getInput().addInputListener(new NuklearKeyboardHandler());
-		window.getInput().addInputListener(new NuklearScrollHandler());
-		window.getInput().addInputListener(new NuklearMouseHandler());
+		keyboardHandler = window.getInput().addInputListener(new NuklearKeyboardHandler());
+		scrollHandler = window.getInput().addInputListener(new NuklearScrollHandler());
+		mouseHandler = window.getInput().addInputListener(new NuklearMouseHandler());
+		
+		window.registerGUIContext(this);
 	}
 	
 	private void initFont() {
+		ByteBuffer ttfBuffer = ResourceUtils.readResourceToBuffer(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 512 * 1024);
+		
 		final int BITMAP_W = 1024;
 		final int BITMAP_H = 1024;
 
@@ -114,7 +119,7 @@ public class NuklearUI {
 		float descent;
 
 		try (MemoryStack stack = stackPush()) {
-			stbtt_InitFont(fontInfo, ttf);
+			stbtt_InitFont(fontInfo, ttfBuffer);
 			scale = stbtt_ScaleForPixelHeight(fontInfo, FONT_HEIGHT);
 
 			IntBuffer d = stack.mallocInt(1);
@@ -126,7 +131,7 @@ public class NuklearUI {
 			STBTTPackContext pc = STBTTPackContext.malloc(stack);
 			stbtt_PackBegin(pc, bitmap, BITMAP_W, BITMAP_H, 0, 1, NULL);
 			stbtt_PackSetOversampling(pc, 4, 4);
-			stbtt_PackFontRange(pc, ttf, 0, FONT_HEIGHT, 32, cdata);
+			stbtt_PackFontRange(pc, ttfBuffer, 0, FONT_HEIGHT, 32, cdata);
 			stbtt_PackEnd(pc);
 
 			// Convert R8 to RGBA8
@@ -218,25 +223,22 @@ public class NuklearUI {
 	
 	/**
 	 * @param window
+	 * <a href="https://github.com/Avoduhcado/MAvogine/issues/42">Window resize handler #42</a>
 	 */
 	public void onRender(Window window) {
 		try (MemoryStack stack = stackPush()) {
 			IntBuffer w = stack.mallocInt(1);
 			IntBuffer h = stack.mallocInt(1);
-
-//			glfwGetWindowSize(windowId, w, h);
-//			width = w.get(0);
-//			height = h.get(0);
-
+			
 			glfwGetFramebufferSize(window.getId(), w, h);
 			displayWidth = w.get(0);
 			displayHeight = h.get(0);
 
 			float halfWidth = displayWidth / 2.0f;
 			float halfHeight = displayHeight / 2.0f;
-			projectionMatrix.identity().ortho2D(-halfWidth, halfWidth, halfHeight, -halfHeight).translate(-halfWidth, -halfHeight, 0);
+			projectionMatrix.setOrtho2D(-halfWidth, halfWidth, halfHeight, -halfHeight).translate(-halfWidth, -halfHeight, 0);
 			
-			// TODO Currently setting width/height and display values to just the framebuffer value, not ideal.
+			// TODO#42 Currently setting width/height and display values to just the framebuffer value, not ideal.
 			mesh.setSize(displayWidth, displayHeight);
 		}
 		
@@ -248,7 +250,8 @@ public class NuklearUI {
 		GL11.glViewport(0, 0, displayWidth, displayHeight);
 
 		mesh.render(context, commands);
-		
+
+		nuklearShader.unbind();
 		nk_clear(context);
 		
 		teardownUIState();
@@ -266,10 +269,9 @@ public class NuklearUI {
 	}
 	
 	private void teardownUIState() {
-		nuklearShader.unbind();
 		glDisable(GL_BLEND);
 		glDisable(GL_SCISSOR_TEST);
-		// TODO Re-enable these based on some global render settings
+		// XXX Re-enable these based on some global render settings or cache the values beforehand?
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 	}
@@ -291,11 +293,7 @@ public class NuklearUI {
 
 		@Override
 		public void keyPressed(KeyEvent event) {
-			handleKeyEvent(event);
-			
-			if (nk_item_is_any_active(context)) {
-				event.consume();
-			}
+			keyReleased(event);
 		}
 		
 		private void handleKeyEvent(KeyEvent event) {
@@ -361,7 +359,7 @@ public class NuklearUI {
 						.y((float) event.yOffset());
 				nk_input_scroll(context, scroll);
 			}
-			// TODO This may want to consume events as well
+			// XXX This may want to consume events as well
 		}
 		
 		@Override
@@ -377,28 +375,6 @@ public class NuklearUI {
 			if (nk_window_is_any_hovered(context)) {
 				event.consume();
 			}
-//			try (MemoryStack stack = stackPush()) {
-//				DoubleBuffer cx = stack.mallocDouble(1);
-//				DoubleBuffer cy = stack.mallocDouble(1);
-//
-//				glfwGetCursorPos(event.window(), cx, cy);
-//
-//				int x = (int)cx.get(0);
-//				int y = (int)cy.get(0);
-//
-//				int nkButton = switch (event.button()) {
-//					case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
-//					case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
-//					default -> NK_BUTTON_LEFT;
-//				};
-//				// XXX Input reports held mouse clicks as GLFW_REPEAT, unclear if that's correct.
-//				nk_input_button(context, nkButton, x, y, true);
-//				
-//				if (nk_item_is_any_active(context)) {
-////				if (nk_window_is_any_hovered(context)) {
-//					event.consume();
-//				}
-//			}
 		}
 
 		@Override
@@ -421,7 +397,6 @@ public class NuklearUI {
 				nk_input_button(context, nkButton, x, y, true);
 				
 				if (nk_item_is_any_active(context)) {
-//				if (nk_window_is_any_hovered(context)) {
 					event.consume();
 				}
 			}
@@ -447,7 +422,6 @@ public class NuklearUI {
 				nk_input_button(context, nkButton, x, y, false);
 				
 				if (nk_item_is_any_active(context)) {
-//				if (nk_window_is_any_hovered(context)) {
 					event.consume();
 				}
 			}
@@ -504,9 +478,9 @@ public class NuklearUI {
 	}
 	
 	/**
-	 * 
+	 * @param window 
 	 */
-	public void cleanup() {
+	public void cleanup(Window window) {
 		nk_free(context);
 		mesh.cleanup();
 		nuklearShader.cleanup();
@@ -517,6 +491,9 @@ public class NuklearUI {
 		Objects.requireNonNull(ALLOCATOR.alloc()).free();
 		Objects.requireNonNull(ALLOCATOR.mfree()).free();
 		
-		// TODO Remove InputListeners, would likely need to store a reference to the Window, otherwise need to rely on saving InputListeners to the corresponding Game and remove them there
+		window.getInput().removeInputListener(keyboardHandler);
+		window.getInput().removeInputListener(scrollHandler);
+		window.getInput().removeInputListener(mouseHandler);
+		window.removeGUIContext(this);
 	}
 }

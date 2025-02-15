@@ -126,18 +126,18 @@ public enum FrameProfiler implements Profilable {
 			
 			AvoLog.log().debug("""
 
-					Frame Time: 	{}
-					Input Time: 	{}
-					Update Time:	{}
-					Render Time:	{}
+					Frame Time: \t{}
+					Input Time: \t{}
+					Update Time:\t{}
+					Render Time:\t{}
 
-					Input/Frame:	{}
-					Update/Frame:	{}
-					Render/Frame:	{}
-					Frame/Budget:	{}
-					Input/Budget:	{}
-					Update/Budget:	{}
-					Render/Budget:	{}
+					Input/Frame:\t{}
+					Update/Frame:\t{}
+					Render/Frame:\t{}
+					Frame/Budget:\t{}
+					Input/Budget:\t{}
+					Update/Budget:\t{}
+					Render/Budget:\t{}
 					""",
 					frameTime, inputTime, updateTime, renderTime,
 					inputPerFrame, updatePerFrame, renderPerFrame, framePerBudget, inputPerBudget, updatePerBudget, renderPerBudget);

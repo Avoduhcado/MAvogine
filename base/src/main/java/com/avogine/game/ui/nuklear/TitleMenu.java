@@ -9,22 +9,23 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.game.HotGame;
-import com.avogine.game.scene.SwappableScene;
+import com.avogine.audio.Audio;
+import com.avogine.game.scene.Scene;
+import com.avogine.game.state.GameState;
 import com.avogine.game.ui.nuklear.audio.AudioConfigUI;
 import com.avogine.game.util.*;
-import com.avogine.io.Window;
+import com.avogine.io.*;
 
 /**
+ * @param <T> 
  *
  */
-public class TitleMenu implements UIElement, Renderable, Cleanupable {
+public class TitleMenu<T extends GameState<?, ?>> implements UIElement, Renderable, Cleanupable {
 
-	private HotGame game;
-	private NuklearUI gui;
+	private final NkContext context;
 	
 	private boolean loadGameEnabled;
-	private Supplier<SwappableScene> loadNewGameSupplier;
+	private Supplier<Class<T>> loadNewGameSupplier;
 	
 	private String windowTitle;
 	private NkRect position;
@@ -36,49 +37,43 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 	private int audioWindowOpts;
 
 	/**
-	 * @param game 
+	 * @param context 
+	 * @param audio 
 	 * @param loadNewGameSupplier 
 	 * 
 	 */
-	public TitleMenu(HotGame game, Supplier<SwappableScene> loadNewGameSupplier) {
+	public TitleMenu(NkContext context, Audio audio, Supplier<Class<T>> loadNewGameSupplier) {
+		this.context = context;
+		
 		loadGameEnabled = saveGamesExist();
 		this.loadNewGameSupplier = loadNewGameSupplier;
 		
 		windowOpts = NK_WINDOW_NO_SCROLLBAR;
 		windowTitle = "TITLE_MENU";
 		
-		audioConfig = new AudioConfigUI(game.getAudio());
+		audioConfig = new AudioConfigUI(audio);
 		audioWindowTitle = "AUDIO_SETTINGS";
 		audioWindowOpts = NK_WINDOW_BORDER;
 	}
 
 	@Override
-	public void onRegister(HotGame game) {
-		this.game = game;
-		gui = game.getGUI();
-		
-		if (gui != null) {
-			NkContext context = gui.getContext();
+	public void onRegister(RegisterableGame game) {
+		position = NkRect.create();
+		nk_begin(context, windowTitle, position, 0);
+		nk_end(context);
+		nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
 
-			position = NkRect.create();
-			nk_begin(context, windowTitle, position, 0);
-			nk_end(context);
-			nk_window_show(context, windowTitle, showOnInit() ? NK_SHOWN : NK_HIDDEN);
+		audioPosition = NkRect.calloc();
+		nk_begin(context, audioWindowTitle, audioPosition, 0);
+		nk_end(context);
+		nk_window_show(context, audioWindowTitle, NK_HIDDEN);
 
-			audioPosition = NkRect.calloc();
-			nk_begin(context, audioWindowTitle, audioPosition, 0);
-			nk_end(context);
-			nk_window_show(context, audioWindowTitle, NK_HIDDEN);
-
-			nk_window_set_focus(context, windowTitle);
-		}
+		nk_window_set_focus(context, windowTitle);
 	}
 
 	@Override
-	public void onRender(Window window, SceneState sceneState) {
-		if (gui != null) {
-			prepare(gui.getContext(), window);
-		}
+	public void onRender(Window window, Scene scene) {
+		prepare(context, window);
 	}
 	
 	/**
@@ -180,7 +175,7 @@ public class TitleMenu implements UIElement, Renderable, Cleanupable {
 	}
 	
 	private void loadNewGame() {
-		game.queueSceneSwap(loadNewGameSupplier.get());
+		// Not implemented
 	}
 	
 	private boolean saveGamesExist() {

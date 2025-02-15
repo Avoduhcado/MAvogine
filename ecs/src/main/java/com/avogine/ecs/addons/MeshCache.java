@@ -2,8 +2,8 @@ package com.avogine.ecs.addons;
 
 import java.util.*;
 
-import com.avogine.ecs.*;
-import com.avogine.render.data.mesh.*;
+import com.avogine.ecs.EntitySystemAddon;
+import com.avogine.render.data.Mesh;
 
 /**
  *

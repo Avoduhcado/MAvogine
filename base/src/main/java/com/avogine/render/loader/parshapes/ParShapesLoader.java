@@ -2,7 +2,7 @@ package com.avogine.render.loader.parshapes;
 
 import org.lwjgl.util.par.ParShapes;
 
-import com.avogine.render.data.mesh.Mesh;
+import com.avogine.render.data.Mesh;
 
 /**
  * TODO Add param objects to pass to each method for shape customization

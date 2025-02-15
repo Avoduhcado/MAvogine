@@ -1,24 +1,35 @@
 package com.avogine;
 
-import com.avogine.game.HotGame;
-import com.avogine.game.scene.*;
+import com.avogine.ecs.TestECSGameState;
+import com.avogine.game.HotSwapGame;
+import com.avogine.game.state.GameState;
 import com.avogine.io.Window;
 
 /**
  *
  */
-public class TestGame extends HotGame {
+public class TestGame extends HotSwapGame {
 
 	/**
-	 * @param scene 
+	 * @param gameState 
 	 */
-	public TestGame(SwappableScene scene) {
-		super(scene);
+	public TestGame(TestECSGameState gameState) {
+		super(gameState);
 	}
 
 	@Override
 	public void init(Window window) {
 		// Not implemented
+	}
+
+	@Override
+	public boolean hasQueuedGameState() {
+		return false;
+	}
+
+	@Override
+	public GameState<?, ?> currentState() {
+		return null;
 	}
 
 }

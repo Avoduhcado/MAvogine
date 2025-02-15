@@ -11,7 +11,7 @@ import com.avogine.util.FrameProfiler;
  * This is the primary entry point into running a game.
  * <p>
  * To kick off the game loop, create a new {@link Avogine} and supply it with a {@link Window} to render
- * to and a {@link HotGame} to run, then call {@link #start()}.
+ * to and a {@link Game} to run, then call {@link #start()}.
  *
  */
 public class Avogine implements Runnable {
@@ -82,7 +82,7 @@ public class Avogine implements Runnable {
 	
 	private void init() {
 		window.init(game.getGLFWConfig(), game.getInputConfig());
-		game.init(window);
+		game.baseInit(window);
 		timer.init();
 	}
 	
@@ -130,6 +130,7 @@ public class Avogine implements Runnable {
 	private void input() {
 		profiler.inputStart();
 
+		window.pollEvents();
 		game.input(window);
 		
 		profiler.inputEnd();
