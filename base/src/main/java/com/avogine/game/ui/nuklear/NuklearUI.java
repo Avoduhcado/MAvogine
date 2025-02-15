@@ -24,7 +24,7 @@ import com.avogine.io.event.*;
 import com.avogine.io.listener.*;
 import com.avogine.render.data.nuklear.NuklearMesh;
 import com.avogine.render.shader.NuklearShader;
-import com.avogine.util.ResourceUtil;
+import com.avogine.util.ResourceUtils;
 import com.avogine.util.resource.ResourceConstants;
 
 /**
@@ -104,7 +104,7 @@ public class NuklearUI {
 	}
 	
 	private void initFont() {
-		ByteBuffer ttfBuffer = ResourceUtil.readResourceToBuffer(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 512 * 1024);
+		ByteBuffer ttfBuffer = ResourceUtils.readResourceToBuffer(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 512 * 1024);
 		
 		final int BITMAP_W = 1024;
 		final int BITMAP_H = 1024;
@@ -223,16 +223,13 @@ public class NuklearUI {
 	
 	/**
 	 * @param window
+	 * <a href="https://github.com/Avoduhcado/MAvogine/issues/42">Window resize handler #42</a>
 	 */
 	public void onRender(Window window) {
 		try (MemoryStack stack = stackPush()) {
 			IntBuffer w = stack.mallocInt(1);
 			IntBuffer h = stack.mallocInt(1);
-
-//			glfwGetWindowSize(windowId, w, h);
-//			width = w.get(0);
-//			height = h.get(0);
-
+			
 			glfwGetFramebufferSize(window.getId(), w, h);
 			displayWidth = w.get(0);
 			displayHeight = h.get(0);
@@ -241,7 +238,7 @@ public class NuklearUI {
 			float halfHeight = displayHeight / 2.0f;
 			projectionMatrix.setOrtho2D(-halfWidth, halfWidth, halfHeight, -halfHeight).translate(-halfWidth, -halfHeight, 0);
 			
-			// TODO Currently setting width/height and display values to just the framebuffer value, not ideal.
+			// TODO#42 Currently setting width/height and display values to just the framebuffer value, not ideal.
 			mesh.setSize(displayWidth, displayHeight);
 		}
 		
@@ -274,7 +271,7 @@ public class NuklearUI {
 	private void teardownUIState() {
 		glDisable(GL_BLEND);
 		glDisable(GL_SCISSOR_TEST);
-		// TODO Re-enable these based on some global render settings
+		// XXX Re-enable these based on some global render settings or cache the values beforehand?
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 	}
@@ -296,11 +293,7 @@ public class NuklearUI {
 
 		@Override
 		public void keyPressed(KeyEvent event) {
-			handleKeyEvent(event);
-			
-			if (nk_item_is_any_active(context)) {
-				event.consume();
-			}
+			keyReleased(event);
 		}
 		
 		private void handleKeyEvent(KeyEvent event) {
@@ -366,7 +359,7 @@ public class NuklearUI {
 						.y((float) event.yOffset());
 				nk_input_scroll(context, scroll);
 			}
-			// TODO This may want to consume events as well
+			// XXX This may want to consume events as well
 		}
 		
 		@Override
@@ -382,28 +375,6 @@ public class NuklearUI {
 			if (nk_window_is_any_hovered(context)) {
 				event.consume();
 			}
-//			try (MemoryStack stack = stackPush()) {
-//				DoubleBuffer cx = stack.mallocDouble(1);
-//				DoubleBuffer cy = stack.mallocDouble(1);
-//
-//				glfwGetCursorPos(event.window(), cx, cy);
-//
-//				int x = (int)cx.get(0);
-//				int y = (int)cy.get(0);
-//
-//				int nkButton = switch (event.button()) {
-//					case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
-//					case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
-//					default -> NK_BUTTON_LEFT;
-//				};
-//				// XXX Input reports held mouse clicks as GLFW_REPEAT, unclear if that's correct.
-//				nk_input_button(context, nkButton, x, y, true);
-//				
-//				if (nk_item_is_any_active(context)) {
-////				if (nk_window_is_any_hovered(context)) {
-//					event.consume();
-//				}
-//			}
 		}
 
 		@Override
@@ -426,7 +397,6 @@ public class NuklearUI {
 				nk_input_button(context, nkButton, x, y, true);
 				
 				if (nk_item_is_any_active(context)) {
-//				if (nk_window_is_any_hovered(context)) {
 					event.consume();
 				}
 			}
@@ -452,7 +422,6 @@ public class NuklearUI {
 				nk_input_button(context, nkButton, x, y, false);
 				
 				if (nk_item_is_any_active(context)) {
-//				if (nk_window_is_any_hovered(context)) {
 					event.consume();
 				}
 			}

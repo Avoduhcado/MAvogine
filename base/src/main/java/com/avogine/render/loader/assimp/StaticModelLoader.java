@@ -12,7 +12,7 @@ import org.lwjgl.system.MemoryStack;
 
 import com.avogine.render.TextureCache;
 import com.avogine.render.data.*;
-import com.avogine.util.ResourceUtil;
+import com.avogine.util.ResourceUtils;
 
 /**
  *
@@ -46,7 +46,7 @@ public class StaticModelLoader {
 		try (AIFileIO fileIo = AIFileIO.create()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					String fileNameUtf8 = memUTF8(fileName);
-					ByteBuffer data = ResourceUtil.readResourceToBuffer(fileNameUtf8);
+					ByteBuffer data = ResourceUtils.readResourceToBuffer(fileNameUtf8);
 
 					return AIFile.create()
 							.ReadProc((pFile, pBuffer, size, count) -> {

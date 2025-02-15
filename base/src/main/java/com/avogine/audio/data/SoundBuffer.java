@@ -10,7 +10,7 @@ import org.lwjgl.stb.STBVorbisInfo;
 import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.util.ResourceUtil;
+import com.avogine.util.ResourceUtils;
 
 /**
  *
@@ -50,7 +50,7 @@ public class SoundBuffer {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer error = stack.mallocInt(1);
 			
-			ByteBuffer fileBuffer = ResourceUtil.readResourceToBuffer(filePath);
+			ByteBuffer fileBuffer = ResourceUtils.readResourceToBuffer(filePath);
 			long decoder = stb_vorbis_open_memory(fileBuffer, error, null);
 			if (decoder == MemoryUtil.NULL) {
 				throw new IOException("Failed to open Ogg Vorbis file. Error: " + error.get(0));

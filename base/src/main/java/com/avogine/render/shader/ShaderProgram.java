@@ -11,11 +11,11 @@ import org.lwjgl.opengl.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.shader.uniform.Uniform;
-import com.avogine.util.ResourceUtil;
+import com.avogine.util.ResourceUtils;
 import com.avogine.util.resource.ResourceConstants;
 
 /**
- * TODO The System.exit(-1) calls should likely just be throwing exceptions instead
+ * Wrapper class for an OpenGL shader program object.
  */
 public abstract class ShaderProgram {
 	
@@ -103,12 +103,12 @@ public abstract class ShaderProgram {
 	 * @throws Exception If there are any errors reading, creating, or compiling the shader
 	 */
 	protected int createShader(String shaderFile, int shaderType) {
-		String shaderCode = ResourceUtil.readResource(ResourceConstants.SHADERS.with(shaderFile));
+		String shaderCode = ResourceUtils.readResource(ResourceConstants.SHADERS.with(shaderFile));
 		
 		int shaderId = glCreateShader(shaderType);
 		if (shaderId == 0) {
 			AvoLog.log().error("Error creating shader. Type: {}", shaderType);
-			System.exit(-1);
+			throw new IllegalStateException();
 		}
 		
 		glShaderSource(shaderId, shaderCode);
@@ -116,7 +116,7 @@ public abstract class ShaderProgram {
 		if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {
 			String shaderErrorMessage = glGetShaderInfoLog(shaderId, 1024);
 			AvoLog.log().error("Error compiling shader: {}\n{}", shaderFile, shaderErrorMessage);
-			System.exit(-1);
+			throw new IllegalStateException();
 		}
 		
 		glAttachShader(programId, shaderId);
@@ -129,7 +129,7 @@ public abstract class ShaderProgram {
 		if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
 			String shaderErrorMessage = glGetProgramInfoLog(programId, 1024);
 			AvoLog.log().error("Error linking shader code: {}", shaderErrorMessage);
-			System.exit(-1);
+			throw new IllegalStateException();
 		}
 		
 		shaderIds.forEach(shader -> glDetachShader(programId, shader));
@@ -161,7 +161,15 @@ public abstract class ShaderProgram {
 	/**
 	 * A tuple of a shader file name and its shader type.
 	 * @param fileName The name of the file to load the shader code from.
-	 * @param type The type of the shader. One of:<br><table><tr><td>{@link GL20C#GL_VERTEX_SHADER VERTEX_SHADER}</td><td>{@link GL20C#GL_FRAGMENT_SHADER FRAGMENT_SHADER}</td><td>{@link GL32#GL_GEOMETRY_SHADER GEOMETRY_SHADER}</td><td>{@link GL40#GL_TESS_CONTROL_SHADER TESS_CONTROL_SHADER}</td></tr><tr><td>{@link GL40#GL_TESS_EVALUATION_SHADER TESS_EVALUATION_SHADER}</td></tr></table>
+	 * @param type The type of the shader. One of:<br>
+	 * <table><tr>
+	 * <td>{@link GL20C#GL_VERTEX_SHADER VERTEX_SHADER}</td>
+	 * <td>{@link GL20C#GL_FRAGMENT_SHADER FRAGMENT_SHADER}</td>
+	 * <td>{@link GL32#GL_GEOMETRY_SHADER GEOMETRY_SHADER}</td>
+	 * <td>{@link GL40#GL_TESS_CONTROL_SHADER TESS_CONTROL_SHADER}</td>
+	 * </tr><tr>
+	 * <td>{@link GL40#GL_TESS_EVALUATION_SHADER TESS_EVALUATION_SHADER}</td>
+	 * </tr></table>
 	 */
 	public record ShaderModuleData(String fileName, int type) {
 		

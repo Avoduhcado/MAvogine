@@ -10,7 +10,7 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.util.ResourceUtil;
+import com.avogine.util.ResourceUtils;
 
 /**
  * A {@link Texture} sub type that overrides specific texture binding operations to use cube mapping.
@@ -69,7 +69,7 @@ public class Cubemap extends Texture {
 			IntBuffer dataSizeBuffer = stack.mallocInt(6);
 
 			for (String filePath : filePaths) {
-				ByteBuffer fileData = ResourceUtil.readResourceToBuffer(filePath);
+				ByteBuffer fileData = ResourceUtils.readResourceToBuffer(filePath);
 				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, widthBuffer, heightBuffer, channelsBuffer, 0);
 				if (imageData == null) {
 					AvoLog.log().error("Cube map texture failed to load at path: {}", filePath);

@@ -9,7 +9,7 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.util.ResourceUtil;
+import com.avogine.util.ResourceUtils;
 
 /**
  *
@@ -59,7 +59,7 @@ public class Texture {
 			IntBuffer heightBuffer = stack.mallocInt(1);
 			IntBuffer channelsBuffer = stack.mallocInt(1);
 			
-			ByteBuffer fileBuffer = ResourceUtil.readResourceToBuffer(texturePath);
+			ByteBuffer fileBuffer = ResourceUtils.readResourceToBuffer(texturePath);
 			ByteBuffer imageBuffer = STBImage.stbi_load_from_memory(fileBuffer, widthBuffer, heightBuffer, channelsBuffer, 0);
 			if (imageBuffer == null) {
 				AvoLog.log().error("Texture failed to load at path: {}", texturePath);

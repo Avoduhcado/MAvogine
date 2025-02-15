@@ -8,7 +8,7 @@ import com.avogine.game.scene.Scene;
 import com.avogine.game.state.*;
 import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.game.util.*;
-import com.avogine.io.*;
+import com.avogine.io.Window;
 import com.avogine.util.Result;
 import com.avogine.util.resource.ResourceConstants;
 
@@ -20,7 +20,7 @@ import com.avogine.util.resource.ResourceConstants;
  * major context switch occurs in the game logic, such as going from a title screen into an actual playable level so as to reduce clutter in your
  * Game type.
  * </p>
- * TODO Add an ECSGame subclass or some type of configuration to denote this is an ECS capable Game to avoid the necessity to always cast scene to an ECSScene.
+ * XXX Add an ECSGame subclass or some type of configuration to denote this is an ECS capable Game to avoid the necessity to always cast scene to an ECSScene.
  */
 public abstract class HotSwapGame extends RegisterableGame implements StateSwappable<GameState<?,?>> {
 
@@ -31,7 +31,6 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 	 */
 	private static final int TARGET_UPS = 60;
 	
-	// TODO Move this to a cache in Audio or something
 	protected final Set<SoundSource> audioSources;
 	
 	protected GameState<?, ?> gameState;
@@ -85,7 +84,7 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 	
 	/**
 	 * Play an audio file directly in the scene that isn't attached to anything.
-	 * TODO Relocate this to Scene? Like in some kind of SoundManager type as well.
+	 * XXX Relocate this to Scene? Like in some kind of SoundManager type as well.
 	 * @param audioFile
 	 * @param loop
 	 */
@@ -95,7 +94,6 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 		var bgmBuffer = new SoundBuffer(ResourceConstants.SOUNDS.with(audioFile));
 		
 		bgmSource.setBuffer(bgmBuffer.getBufferID());
-		// TODO Use a real gain value
 		bgmSource.setGain(0.25f);
 		
 		bgmSource.play();

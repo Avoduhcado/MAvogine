@@ -13,7 +13,7 @@ import com.avogine.Avogine;
 import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.io.config.*;
 import com.avogine.logging.AvoLog;
-import com.avogine.util.ResourceUtil;
+import com.avogine.util.ResourceUtils;
 import com.avogine.util.resource.ResourceConstants;
 
 /**
@@ -128,14 +128,14 @@ public class Window {
 			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFPS = 1.0 / (focused ? maxFps : maxBackgroundFps));
 		}
 
-		// TODO Customize by WindowConfig?
+		// XXX Customize by WindowConfig?
 		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
 			GLFW.glfwSetWindowOpacity(id, 1.0f);
 		}
 		
 		loadAndSetIcons(ResourceConstants.TEXTURES.with("icon", "AGDG Logo.png"));
 		
-		// TODO Customizable by WindowConfig?
+		// XXX Customizable by WindowConfig?
 		if (GLFW.glfwRawMouseMotionSupported()) {
 			GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
 		}
@@ -160,7 +160,7 @@ public class Window {
 	}
 	
 	/**
-	 * TODO Expose registerable callbacks for things like Nuklear to begin/end input polling around the glfwPollEvents call
+	 * Poll GLFW for events and process them in {@link Input}.
 	 */
 	public void pollEvents() {
 		guiContexts.forEach(NuklearUI::inputBegin);
@@ -232,14 +232,14 @@ public class Window {
 			for (String filePath : filePaths) {
 				GLFWImage icon = GLFWImage.malloc(stack);
 
-				IntBuffer width = stack.mallocInt(1);
-				IntBuffer height = stack.mallocInt(1);
+				IntBuffer iconWidth = stack.mallocInt(1);
+				IntBuffer iconHeight = stack.mallocInt(1);
 				IntBuffer nrChannels = stack.mallocInt(1);
 
-				ByteBuffer fileData = ResourceUtil.readResourceToBuffer(filePath, 1024);
-				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, width, height, nrChannels, 0);
+				ByteBuffer fileData = ResourceUtils.readResourceToBuffer(filePath, 1024);
+				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, iconWidth, iconHeight, nrChannels, 0);
 				if (imageData != null) {
-					icon.set(width.get(), height.get(), imageData);
+					icon.set(iconWidth.get(), iconHeight.get(), imageData);
 					iconList.add(icon);
 				} else {
 					AvoLog.log().warn("Icon failed to load: {}", filePath);

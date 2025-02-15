@@ -24,7 +24,7 @@ import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.util.ResourceUtil;
+import com.avogine.util.ResourceUtils;
 
 /**
  * TODO#38 <a href="https://github.com/Avoduhcado/MAvogine/issues/38">FontDetails improvements #38</a>
@@ -56,7 +56,7 @@ public class FontDetails {
 		this.fontName = fileName;
 		this.size = fontHeight;
 		
-		ByteBuffer ttfBuffer = ResourceUtil.readResourceToBuffer(fileName, 16 * 1024);
+		ByteBuffer ttfBuffer = ResourceUtils.readResourceToBuffer(fileName, 16 * 1024);
 		
 		fontInfo = STBTTFontinfo.create();
 		charData = STBTTPackedchar.create(96);
@@ -160,13 +160,13 @@ public class FontDetails {
 	}
 
 	/**
-	 * TODO Move this to test code, it's kind of pointless here
+	 * XXX Move this to test code, it's kind of pointless here
 	 * Save out a PNG file of what would be rendered into a font file as a gray scale bitmap instead.
 	 * This will save the file in the root directory of the project as "fontName_{@value #FONT_HEIGHT}.png"
 	 * @param fontName The font to render
 	 */
 	public static void debugPrintFontBitmap(String fontName) {
-		ByteBuffer ttfBuffer = ResourceUtil.readResourceToBuffer(fontName, 16 * 1024);
+		ByteBuffer ttfBuffer = ResourceUtils.readResourceToBuffer(fontName, 16 * 1024);
 		
 		STBTTFontinfo info = STBTTFontinfo.create();
 		if (!stbtt_InitFont(info, ttfBuffer)) {

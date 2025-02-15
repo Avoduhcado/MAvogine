@@ -56,10 +56,10 @@ public class Audio {
 	public void init() {
 		List<String> deviceList = enumerateAudioDevices();
 		if (properties.defaultDevice != null && !deviceList.contains(properties.defaultDevice)) {
-			properties.defaultDevice = null;
+			device = alcOpenDevice((String) null);
+		} else {
+			device = alcOpenDevice(properties.defaultDevice);
 		}
-		
-		device = alcOpenDevice(properties.defaultDevice);
 		if (device == MemoryUtil.NULL) {
 			throw new IllegalStateException("Failed to open OpenAL device.");
 		}
@@ -158,11 +158,11 @@ public class Audio {
 	}
 	
 	/**
-	 * TODO Handle missing values, should this attempt to computeIfAbsent?
 	 * @param name
-	 * @return
+	 * @return a cached {@link SoundSource} with the given name.
 	 */
 	public SoundSource getSoundSource(String name) {
+		// XXX Handle missing values, should this attempt to computeIfAbsent?
 		return soundSourceCache.get(name);
 	}
 	
@@ -207,7 +207,7 @@ public class Audio {
 	 */
 	public void setListenerVolume(float volume) {
 		alListenerf(AL_GAIN, volume);
-		properties.listenerGain = volume;
+		properties = new AudioProperties(properties.defaultDevice, volume);
 	}
 	
 	/**
@@ -224,7 +224,7 @@ public class Audio {
 	 * @param deviceSpecifier
 	 */
 	public void changeDevice(String deviceSpecifier) {
-		properties.defaultDevice = deviceSpecifier;
+		properties = new AudioProperties(deviceSpecifier, properties.listenerGain);
 		if (ALC.getCapabilities().ALC_SOFT_reopen_device) {
 			SOFTReopenDevice.alcReopenDeviceSOFT(device, deviceSpecifier, (IntBuffer) null);
 			currentDevice = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
@@ -302,16 +302,17 @@ public class Audio {
 	
 	/**
 	 * Data structure for any customizable options to use while initializing the audio system.
+	 * @param defaultDevice The default device to open when initializing OpenAL.
+	 * Set to {@code null} to automatically open the default system device.
+	 * @param listenerGain The gain setting of the listener. Pseudo max volume.
 	 */
-	public static class AudioProperties {
-		/** 
-		 * The default device to open when initializing OpenAL.
-		 * Set to {@code null} to automatically open the default system device.
+	public static record AudioProperties(String defaultDevice, float listenerGain) {
+		/**
+		 * Initialize a default {@link AudioProperties}.
 		 */
-		public String defaultDevice = null;
-		
-		/** The gain setting of the listener. Pseudo max volume. */
-		public float listenerGain = 1.0f;
+		public AudioProperties() {
+			this(null, 1.0f);
+		}
 	}
 
 }

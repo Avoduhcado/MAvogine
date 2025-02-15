@@ -11,9 +11,9 @@ import com.avogine.logging.AvoLog;
 /**
  *
  */
-public class ResourceUtil {
+public class ResourceUtils {
 
-	private ResourceUtil() {
+	private ResourceUtils() {
 		
 	}
 	
@@ -23,7 +23,7 @@ public class ResourceUtil {
 	 */
 	public static String readResource(String resourcePath) {
 		String fileContents = null;
-		try (var in = ResourceUtil.class.getResourceAsStream(resourcePath);
+		try (var in = ResourceUtils.class.getResourceAsStream(resourcePath);
 				var reader = new BufferedReader(new InputStreamReader(in));
 				var lines = reader.lines();) {
 			fileContents = lines.collect(Collectors.joining("\n"));
@@ -42,7 +42,7 @@ public class ResourceUtil {
 		AvoLog.log().debug("Reading: {}", resourcePath);
 		
 		ByteBuffer buffer = null;
-		try (var source = ResourceUtil.class.getResourceAsStream(resourcePath)) {
+		try (var source = ResourceUtils.class.getResourceAsStream(resourcePath)) {
 			buffer = BufferUtils.createByteBuffer(bufferSize);
 			
 			byte[] buf = new byte[8192];
@@ -73,7 +73,7 @@ public class ResourceUtil {
 	}
 
 	/**
-	 * TODO Some sort of optional debugging output could be included here to offer suggestions for larger sized files to allocate a larger initial buffer to avoid multiple calls to increase the size.
+	 * XXX Some sort of optional debugging output could be included here to offer suggestions for larger sized files to allocate a larger initial buffer to avoid multiple calls to increase the size.
 	 * @param buffer
 	 * @param newCapacity
 	 * @return
