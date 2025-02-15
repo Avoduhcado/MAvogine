@@ -64,7 +64,9 @@ public class Window {
 		monitorIndex = preferences.monitor();
 		
 		maxFps = Math.clamp(preferences.fpsCap(), 0, 1000);
-		maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
+		if (maxFps > 0) {
+			maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
+		}
 		
 		input = new Input(this);
 		
