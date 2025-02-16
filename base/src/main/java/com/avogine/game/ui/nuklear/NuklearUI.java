@@ -20,7 +20,9 @@ import org.lwjgl.stb.*;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.io.Window;
-import com.avogine.io.event.*;
+import com.avogine.io.event.KeyEvent;
+import com.avogine.io.event.KeyEvent.*;
+import com.avogine.io.event.MouseEvent.*;
 import com.avogine.io.listener.*;
 import com.avogine.render.data.nuklear.NuklearMesh;
 import com.avogine.render.shader.NuklearShader;
@@ -92,7 +94,7 @@ public class NuklearUI {
 		defaultFont = NkUserFont.create();
 		initFont();
 
-		nuklearShader = new NuklearShader("nuklearVertex.glsl", "nuklearFragment.glsl");
+		nuklearShader = new NuklearShader();
 		
 		mesh = new NuklearMesh(window.getWidth(), window.getHeight(), window.getWidth(), window.getHeight());
 		
@@ -278,26 +280,33 @@ public class NuklearUI {
 	
 	private class NuklearKeyboardHandler implements KeyListener {
 		@Override
-		public void keyTyped(KeyEvent event) {
+		public KeyEvent keyTyped(KeyTypedEvent event) {
 			nk_input_unicode(context, event.codepoint());
+			return event;
 		}
 
 		@Override
-		public void keyReleased(KeyEvent event) {
+		public KeyEvent keyReleased(KeyReleasedEvent event) {
 			handleKeyEvent(event);
 			
 			if (nk_item_is_any_active(context)) {
-				event.consume();
+				return event.consume();
 			}
+			return event;
 		}
 
 		@Override
-		public void keyPressed(KeyEvent event) {
-			keyReleased(event);
+		public KeyEvent keyPressed(KeyPressedEvent event) {
+			handleKeyEvent(event);
+			
+			if (nk_item_is_any_active(context)) {
+				return event.consume();
+			}
+			return event;
 		}
 		
 		private void handleKeyEvent(KeyEvent event) {
-			boolean press = event.id() == KeyEvent.KEY_PRESSED;
+			boolean press = event instanceof KeyPressedEvent;
 			switch (event.key()) {
 				// XXX Hmm, this also seems like a terrible way to handle this, this event already exists in Input
 				case GLFW_KEY_ESCAPE ->	glfwSetWindowShouldClose(event.window(), true);
@@ -352,7 +361,7 @@ public class NuklearUI {
 	
 	private class NuklearScrollHandler implements MouseWheelListener {
 		@Override
-		public void mouseWheelMoved(MouseWheelEvent event) {
+		public MouseWheelEvent mouseWheelMoved(MouseWheelEvent event) {
 			try (MemoryStack stack = stackPush()) {
 				NkVec2 scroll = NkVec2.malloc(stack)
 						.x((float) event.xOffset())
@@ -360,6 +369,7 @@ public class NuklearUI {
 				nk_input_scroll(context, scroll);
 			}
 			// XXX This may want to consume events as well
+			return event;
 		}
 		
 		@Override
@@ -371,14 +381,15 @@ public class NuklearUI {
 	private class NuklearMouseHandler implements MouseButtonListener, MouseMotionListener {
 		
 		@Override
-		public void mouseClicked(MouseEvent event) {
+		public MouseButtonEvent mouseClicked(MouseClickedEvent event) {
 			if (nk_window_is_any_hovered(context)) {
-				event.consume();
+				return event;
 			}
+			return event;
 		}
 
 		@Override
-		public void mousePressed(MouseEvent event) {
+		public MouseButtonEvent mousePressed(MousePressedEvent event) {
 			try (MemoryStack stack = stackPush()) {
 				DoubleBuffer cx = stack.mallocDouble(1);
 				DoubleBuffer cy = stack.mallocDouble(1);
@@ -397,13 +408,14 @@ public class NuklearUI {
 				nk_input_button(context, nkButton, x, y, true);
 				
 				if (nk_item_is_any_active(context)) {
-					event.consume();
+					return event.consume();
 				}
+				return event;
 			}
 		}
 
 		@Override
-		public void mouseReleased(MouseEvent event) {
+		public MouseButtonEvent mouseReleased(MouseReleasedEvent event) {
 			try (MemoryStack stack = stackPush()) {
 				DoubleBuffer cx = stack.mallocDouble(1);
 				DoubleBuffer cy = stack.mallocDouble(1);
@@ -422,22 +434,25 @@ public class NuklearUI {
 				nk_input_button(context, nkButton, x, y, false);
 				
 				if (nk_item_is_any_active(context)) {
-					event.consume();
+					return event.consume();
 				}
+				return event;
 			}
 		}
 
 		@Override
-		public void mouseMoved(MouseEvent event) {
+		public MouseMotionEvent mouseMoved(MouseMovedEvent event) {
 			nk_input_motion(context, (int)event.mouseX(), (int)event.mouseY());
+			return event;
 		}
 
 		@Override
-		public void mouseDragged(MouseEvent event) {
+		public MouseMotionEvent mouseDragged(MouseDraggedEvent event) {
 			nk_input_motion(context, (int)event.mouseX(), (int)event.mouseY());
 			if (nk_item_is_any_active(context)) {
-				event.consume();
+				return event.consume();
 			}
+			return event;
 		}
 		
 		@Override

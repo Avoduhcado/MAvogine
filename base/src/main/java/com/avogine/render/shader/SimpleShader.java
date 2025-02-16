@@ -1,5 +1,7 @@
 package com.avogine.render.shader;
 
+import static com.avogine.util.resource.ResourceConstants.SHADERS;
+
 import com.avogine.render.shader.uniform.*;
 
 /**
@@ -28,11 +30,10 @@ public class SimpleShader extends ShaderProgram {
 	public final UniformSampler objectTexture = new UniformSampler();
 
 	/**
-	 * @param vertexShaderFile
-	 * @param fragmentShaderFile
+	 * 
 	 */
-	public SimpleShader(String vertexShaderFile, String fragmentShaderFile) {
-		super(vertexShaderFile, fragmentShaderFile);
+	public SimpleShader() {
+		super(SHADERS.with("simpleVertex.glsl"), SHADERS.with("simpleFragment.glsl"));
 		storeAllUniformLocations(projectionMatrix, viewMatrix, modelMatrix, normalMatrix, viewPosition, lightPosition, lightColor, hasTexture, objectColor, objectTexture);
 		linkTextureUnits();
 	}

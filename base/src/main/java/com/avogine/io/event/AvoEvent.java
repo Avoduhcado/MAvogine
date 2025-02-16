@@ -1,39 +1,17 @@
 package com.avogine.io.event;
 
-/**
- *
- */
-public abstract class AvoEvent {
-	
-	/**
-	 * The type of event produced.
-	 */
-	protected int id;
-	
-	protected boolean consumed;
+import com.avogine.Avogine;
 
-	/**
-	 * @return the ID of the event.
-	 */
-	public int id() {
-		return id;
-	}
+/**
+ * Base event type for events and listeners in {@link Avogine}.
+ */
+public interface AvoEvent {
 	
 	/**
-	 * Consumes this event, if this event can be consumed.
+	 * @return true if this event has been consumed and should no longer propagate to further listeners.
 	 */
-	public void consume() {
-		consumed = switch (id) {
-			case KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED, MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_MOVED, MouseEvent.MOUSE_DRAGGED, MouseEvent.MOUSE_WHEEL -> true;
-			default -> false;
-		};
-	}
-	
-	/**
-	 * @return whether this event has been consumed and should no longer propagate to further listeners.
-	 */
-	public boolean isConsumed() {
-		return consumed;
+	public default boolean consumed() {
+		return false;
 	}
 	
 }

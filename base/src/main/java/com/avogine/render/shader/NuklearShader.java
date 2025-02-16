@@ -1,5 +1,7 @@
 package com.avogine.render.shader;
 
+import static com.avogine.util.resource.ResourceConstants.SHADERS;
+
 import com.avogine.render.shader.uniform.*;
 
 /**
@@ -7,15 +9,14 @@ import com.avogine.render.shader.uniform.*;
  */
 public class NuklearShader extends ShaderProgram {
 
-	public UniformMat4 projectionMatrix = new UniformMat4();
-	public UniformSampler nuklearTexture = new UniformSampler();
+	public final UniformMat4 projectionMatrix = new UniformMat4();
+	public final UniformSampler nuklearTexture = new UniformSampler();
 	
 	/**
-	 * @param vertexShaderFile
-	 * @param fragmentShaderFile
+	 * 
 	 */
-	public NuklearShader(String vertexShaderFile, String fragmentShaderFile) {
-		super(vertexShaderFile, fragmentShaderFile);
+	public NuklearShader() {
+		super(SHADERS.with("nuklearVertex.glsl"), SHADERS.with("nuklearFragment.glsl"));
 		storeAllUniformLocations(projectionMatrix, nuklearTexture);
 		loadTexUnit();
 	}

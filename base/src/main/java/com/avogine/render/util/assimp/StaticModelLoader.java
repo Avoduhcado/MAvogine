@@ -1,4 +1,4 @@
-package com.avogine.render.loader.assimp;
+package com.avogine.render.util.assimp;
 
 import static org.lwjgl.system.MemoryUtil.*;
 

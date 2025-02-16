@@ -1,97 +1,177 @@
 package com.avogine.io.event;
 
-import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
-import static org.lwjgl.system.MemoryStack.stackPush;
-
-import java.nio.IntBuffer;
-
-import org.joml.*;
-import org.lwjgl.system.MemoryStack;
+import com.avogine.io.event.MouseEvent.*;
 
 /**
  *
  */
-public non-sealed class MouseEvent extends InputEvent {
-
-	public static final int MOUSE_PRESSED = 201;
+public sealed interface MouseEvent extends InputEvent permits MouseButtonEvent, MouseMotionEvent, MouseWheelEvent {
 	
-	public static final int MOUSE_RELEASED = 202;
-	
-	public static final int MOUSE_CLICKED = 203;
-	
-	public static final int MOUSE_DRAGGED = 204;
-	
-	public static final int MOUSE_MOVED = 205;
-	
-	public static final int MOUSE_WHEEL = 206;
-	
-	public final int button;
-	public final int clickCount;
-	public float mouseX;
-	public float mouseY;
+	public sealed interface MouseButtonEvent extends MouseEvent {
+		
+		/**
+		 * @return the button that triggered the event.
+		 */
+		public int button();
+		
+		/**
+		 * Return the number of times the button was clicked.
+		 * <p>
+		 * 1 for all {@link MousePressedEvent}s and {@link MouseReleasedEvent}s. 
+		 * 2 for some {@link MouseClickedEvent}s where the mouse button was pressed and released in quick succession.
+		 * @return the number of times the button was clicked.
+		 */
+		public int clickCount();
+		
+		/**
+		 * @return the X position in screen space of where the event was triggered.
+		 */
+		public float mouseX();
+		
+		/**
+		 * @return the Y position in screen space of where the event was triggered.
+		 */
+		public float mouseY();
+	}
 	
 	/**
-	 * @param id
+	 *
+	 * @param window
 	 * @param button
 	 * @param clickCount
 	 * @param mouseX
 	 * @param mouseY
-	 * @param window
+	 * @param consumed
 	 */
-	public MouseEvent(int id, int button, int clickCount, float mouseX, float mouseY, long window) {
-		this.id = id;
-		this.button = button;
-		this.clickCount = clickCount;
-		this.mouseX = mouseX;
-		this.mouseY = mouseY;
-		this.window = window;
-	}
-	
-	public int button() {
-		return button;
-	}
-	
-	public int clickCount() {
-		return clickCount;
-	}
-	
-	public float mouseX() {
-		return mouseX;
-	}
-	
-	public float mouseY() {
-		return mouseY;
-	}
-
-	@Override
-	public void consume() {
-		consumed = true;
+	public record MousePressedEvent(long window, int button, int clickCount, float mouseX, float mouseY, boolean consumed) implements MouseButtonEvent, ConsumableEvent<MousePressedEvent> {
+		/**
+		 * @param window 
+		 * @param button 
+		 * @param clickCount 
+		 * @param mouseX 
+		 * @param mouseY 
+		 */
+		public MousePressedEvent(long window, int button, int clickCount, float mouseX, float mouseY) {
+			this(window, button, clickCount, mouseX, mouseY, false);
+		}
+		
+		@Override
+		public MousePressedEvent withConsume() {
+			return new MousePressedEvent(window, button, clickCount, mouseX, mouseY, true);
+		}
 	}
 	
 	/**
-	 * @param projection
+	 *
+	 * @param window
+	 * @param button
+	 * @param clickCount
+	 * @param mouseX
+	 * @param mouseY
+	 * @param consumed
 	 */
-	public void transformPoint(Matrix4f projection) {
-		int displayWidth;
-		int displayHeight;
-		float halfWidth;
-		float halfHeight;
-		try (MemoryStack stack = stackPush()) {
-			IntBuffer w = stack.mallocInt(1);
-			IntBuffer h = stack.mallocInt(1);
-
-			glfwGetFramebufferSize(window, w, h);
-			displayWidth = w.get(0);
-			displayHeight = h.get(0);
-
-			halfWidth = displayWidth / 2.0f;
-			halfHeight = displayHeight / 2.0f;
+	public record MouseReleasedEvent(long window, int button, int clickCount, float mouseX, float mouseY, boolean consumed) implements MouseButtonEvent, ConsumableEvent<MouseReleasedEvent> {
+		/**
+		 * @param window 
+		 * @param button 
+		 * @param clickCount 
+		 * @param mouseX 
+		 * @param mouseY 
+		 */
+		public MouseReleasedEvent(long window, int button, int clickCount, float mouseX, float mouseY) {
+			this(window, button, clickCount, mouseX, mouseY, false);
 		}
-		Vector3f transformedMouse = projection
-				.invertOrtho(new Matrix4f())
-				.transformPosition(mouseX, -mouseY, 0, new Vector3f())
-				.div(halfWidth, halfHeight, 1f);
-		mouseX = transformedMouse.x;
-		mouseY = transformedMouse.y;
+		
+		@Override
+		public MouseReleasedEvent withConsume() {
+			return new MouseReleasedEvent(window, button, clickCount, mouseX, mouseY, true);
+		}
+	}
+	
+	/**
+	 *
+	 * @param window
+	 * @param button
+	 * @param clickCount
+	 * @param mouseX
+	 * @param mouseY
+	 */
+	public record MouseClickedEvent(long window, int button, int clickCount, float mouseX, float mouseY) implements MouseButtonEvent {
+		
+	}
+
+	public sealed interface MouseMotionEvent extends MouseEvent {
+		
+	}
+
+	/**
+	 *
+	 * @param window
+	 * @param button
+	 * @param mouseX
+	 * @param mouseY
+	 * @param consumed
+	 */
+	public record MouseDraggedEvent(long window, int button, float mouseX, float mouseY, boolean consumed) implements MouseMotionEvent, ConsumableEvent<MouseDraggedEvent> {
+		/**
+		 * @param window 
+		 * @param button 
+		 * @param mouseX 
+		 * @param mouseY 
+		 */
+		public MouseDraggedEvent(long window, int button, float mouseX, float mouseY) {
+			this(window, button, mouseX, mouseY, false);
+		}
+		
+		@Override
+		public MouseDraggedEvent withConsume() {
+			return new MouseDraggedEvent(window, button, mouseX, mouseY, true);
+		}
+	}
+	
+	/**
+	 *
+	 * @param window
+	 * @param mouseX
+	 * @param mouseY
+	 * @param consumed
+	 */
+	public record MouseMovedEvent(long window, float mouseX, float mouseY, boolean consumed) implements MouseMotionEvent, ConsumableEvent<MouseMovedEvent> {
+		/**
+		 * @param window 
+		 * @param mouseX 
+		 * @param mouseY 
+		 */
+		public MouseMovedEvent(long window, float mouseX, float mouseY) {
+			this(window, mouseX, mouseY, false);
+		}
+		
+		@Override
+		public MouseMovedEvent withConsume() {
+			return new MouseMovedEvent(window, mouseX, mouseY, true);
+		}
+	}
+	
+	/**
+	 *
+	 * @param window
+	 * @param xOffset
+	 * @param yOffset
+	 * @param consumed
+	 */
+	public record MouseWheelEvent(long window, double xOffset, double yOffset, boolean consumed) implements MouseEvent, ConsumableEvent<MouseWheelEvent> {
+		/**
+		 * @param window 
+		 * @param xOffset 
+		 * @param yOffset 
+		 */
+		public MouseWheelEvent(long window, double xOffset, double yOffset) {
+			this(window, xOffset, yOffset, false);
+		}
+		
+		@Override
+		public MouseWheelEvent withConsume() {
+			return new MouseWheelEvent(window, xOffset, yOffset, true);
+		}
 	}
 }

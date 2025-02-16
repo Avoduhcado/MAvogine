@@ -36,7 +36,7 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	
 	@Override
 	public void onRegister(RegisterableGame game) {
-		basicShader = new BasicShader("basicVertex.glsl", "basicFragment.glsl");
+		basicShader = new BasicShader();
 	}
 	
 	@Override
