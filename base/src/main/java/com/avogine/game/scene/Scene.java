@@ -1,39 +1,39 @@
 package com.avogine.game.scene;
 
-import org.joml.*;
-
-import com.avogine.game.camera.*;
-import com.avogine.io.*;
+import org.joml.Matrix4f;
 
 /**
- *
+ * 
  */
 public abstract class Scene {
 
-	protected Matrix4f projection;
-	protected Camera camera;
+	protected final Projection projection;
+	protected final Camera camera;
 	
 	/**
 	 * 
 	 */
-	protected Scene() {
+	protected Scene(int width, int height) {
+		this(new Projection(width, height), new Camera());
 	}
 	
-	protected Scene(Matrix4f projection, Camera camera) {
+	protected Scene(Projection projection, Camera camera) {
 		this.projection = projection;
 		this.camera = camera;
 	}
 	
 	/**
-	 * @param window
-	 */
-	public abstract void init(Window window);
-	
-	/**
 	 * @return the projection
 	 */
-	public Matrix4f getProjection() {
+	public Projection getProjection() {
 		return projection;
+	}
+	
+	/**
+	 * @return the projection matrix
+	 */
+	public Matrix4f getProjectionMatrix() {
+		return projection.getProjectionMatrix();
 	}
 	
 	/**
@@ -44,8 +44,10 @@ public abstract class Scene {
 	}
 	
 	/**
-	 * 
+	 * @return the view matrix
 	 */
-	public abstract void cleanup();
-	
+	public Matrix4f getViewMatrix() {
+		return camera.getView();
+	}
+
 }

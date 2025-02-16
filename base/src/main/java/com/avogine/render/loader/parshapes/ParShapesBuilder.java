@@ -2,20 +2,18 @@ package com.avogine.render.loader.parshapes;
 
 import java.nio.*;
 
-import org.lwjgl.*;
-import org.lwjgl.system.*;
-import org.lwjgl.util.par.ParShapes;
-import org.lwjgl.util.par.ParShapesMesh;
+import org.joml.Vector3f;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.util.par.*;
 
-import com.avogine.render.data.InstancedMesh;
-import com.avogine.render.data.Mesh;
+import com.avogine.render.data.*;
 
 /**
  * TODO Implement a scaleAroundCenter method, which will likely require the ParShapesBuilder instance to store current transform values to pass along for context.
  */
 public class ParShapesBuilder {
 
-	private ParShapesMesh parMesh;
+	protected ParShapesMesh parMesh;
 	
 	/**
 	 * {@link ParShapes#par_shapes_create_plane(int, int)}
@@ -42,11 +40,30 @@ public class ParShapesBuilder {
 	}
 	
 	/**
+	 * {@link ParShapes#par_shapes_create_subdivided_sphere(int)}
+	 * @param subdivisions
+	 * @return
+	 */
+	public ParShapesBuilder createSphere(int subdivisions) {
+		parMesh = ParShapes.par_shapes_create_subdivided_sphere(subdivisions);
+		return this;
+	}
+	
+	/**
 	 * {@link ParShapes#par_shapes_create_cube()}
 	 * @return
 	 */
 	public ParShapesBuilder createCube() {
 		parMesh = ParShapes.par_shapes_create_cube();
+		return this;
+	}
+	
+	/**
+	 * {@link ParShapes#par_shapes_create_rock(int, int)}
+	 * @return
+	 */
+	public ParShapesBuilder createRock(int seed, int subdivisions) {
+		parMesh = ParShapes.par_shapes_create_rock(seed, subdivisions);
 		return this;
 	}
 	
@@ -66,12 +83,12 @@ public class ParShapesBuilder {
 		ParShapesMesh cylinder = ParShapes.par_shapes_create_cylinder(20, 2);
 		ParShapes.par_shapes_rotate(cylinder, (float) (Math.PI * 0.5f), new float[] {1, 0, 0});
 		ParShapes.par_shapes_scale(cylinder, width, height, width);
-		ParShapes.par_shapes_merge(parMesh, cylinder);
+		ParShapes.par_shapes_merge_and_free(parMesh, cylinder);
 
 		ParShapesMesh bottomHemi = ParShapes.par_shapes_clone(topHemi, null);
 		ParShapes.par_shapes_rotate(bottomHemi, (float) Math.PI, new float[] {1, 0, 0});
 		ParShapes.par_shapes_translate(bottomHemi, 0, -height, 0);
-		ParShapes.par_shapes_merge(parMesh, bottomHemi);
+		ParShapes.par_shapes_merge_and_free(parMesh, bottomHemi);
 		
 		return this;
 	}
@@ -115,15 +132,73 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * Construct a new {@link Mesh} from {@link #parMesh} with all transformations applied.
+	 * Construct a new {@link Mesh} from the internal {@code parMesh} with all transformations applied.
 	 * @return a new {@code Mesh}
 	 */
 	public Mesh build() {
-		// TODO Convert magic numbers into vertex data size constant
+		float[] vertices = new float[parMesh.npoints() * 3];
+		float[] normals = new float[parMesh.npoints() * 3];
+		float[] tangents = new float[parMesh.npoints() * 3];
+		float[] bitangents = new float[parMesh.npoints() * 3];
+		float[] textureCoordinates = new float[parMesh.npoints() * 2];
+		parMesh.points(parMesh.npoints() * 3).get(vertices);
+		if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
+			parMesh.normals(parMesh.npoints() * 3).get(normals);
+		}
+		if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
+			parMesh.tcoords(parMesh.npoints() * 2).get(textureCoordinates);
+		}
+		
+		int[] indices = new int[parMesh.ntriangles() * 3];
+		parMesh.triangles(parMesh.ntriangles() * 3).get(indices);
+		
+		Vector3f aabbMin = new Vector3f();
+		Vector3f aabbMax = new Vector3f();
+		for (int i = 0; i < vertices.length; i += 3) {
+			float x = vertices[i];
+			float y = vertices[i + 1];
+			float z = vertices[i + 2];
+			if (x < aabbMin.x) {
+				aabbMin.x = x;
+			} else if (x > aabbMax.x) {
+				aabbMax.x = x;
+			}
+			if (y < aabbMin.y) {
+				aabbMin.y = y;
+			} else if (y > aabbMax.y) {
+				aabbMax.y = y;
+			}
+			if (z < aabbMin.z) {
+				aabbMin.z = z;
+			} else if (z > aabbMax.z) {
+				aabbMax.z = z;
+			}
+		}
+
+		var mesh = new Mesh(new VertexData(vertices, normals, tangents, bitangents, textureCoordinates, indices), 0, aabbMin, aabbMax);
+
+		parMesh.free();
+		return mesh;
+	}
+	
+	/**
+	 * @param <T>
+	 * @param builder
+	 * @return
+	 */
+	public <T> T build(BuildFunction<T> builder) {
+		return builder.build(parMesh);
+	}
+	
+	/**
+	 * @param instances
+	 * @return
+	 */
+	public InstancedMesh buildInstanced(int instances) {
 		FloatBuffer vertexData = null;
 		try {
 			vertexData = MemoryUtil.memAllocFloat(parMesh.npoints() * (3 + 3 + 2));
-	
+
 			FloatBuffer positions = parMesh.points(parMesh.npoints() * 3);
 			FloatBuffer normals = null;
 			if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
@@ -133,13 +208,13 @@ public class ParShapesBuilder {
 			if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
 				textureCoordinates = parMesh.tcoords(parMesh.npoints() * 2);
 			}
-	
+
 			for (int i = 0; i < parMesh.npoints(); i++) {
 				// Vertex positions
 				vertexData.put(positions.get());
 				vertexData.put(positions.get());
 				vertexData.put(positions.get());
-	
+
 				// Vertex normals
 				if (normals != null) {
 					vertexData.put(normals.get());
@@ -150,7 +225,7 @@ public class ParShapesBuilder {
 					vertexData.put(0.0f);
 					vertexData.put(0.0f);
 				}
-	
+
 				// Vertex texture coordinates
 				if (textureCoordinates != null) {
 					vertexData.put(textureCoordinates.get());
@@ -162,67 +237,10 @@ public class ParShapesBuilder {
 			}
 			vertexData.flip();
 			IntBuffer indices = parMesh.triangles(parMesh.ntriangles() * 3);
-	
-			return new Mesh(vertexData, indices);
-		} finally {
-			parMesh.free();
-			if (vertexData != null) {
-				MemoryUtil.memFree(vertexData);
-			}
-		}
-	}
-	
-	/**
-	 * @param instances
-	 * @return
-	 */
-	public InstancedMesh buildInstanced(int instances) {
-		FloatBuffer vertexData = null;
-		try {
-		vertexData = MemoryUtil.memAllocFloat(parMesh.npoints() * (3 + 3 + 2));
 
-		FloatBuffer positions = parMesh.points(parMesh.npoints() * 3);
-		FloatBuffer normals = null;
-		if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
-			normals = parMesh.normals(parMesh.npoints() * 3);
-		}
-		FloatBuffer textureCoordinates = null;
-		if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
-			textureCoordinates = parMesh.tcoords(parMesh.npoints() * 2);
-		}
+			FloatBuffer instancedVertexData = MemoryUtil.memAllocFloat(17 * instances);
 
-		for (int i = 0; i < parMesh.npoints(); i++) {
-			// Vertex positions
-			vertexData.put(positions.get());
-			vertexData.put(positions.get());
-			vertexData.put(positions.get());
-
-			// Vertex normals
-			if (normals != null) {
-				vertexData.put(normals.get());
-				vertexData.put(normals.get());
-				vertexData.put(normals.get());
-			} else {
-				vertexData.put(0.0f);
-				vertexData.put(0.0f);
-				vertexData.put(0.0f);
-			}
-
-			// Vertex texture coordinates
-			if (textureCoordinates != null) {
-				vertexData.put(textureCoordinates.get());
-				vertexData.put(textureCoordinates.get());
-			} else {
-				vertexData.put(0.0f);
-				vertexData.put(0.0f);
-			}
-		}
-		vertexData.flip();
-		IntBuffer indices = parMesh.triangles(parMesh.ntriangles() * 3);
-		
-		FloatBuffer instancedVertexData = MemoryUtil.memAllocFloat(17 * instances);
-
-		return new InstancedMesh(vertexData, instancedVertexData, indices, instances);
+			return new InstancedMesh(vertexData, instancedVertexData, indices, instances);
 		} finally {
 			parMesh.free();
 			if (vertexData != null) {

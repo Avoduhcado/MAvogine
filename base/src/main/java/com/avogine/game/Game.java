@@ -1,17 +1,26 @@
 package com.avogine.game;
 
-import com.avogine.io.*;
+import org.lwjgl.opengl.GL;
+
+import com.avogine.Avogine;
+import com.avogine.io.Window;
+import com.avogine.io.config.*;
 
 /**
  *
  */
 public interface Game {
-
+	
 	/**
 	 * Initialize all relevant game logic to start the game loop.
 	 * @param window
 	 */
 	public void init(Window window);
+	
+	/**
+	 * @param window
+	 */
+	public void input(Window window);
 	
 	/**
 	 * Update any relevant entities or systems at a fixed time step determined by {@code interval}.
@@ -26,8 +35,9 @@ public interface Game {
 	 * <p>
 	 * <b>XXX Should explicit calls to GL methods be avoided from this implementation? And be dependent on something deeper? I don't
 	 * particularly care about abstract rendering methods at the moment.</b>
+	 * @param window The window to render the scene to.
 	 */
-	public void render();
+	public void render(Window window);
 	
 	/**
 	 * Free up any allocated memory defined from this object.
@@ -36,5 +46,49 @@ public interface Game {
 	 * in the {@code init()} method like meshes, shaders, etc.
 	 */
 	public void cleanup();
+	
+	/**
+	 * Initialize all game related logic and potential API resources prior to launching the game loop.
+	 * </p>
+	 * This method is intended to only be called directly from {@link Avogine#start()}, actual implementations of {@link Game} should
+	 * override {@link #init(Window)} to handle {@code Game} specific initialization. Exercise caution when overriding this method.
+	 * @param window
+	 */
+	public default void baseInit(Window window) {
+		initRender();
+		init(window);
+	}
+	
+	/**
+	 * Initialize any render API specific configurations prior to launching the game loop.
+	 * <p>
+	 * Presently, this just calls {@link GL#createCapabilities()} to set up an OpenGL capable environment. This could be moved to something like a {@code GameOpenGL} sub type
+	 * if multiple render API vendors should be supported, i.e., Vulkan.
+	 */
+	public default void initRender() {
+		GL.createCapabilities();
+	}
+
+	/**
+	 * Return the maximum number of updates to attempt to perform per second.
+	 * @return the maximum number of updates to attempt to perform per second.
+	 */
+	public default int getTargetUps() {
+		return 30;
+	}
+
+	/**
+	 * @return
+	 */
+	public default GLFWConfig getGLFWConfig() {
+		return GLFWConfig.defaultConfig();
+	}
+	
+	/**
+	 * @return
+	 */
+	public default InputConfig getInputConfig() {
+		return InputConfig.defaultConfig();
+	}
 	
 }

@@ -1,15 +1,14 @@
 package com.avogine.render.data;
 
-import java.lang.invoke.MethodHandles;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.*;
+
 import java.nio.ByteBuffer;
-import java.util.function.*;
+import java.util.function.Supplier;
 
-import static org.lwjgl.opengl.GL33.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.avogine.experimental.annotation.*;
+import com.avogine.experimental.annotation.MemoryManaged;
 import com.avogine.io.Window;
+import com.avogine.logging.AvoLog;
 
 /**
  * @author Dominus
@@ -18,8 +17,6 @@ import com.avogine.io.Window;
 @MemoryManaged
 public class FrameBuffer {
 
-	protected static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
-
 	protected final int fbo;
 	
 	protected Supplier<Integer> width;
@@ -27,7 +24,6 @@ public class FrameBuffer {
 	
 	protected Window window;
 	
-	protected TextureAtlas colorTexture;
 	protected int colorAttachment;
 	protected int rbo;
 	
@@ -65,7 +61,6 @@ public class FrameBuffer {
 		bind();
 		
 		// Create a color texture
-		// TODO Reorganize project so that this can be called from TextureLoader
 		colorAttachment = glGenTextures();
 		glBindTexture(GL_TEXTURE_2D, colorAttachment);
 		
@@ -78,8 +73,6 @@ public class FrameBuffer {
 		// Attach the color texture to this framebuffer
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachment, 0);
 		
-		colorTexture = new TextureAtlas(colorAttachment, width.get(), height.get());
-		
 		// Create a depth and stencil renderbuffer
 		rbo = glGenRenderbuffers();
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -90,7 +83,7 @@ public class FrameBuffer {
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 		
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			logger.error("Framebuffer is not complete!");
+			AvoLog.log().error("Framebuffer is not complete!");
 		}
 		unbind();
 	}
@@ -124,10 +117,10 @@ public class FrameBuffer {
 	}
 	
 	/**
-	 * @return The texture containing the color buffer 
+	 * @return The texture ID containing the color buffer 
 	 */
-	public TextureAtlas getColorTexture() {
-		return colorTexture;
+	public int getColorAttachment() {
+		return colorAttachment;
 	}
 	
 	/**

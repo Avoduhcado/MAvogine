@@ -2,30 +2,134 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.avogine</groupId>
   <artifactId>mavogine</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.1.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   
   <modules>
   	<module>base</module>
   	<module>log</module>
+  	<module>ecs</module>
   	<module>avoroutines</module>
   </modules>
   
+  <scm>
+	<connection>scm:git:https://github.com/avoduhcado/mavogine.git</connection>
+	<developerConnection>scm:git:https://github.com/avoduhcado/mavogine.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+  
+  <distributionManagement>
+    <repository>
+		<id>github</id>
+		<name>Github Avoduhcado Apache Maven Packages</name>
+		<url>https://maven.pkg.github.com/avoduhcado/mavogine</url>
+    </repository>
+  </distributionManagement>
+  
   <properties>
-    <maven.compiler.release>16</maven.compiler.release>
-    <lwjgl.version>3.2.3</lwjgl.version>
-    <joml.version>1.10.1</joml.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <mavogine.version>0.1.3-SNAPSHOT</mavogine.version>
+    <lwjgl.version>3.3.3</lwjgl.version>
+    <joml.version>1.10.8</joml.version>
     <lwjgl.natives>natives-windows</lwjgl.natives>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.scm.id>github</project.scm.id>
   </properties>
   
   <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.0</version>
-      </plugin>
-    </plugins>
+	<pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.13.0</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>3.1.2</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>3.0.1</version>
+				<configuration>
+					<tagNameFormat>v@{project.version}</tagNameFormat>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<scmCommentPrefix>[maven-release-plugin][skip ci]</scmCommentPrefix>
+					<releaseProfiles>releases</releaseProfiles>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.6.3</version>
+			</plugin>
+		</plugins>
+	</pluginManagement>
+	<plugins>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-source-plugin</artifactId>
+			<executions>
+				<execution>
+					<id>attach-sources</id>
+					<goals>
+						<goal>jar-no-fork</goal>
+					</goals>
+				</execution>
+			</executions>
+		</plugin>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-javadoc-plugin</artifactId>
+			<executions>
+				<execution>
+					<id>attach-javadocs</id>
+					<goals>
+						<goal>jar</goal>
+					</goals>
+				</execution>
+			</executions>
+			<configuration>
+				<doclint>none</doclint>
+			</configuration>
+		</plugin>
+	</plugins>
   </build>
+  
+  <dependencyManagement>
+	<dependencies>
+		<dependency>
+			<groupId>org.lwjgl</groupId>
+			<artifactId>lwjgl-bom</artifactId>
+			<version>${lwjgl.version}</version>
+			<scope>import</scope>
+			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>com.avogine</groupId>
+			<artifactId>base</artifactId>
+			<version>${mavogine.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.avogine</groupId>
+			<artifactId>log</artifactId>
+			<version>${mavogine.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.8.2</version>
+			<type>pom.sha512</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+  </dependencyManagement>
   
 </project>

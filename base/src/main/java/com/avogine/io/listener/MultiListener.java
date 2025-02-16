@@ -1,6 +1,6 @@
 package com.avogine.io.listener;
 
-import com.avogine.io.event.Event;
+import com.avogine.io.event.AvoEvent;
 
 /**
  *
@@ -16,7 +16,7 @@ public class MultiListener {
 		this.secondListener = secondListener;
 	}
 	
-	public void fireEvent(Event event) {
+	public void fireEvent(AvoEvent event) {
 		//firstListener.fireEvent(event);
 		if (secondListener != null) {
 			secondListener.fireEvent(event);

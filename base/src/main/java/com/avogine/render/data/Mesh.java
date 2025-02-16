@@ -1,266 +1,185 @@
 package com.avogine.render.data;
 
-import java.lang.invoke.MethodHandles;
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
+
 import java.nio.*;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.*;
 
-import static org.lwjgl.opengl.GL33.*;
-
-import org.lwjgl.system.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.avogine.experimental.annotation.*;
+import org.joml.Vector3f;
+import org.lwjgl.opengl.GL30;
+import org.lwjgl.system.MemoryUtil;
 
 /**
- * TODO Refactor into taking in raw Vertex data, indices, and Texture IDs followed by a setup method that locally converts all of the data into buffers to feed into openGL
+ * Used by {@link Model}.
+ * <p>
+ * TODO#39 <a href="https://github.com/Avoduhcado/MAvogine/issues/39">Animated models #39</a>
  */
-@MemoryManaged
-public class Mesh implements Renderable {
+public class Mesh {
 	
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private Vector3f aabbMax;
+	private Vector3f aabbMin;
+	private int numVertices;
+	private int vaoId;
+	private List<Integer> vboIdList;
+	private int materialIndex;
+	
+	/**
+	 * @param vertexData 
+	 * @param materialIndex 
+	 */
+	public Mesh(VertexData vertexData, int materialIndex) {
+		this(vertexData, materialIndex, new Vector3f(), new Vector3f());
+	}
+	
+	/**
+	 * @param vertexData
+	 * @param materialIndex 
+	 * @param aabbMin 
+	 * @param aabbMax 
+	 */
+	public Mesh(VertexData vertexData, int materialIndex, Vector3f aabbMin, Vector3f aabbMax) {
+		FloatBuffer positionsBuffer = null;
+		FloatBuffer normalsBuffer = null;
+		FloatBuffer tangentsBuffer = null;
+		FloatBuffer bitangentsBuffer = null;
+		FloatBuffer textCoordsBuffer = null;
+		IntBuffer indicesBuffer = null;
+		try {
+			this.aabbMin = aabbMin;
+			this.aabbMax = aabbMax;
+			numVertices = vertexData.indices().length;
+			vboIdList = new ArrayList<>();
+			this.materialIndex = materialIndex;
 
-	private int vao;
-	private int vbo;
-	private int ebo;
-	
-	private int vertexCount;
-	
-	private Material material;
-	
-	/**
-	 * 
-	 * @param data
-	 * @param indices
-	 */
-	public Mesh(FloatBuffer data, IntBuffer indices) {
-		vao = glGenVertexArrays();
-		vbo = glGenBuffers();
-		ebo = glGenBuffers();
-		
-		glBindVertexArray(vao);
-		
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
+			vaoId = glGenVertexArrays();
+			glBindVertexArray(vaoId);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
-		
-		vertexCount = indices.limit();
-		
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
-		
-		glBindVertexArray(0);
-	}
-	
-	public Mesh(List<Float> data, IntBuffer indices) {
-		vao = glGenVertexArrays();
-		vbo = glGenBuffers();
-		ebo = glGenBuffers();
-		
-		FloatBuffer vertexData = allocateVertexData(data);
-		
-		glBindVertexArray(vao);
-		
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertexData, GL_STATIC_DRAW);
-		if (vertexData != null) {
-			MemoryUtil.memFree(vertexData);
-		}
+			// Positions VBO
+			int vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			positionsBuffer = MemoryUtil.memCallocFloat(vertexData.positions().length);
+			positionsBuffer.put(0, vertexData.positions());
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ARRAY_BUFFER, positionsBuffer, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-		// TODO 
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
-		
-		vertexCount = indices.limit();
-		
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
-		
-		glBindVertexArray(0);
-	}
-	
-	/**
-	 * Bind the {@link #material} and {@code Vertex Array} for this mesh.
-	 * <p>
-	 * This is called automatically by {@link #render()}.
-	 */
-	@Override
-	public void bind() {
-		bindMaterial();
-		glBindVertexArray(vao);
-	}
-	
-	/**
-	 * Unbind the {@code Vertex Array} and unbind any material textures if they exist.
-	 */
-	@Override
-	public void unbind() {
-		glBindVertexArray(0);
-		unbindMaterial();
-	}
+			// Normals VBO
+			vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			normalsBuffer = MemoryUtil.memCallocFloat(vertexData.normals().length);
+			normalsBuffer.put(0, vertexData.normals());
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
 
-	/**
-	 * If this mesh has an associated material, and that material either has an attached texture or normal map, bind them.
-	 */
-	private void bindMaterial() {
-		if (material == null) {
-			return;
-		}
-		if (material.isTextured()) {
-			glActiveTexture(GL_TEXTURE0);
-			material.getDiffuse().bind();
-		}
-		if (material.getSpecular() != null) {
-			glActiveTexture(GL_TEXTURE4);
-			material.getSpecular().bind();
-		}
-		if (material.hasNormalMap()) {
-			glActiveTexture(GL_TEXTURE2);
-			material.getNormalMap().bind();
-		}
-	}
-	
-	private void unbindMaterial() {
-		if (material == null) {
-			return;
-		}
-		if (material.isTextured()) {
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-		if (material.getSpecular() != null) {
-			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-		if (material.hasNormalMap()) {
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-	}
-	
-	/**
-	 * Draw the vertices of this mesh to the currently bound {@code FrameBuffer}.
-	 * <p>
-	 * <b>TODO: Importing things for openGL doc doesn't work with static imports?</b>
-	 * <p>
-	 * This is a simple wrapper to {@link GL11#glDrawElements(GL11.GL_TRIANGLES, int, GL11.GL_UNSIGNED_INT, long)} that handles calling
-	 * {@link #bind()} and {@link #unbind()} before and after drawing to perform any necessary {@code Texture} and {@code Vertex Array} binding.
-	 */
-	@Override
-	public void render() {
-		bind();
-		
-		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
-		
-		unbind();
-	}
-	
-	/**
-	 * 
-	 * @param <T>
-	 * @param entities
-	 * @param consumer
-	 */
-	@Override
-	public <T> void renderBatch(Collection<T> entities, Consumer<T> consumer) {
-		renderBatch(entities.stream(), consumer);
-	}
-	
-	/**
-	 * 
-	 * @param <T>
-	 * @param entities
-	 * @param consumer
-	 */
-	@Override
-	public <T> void renderBatch(Stream<T> entities, Consumer<T> consumer) {
-		bind();
+			// Tangents VBO
+			vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			tangentsBuffer = MemoryUtil.memCallocFloat(vertexData.tangents().length);
+			tangentsBuffer.put(0, vertexData.tangents());
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ARRAY_BUFFER, tangentsBuffer, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(2);
+			glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
 
-		entities
-//		.filter(T::isInsideFrustum)
-		.forEach(entity -> {
-			// Set up data required by entity
-			consumer.accept(entity);
-			// Render this entity
-			glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
-		});
+			// Bitangents VBO
+			vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			bitangentsBuffer = MemoryUtil.memCallocFloat(vertexData.bitangents().length);
+			bitangentsBuffer.put(0, vertexData.bitangents());
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ARRAY_BUFFER, bitangentsBuffer, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(3);
+			glVertexAttribPointer(3, 3, GL_FLOAT, false, 0, 0);
 
-		unbind();
-	}
-	
-	/**
-	 * @return the number of vertices in this mesh
-	 */
-	public int getVertexCount() {
-		return vertexCount;
-	}
-	
-	/**
-	 * @return
-	 */
-	public Material getMaterial() {
-		return material;
+			// Texture coordinates VBO
+			vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			textCoordsBuffer = MemoryUtil.memCallocFloat(vertexData.textureCoordinates().length);
+			textCoordsBuffer.put(0, vertexData.textureCoordinates());
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ARRAY_BUFFER, textCoordsBuffer, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(4);
+			glVertexAttribPointer(4, 2, GL_FLOAT, false, 0, 0);
+			
+			// Index VBO
+			vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			indicesBuffer = MemoryUtil.memCallocInt(vertexData.indices().length);
+			indicesBuffer.put(0, vertexData.indices());
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindVertexArray(0);
+		} finally {
+			if (positionsBuffer != null) {
+				MemoryUtil.memFree(positionsBuffer);
+			}
+			if (normalsBuffer != null) {
+				MemoryUtil.memFree(normalsBuffer);
+			}
+			if (tangentsBuffer != null) {
+				MemoryUtil.memFree(tangentsBuffer);
+			}
+			if (bitangentsBuffer != null) {
+				MemoryUtil.memFree(bitangentsBuffer);
+			}
+			if (textCoordsBuffer != null) {
+				MemoryUtil.memFree(textCoordsBuffer);
+			}
+			if (indicesBuffer != null) {
+				MemoryUtil.memFree(indicesBuffer);
+			}
+		}
 	}
 
 	/**
-	 * @param material
+	 * Free all GPU memory.
 	 */
-	public void setMaterial(Material material) {
-		this.material = material;
-	}
-	
-	/**
-	 * @param data
-	 * @return
-	 */
-	private FloatBuffer allocateVertexData(List<Float> data) {
-		FloatBuffer vertexData = MemoryUtil.memAllocFloat(data.size());
-		data.forEach(vertexData::put);
-		vertexData.flip();
-		return vertexData;
-	}
-	
-	@Override
 	public void cleanup() {
-		glDeleteBuffers(vbo);
-		glDeleteBuffers(ebo);
-		
-		glBindVertexArray(0);
-		glDeleteVertexArrays(vao);
-	}
-	
-	/**
-	 * @param length
-	 * @param defaultValue
-	 * @return
-	 */
-	public static float[] createEmptyFloatArray(int length, float defaultValue) {
-		float[] result = new float[length];
-		Arrays.fill(result, defaultValue);
-		return result;
+		vboIdList.forEach(GL30::glDeleteBuffers);
+		glDeleteVertexArrays(vaoId);
 	}
 
 	/**
-	 * @param length
-	 * @param defaultValue
-	 * @return
+	 * @return the maximum position of the axis-aligned bounding box that contains this mesh.
 	 */
-	public static int[] createEmptyIntArray(int length, int defaultValue) {
-		int[] result = new int[length];
-		Arrays.fill(result, defaultValue);
-		return result;
+	public Vector3f getAabbMax() {
+		return aabbMax;
+	}
+
+	/**
+	 * @return the minimum position of the axis-aligned bounding box that contains this mesh.
+	 */
+	public Vector3f getAabbMin() {
+		return aabbMin;
+	}
+
+	/**
+	 * @return the total number of vertex indices used to construct this mesh.
+	 */
+	public int getNumVertices() {
+		return numVertices;
+	}
+
+	/**
+	 * @return the ID of the vertex array object this mesh is bound to in memory.
+	 */
+	public final int getVaoId() {
+		return vaoId;
+	}
+	
+	/**
+	 * @return the materialIndex
+	 */
+	public int getMaterialIndex() {
+		return materialIndex;
 	}
 	
 }

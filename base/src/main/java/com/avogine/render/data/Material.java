@@ -1,154 +1,164 @@
 package com.avogine.render.data;
 
-import org.joml.*;
+import org.joml.Vector4f;
 
+import com.avogine.render.data.texture.Texture;
+
+/**
+ *
+ */
 public class Material {
 
-	public static final Vector3f DEFAULT_COLOR = new Vector3f(1f);
-
-	private final Vector3f ambientColor;
-	private final Vector3f diffuseColor;
-	private final Vector3f specularColor;
-
-	private float shininess;
-	private float reflectance;
-	
-	private TextureAtlas diffuse;
-	private TextureAtlas specular;
-	private TextureAtlas normalMap;
-	private TextureAtlas emission;
-	
-	public Material(Vector3f ambientColor, Vector3f diffuseColor, Vector3f specularColor, float shininess, TextureAtlas diffuse, float reflectance) {
-		this.ambientColor = ambientColor;
-		this.diffuseColor = diffuseColor;
-		this.specularColor = specularColor;
-		this.shininess = shininess;
-		this.diffuse = diffuse;
-		this.reflectance = reflectance;
-	}
-	
-	public Material(TextureAtlas diffuse, TextureAtlas specular, TextureAtlas emission, float shininess) {
-		this.diffuse = diffuse;
-		this.specular = specular;
-		this.shininess = shininess;
-		this.emission = emission;
-		
-		this.ambientColor = new Vector3f();
-		this.diffuseColor = new Vector3f();
-		this.specularColor = new Vector3f();
-		this.reflectance = 1.0f;
-	}
-
-	public Material(Vector3f ambientColor, Vector3f diffuseColor, Vector3f specularColor, float shininess) {
-		this(ambientColor, diffuseColor, specularColor, shininess, null, 1.0f);
-	}	
-	
-	public Material(Vector3f color, TextureAtlas texture, float shininess) {
-		this(color, color, color, shininess);
-	}
-
-	public Material(TextureAtlas texture, float shininess) {
-		this(DEFAULT_COLOR, texture, shininess);
-	}
-
-	public Material(TextureAtlas diffuse) {
-		this(diffuse, 32f);
-	}
-	
-	public Material() {
-		this(null);
-	}
-
 	/**
-	 * @return the ambient color
+	 * 
 	 */
-	public Vector3f getAmbientColor() {
+	public static final Vector4f DEFAULT_COLOR = new Vector4f(1f);
+
+	private Vector4f diffuseColor;
+	private Texture diffuseTexture;
+	private Vector4f ambientColor;
+	private Texture ambientTexture;
+	private Vector4f specularColor;
+	private Texture specularTexture;
+	
+	/**
+	 * @param diffuseColor 
+	 * @param diffuseTexture 
+	 * @param ambientColor 
+	 * @param ambientTexture 
+	 * @param specularColor 
+	 * @param specularTexture 
+	 */
+	public Material(Vector4f diffuseColor, Texture diffuseTexture, Vector4f ambientColor, Texture ambientTexture, Vector4f specularColor, Texture specularTexture) {
+		this.diffuseColor = diffuseColor;
+		this.diffuseTexture = diffuseTexture;
+		this.ambientColor = ambientColor;
+		this.ambientTexture = ambientTexture;
+		this.specularColor = specularColor;
+		this.specularTexture = specularTexture;
+	}
+	
+	/**
+	 * @param diffuse
+	 * @param ambient
+	 * @param specular
+	 */
+	public Material(Vector4f diffuse, Vector4f ambient, Vector4f specular) {
+		this(diffuse, null, ambient, null, specular, null);
+	}
+	
+	/**
+	 * @param diffuse
+	 * @param ambient
+	 * @param specular
+	 */
+	public Material(Texture diffuse, Texture ambient, Texture specular) {
+		this(DEFAULT_COLOR, diffuse, DEFAULT_COLOR, ambient, DEFAULT_COLOR, specular);
+	}
+	
+	/**
+	 * @param diffuse
+	 */
+	public Material(Texture diffuse) {
+		this(diffuse, null, null);
+	}
+	
+	/**
+	 * @param diffuse
+	 */
+	public Material(Vector4f diffuse) {
+		this(diffuse, DEFAULT_COLOR, DEFAULT_COLOR);
+	}
+	
+	/**
+	 * 
+	 */
+	public Material() {
+		this(DEFAULT_COLOR);
+	}
+	
+	/**
+	 * @return the diffuseColor
+	 */
+	public Vector4f getDiffuseColor() {
+		return diffuseColor;
+	}
+	
+	/**
+	 * @param diffuseColor the diffuseColor to set
+	 */
+	public void setDiffuseColor(Vector4f diffuseColor) {
+		this.diffuseColor = diffuseColor;
+	}
+	
+	/**
+	 * @return the diffuseTexture
+	 */
+	public Texture getDiffuseTexture() {
+		return diffuseTexture;
+	}
+	
+	/**
+	 * @param diffuseTexture the diffuseTexture to set
+	 */
+	public void setDiffuseTexture(Texture diffuseTexture) {
+		this.diffuseTexture = diffuseTexture;
+	}
+	
+	/**
+	 * @return the ambientColor
+	 */
+	public Vector4f getAmbientColor() {
 		return ambientColor;
 	}
 	
 	/**
-	 * @param ambient the ambient color to set
+	 * @param ambientColor the ambientColor to set
 	 */
-	public void setAmbientColor(Vector3f ambient) {
-		this.ambientColor.set(ambient);
+	public void setAmbientColor(Vector4f ambientColor) {
+		this.ambientColor = ambientColor;
 	}
 	
-	public Vector3f getDiffuseColor() {
-		return diffuseColor;
+	/**
+	 * @return the ambientTexture
+	 */
+	public Texture getAmbientTexture() {
+		return ambientTexture;
 	}
 	
-	public void setDiffuseColor(Vector3f diffuseColor) {
-		this.diffuseColor.set(diffuseColor);
+	/**
+	 * @param ambientTexture the ambientTexture to set
+	 */
+	public void setAmbientTexture(Texture ambientTexture) {
+		this.ambientTexture = ambientTexture;
 	}
 	
-	public Vector3f getSpecularColor() {
+	/**
+	 * @return the specularColor
+	 */
+	public Vector4f getSpecularColor() {
 		return specularColor;
 	}
 	
-	public void setSpecularColor(Vector3f specularColor) {
-		this.specularColor.set(specularColor);
-	}
-	
-	public float getShininess() {
-		return shininess;
-	}
-	
-	public void setShininess(float shininess) {
-		this.shininess = shininess;
-	}
-
-	public float getReflectance() {
-		return reflectance;
-	}
-	
-	public void setReflectance(float reflectance) {
-		this.reflectance = reflectance;
-	}
-	
-	public boolean isTextured() {
-		return diffuse != null;
-	}
-	
-	public TextureAtlas getDiffuse() {
-		return diffuse;
-	}
-	
-	public void setDiffuse(TextureAtlas diffuse) {
-		this.diffuse = diffuse;
-	}
-	
-	public TextureAtlas getSpecular() {
-		return specular;
-	}
-	
-	public void setSpecular(TextureAtlas specular) {
-		this.specular = specular;
+	/**
+	 * @param specularColor the specularColor to set
+	 */
+	public void setSpecularColor(Vector4f specularColor) {
+		this.specularColor = specularColor;
 	}
 	
 	/**
-	 * @return the emission
+	 * @return the specularTexture
 	 */
-	public TextureAtlas getEmission() {
-		return emission;
+	public Texture getSpecularTexture() {
+		return specularTexture;
 	}
 	
 	/**
-	 * @param emission the emission to set
+	 * @param specularTexture the specularTexture to set
 	 */
-	public void setEmission(TextureAtlas emission) {
-		this.emission = emission;
+	public void setSpecularTexture(Texture specularTexture) {
+		this.specularTexture = specularTexture;
 	}
 	
-	public boolean hasNormalMap() {
-		return normalMap != null;
-	}
-	
-	public TextureAtlas getNormalMap() {
-		return normalMap;
-	}
-	
-	public void setNormalMap(TextureAtlas normalMap) {
-		this.normalMap = normalMap;
-	}
-
 }

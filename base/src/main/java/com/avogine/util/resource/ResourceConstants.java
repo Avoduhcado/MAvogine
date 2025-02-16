@@ -1,16 +1,41 @@
 package com.avogine.util.resource;
 
-public class ResourceConstants {
+/**
+ * Constant values for different resource directory paths relative to the /resources directory.
+ */
+public enum ResourceConstants {
+	
+	/** The root directory for all model resources. */
+	MODELS("/models/"),
+	/** The root directory for all shader resources. */
+	SHADERS("/shaders/"),
+	/** The root directory for all texture resources. */
+	TEXTURES("/textures/"),
+	/** The root directory for all font resources. */
+	FONTS("/fonts/"),
+	/** The root directory for all sound resources. */
+	SOUNDS("/sounds/");
 
-	/** {@value #MODEL_PATH} */
-	public static final String MODEL_PATH = "/models/";
-	/** {@value #SHADER_PATH} */
-	public static final String SHADER_PATH = "/shaders/";
-	/** {@value #TEXTURE_PATH} */
-	public static final String TEXTURE_PATH = "/textures/";
-	/** {@value #FONT_PATH} */
-	public static final String FONT_PATH = "/fonts/";
-	/** {@value #AUDIO_PATH} */
-	public static final String AUDIO_PATH = "/audio/";
+	private String directory;
+
+	/**
+	 * @return the root directory for this resource.
+	 */
+	public String getDirectory() {
+		return directory;
+	}
+
+	/**
+	 * Return a relative file path starting from this {@link ResourceConstants} directory and joining each sub path element with a {@code /}.
+	 * @param paths A list of sub path elements pointing to a specific file location.
+	 * @return a relative file path starting from this {@link ResourceConstants} directory and joining each sub path element with a {@code /}.
+	 */
+	public String with(String...paths) {
+		return directory + String.join("/", paths);
+	}
+
+	private ResourceConstants(String directory) {
+		this.directory = directory;
+	}
 
 }

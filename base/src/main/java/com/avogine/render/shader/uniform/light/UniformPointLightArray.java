@@ -1,7 +1,5 @@
 package com.avogine.render.shader.uniform.light;
 
-import java.util.*;
-
 import com.avogine.entity.light.*;
 import com.avogine.render.shader.uniform.*;
 

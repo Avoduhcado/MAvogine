@@ -1,31 +1,24 @@
 package com.avogine.render.data;
 
-import java.lang.invoke.MethodHandles;
-import java.nio.*;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.*;
-
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL33.*;
+import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
+import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
-import org.joml.*;
+import java.nio.*;
+import java.util.Collection;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
 import org.lwjgl.system.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.avogine.util.*;
 
 /**
  * TODO Potentially include multiple VBOs for instanced meshes, one for static data, and one for dynamic data that is streamed in as the scene updates and meshes transform themselves
  * Cleanup all this code, presently this is pretty hardcoded just for rendering 2D sprites with a texture atlas
  */
-public class InstancedMesh implements Renderable {
-
-	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+public class InstancedMesh {
 
 	private int vao;
 	private int vbo;
@@ -112,17 +105,14 @@ public class InstancedMesh implements Renderable {
 		this.numberOfInstances = numberOfInstances;
 	}
 
-	@Override
 	public void bind() {
 		glBindVertexArray(vao);
 	}
 
-	@Override
 	public void unbind() {
 		glBindVertexArray(0);
 	}
 
-	@Override
 	public void render() {
 		bind();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
@@ -133,13 +123,11 @@ public class InstancedMesh implements Renderable {
 		unbind();
 	}
 	
-	@Override
 	public <T> void renderBatch(Collection<T> entities, Consumer<T> action) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
 	public <T> void renderBatch(Stream<T> entities, Consumer<T> action) {
 		// TODO Auto-generated method stub
 		
@@ -287,7 +275,6 @@ public class InstancedMesh implements Renderable {
 		this.material = material;
 	}
 
-	@Override
 	public void cleanup() {
 		glDeleteBuffers(vbo);
 		glDeleteBuffers(ebo);

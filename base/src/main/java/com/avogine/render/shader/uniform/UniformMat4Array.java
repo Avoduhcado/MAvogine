@@ -1,10 +1,6 @@
 package com.avogine.render.shader.uniform;
 
-import java.util.*;
-
-import org.joml.Matrix4f;
-
-import com.avogine.render.shader.uniform.light.*;
+import org.joml.*;
 
 public class UniformMat4Array extends Uniform {
 
