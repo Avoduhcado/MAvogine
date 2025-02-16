@@ -1,50 +1,79 @@
 package com.avogine.io.event;
 
-/**
- * 
- */
-public non-sealed class KeyEvent extends InputEvent {
-	
-	public static final int KEY_PRESSED = 101;
-	
-	public static final int KEY_RELEASED = 102;
+import com.avogine.io.listener.KeyListener;
 
-	/**
-	 * Constant value for events where a key was just pressed.
-	 * </p>
-	 * This will only fire one event regardless of how long a key is held down for.
-	 */
-	public static final int KEY_TYPED = 103;
-	
-	public final int key;
-	
-	public final int codepoint;
-	
-	/**
-	 * @param id the type of event, one of {@link #KEY_PRESSED}, {@link #KEY_RELEASED} or {@link #KEY_TYPED}
-	 * @param key the key that triggered the event
-	 * @param codepoint The character produced by this event.
-	 * @param window the window ID the key was triggered from
-	 */
-	public KeyEvent(int id, int key, int codepoint, long window) {
-		this.id = id;
-		this.key = key;
-		this.codepoint = codepoint;
-		this.window = window;
-	}
-	
+/**
+ * Base interface for {@link InputEvent}s fired by key input.
+ */
+public sealed interface KeyEvent extends InputEvent {
 	/**
 	 * @return the key
 	 */
-	public int key() {
-		return key;
-	}
+	public int key();
 	
 	/**
 	 * @return the unicode codepoint
 	 */
-	public int codepoint() {
-		return codepoint;
+	public int codepoint();
+
+	/**
+	 * KeyEvent where a key is pressed.
+	 * <p>
+	 * This will continue to fire new events while the key is pressed.
+	 * @param window The window ID the key was triggered from.
+	 * @param key The key that triggered the event
+	 * @param codepoint The character produced by this event.
+	 * @param consumed true only if this event has been handled and consumed by a {@link KeyListener}.
+	 */
+	public record KeyPressedEvent(long window, int key, int codepoint, boolean consumed) implements KeyEvent, ConsumableEvent<KeyPressedEvent> {
+		/**
+		 * @param window The window ID the key was triggered from.
+		 * @param key The key that triggered the event
+		 * @param codepoint The character produced by this event.
+		 */
+		public KeyPressedEvent(long window, int key, int codepoint) {
+			this(window, key, codepoint, false);
+		}
+		
+		@Override
+		public KeyPressedEvent withConsume() {
+			return new KeyPressedEvent(window, key, codepoint, true);
+		}
+	}
+	
+	/**
+	 * KeyEvent where a key was released.
+	 * @param window The window ID the key was triggered from.
+	 * @param key The key that triggered the event
+	 * @param codepoint The character produced by this event.
+	 * @param consumed true only if this event has been handled and consumed by a {@link KeyListener}.
+	 */
+	public record KeyReleasedEvent(long window, int key, int codepoint, boolean consumed) implements KeyEvent, ConsumableEvent<KeyReleasedEvent> {
+		/**
+		 * @param window The window ID the key was triggered from.
+		 * @param key The key that triggered the event
+		 * @param codepoint The character produced by this event.
+		 */
+		public KeyReleasedEvent(long window, int key, int codepoint) {
+			this(window, key, codepoint, false);
+		}
+		
+		@Override
+		public KeyReleasedEvent withConsume() {
+			return new KeyReleasedEvent(window, key, codepoint, true);
+		}
+	}
+	
+	/**
+	 * KeyEvent where a key was just pressed.
+	 * <p>
+	 * This differs from {@link KeyPressedEvent} in that it will only be fired once per key press.
+	 * @param window The window ID the key was triggered from.
+	 * @param key The key that triggered the event
+	 * @param codepoint The character produced by this event.
+	 */
+	public record KeyTypedEvent(long window, int key, int codepoint) implements KeyEvent {
+		
 	}
 
 }

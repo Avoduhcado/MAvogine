@@ -57,6 +57,7 @@ public class Avogine implements Runnable {
 	 * This has minor tweaks for running threads on Mac, namely setting the System property "java.awt.headless" to
 	 * true to avoid conflicts between GLFW and AWT.
 	 */
+	@SuppressWarnings("squid:S1217") // Presumed to be a false positive until actual testing on a Mac can confirm the need to use Thread.run()
 	public void start() {
 		String osName = System.getProperty("os.name");
 		if (osName.contains("Mac")) {
@@ -140,7 +141,6 @@ public class Avogine implements Runnable {
 		profiler.updateStart();
 		
 		while (updateAccumulator > updateInterval) {
-			// TODO Process EventQueue
 			game.update((float) updateInterval);
 			updateAccumulator -= updateInterval;
 		}

@@ -1,6 +1,6 @@
 package com.avogine.io.listener;
 
-import com.avogine.io.event.MouseEvent;
+import com.avogine.io.event.MouseEvent.*;
 
 /**
  * A listener that fires when a mouse button has been pressed or released.
@@ -9,17 +9,20 @@ public interface MouseButtonListener extends InputListener {
 
 	/**
 	 * @param event
+	 * @return the event
 	 */
-	public void mouseClicked(MouseEvent event);
+	public MouseButtonEvent mouseClicked(MouseClickedEvent event);
 	
 	/**
 	 * @param event
+	 * @return the event
 	 */
-	public void mousePressed(MouseEvent event);
+	public MouseButtonEvent mousePressed(MousePressedEvent event);
 	
 	/**
 	 * @param event
+	 * @return the event
 	 */
-	public void mouseReleased(MouseEvent event);
+	public MouseButtonEvent mouseReleased(MouseReleasedEvent event);
 	
 }

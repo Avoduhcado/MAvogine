@@ -50,7 +50,7 @@ public class TextRender {
 	 * @param fontCache 
 	 */
 	public void init(Matrix4f projection, FontCache fontCache) {
-		fontShader = new FontShader("textVertex.glsl", "textFragment.glsl");
+		fontShader = new FontShader();
 		fontShader.bind();
 		fontShader.projection.loadMatrix(projection);
 		fontShader.unbind();

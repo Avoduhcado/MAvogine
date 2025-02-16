@@ -36,7 +36,7 @@ public class ResourceUtils {
 	/**
 	 * @param resourcePath
 	 * @param bufferSize
-	 * @return
+	 * @return a buffer containing the byte contents of the given resource.
 	 */
 	public static ByteBuffer readResourceToBuffer(String resourcePath, int bufferSize) {
 		AvoLog.log().debug("Reading: {}", resourcePath);
@@ -65,11 +65,11 @@ public class ResourceUtils {
 	}
 	
 	/**
-	 * @param filePath
-	 * @return
+	 * @param resourcePath
+	 * @return a buffer containing the byte contents of the given resource.
 	 */
-	public static ByteBuffer readResourceToBuffer(String filePath) {
-		return readResourceToBuffer(filePath, 8 * 1024);
+	public static ByteBuffer readResourceToBuffer(String resourcePath) {
+		return readResourceToBuffer(resourcePath, 8 * 1024);
 	}
 
 	/**

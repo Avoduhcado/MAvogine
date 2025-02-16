@@ -1,6 +1,8 @@
 package com.avogine.render.shader;
 
-import org.lwjgl.opengl.*;
+import static com.avogine.util.resource.ResourceConstants.SHADERS;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER;
 
 import com.avogine.render.shader.uniform.UniformMat4;
 
@@ -17,7 +19,10 @@ public class NormalShader extends ShaderProgram {
 	 * 
 	 */
 	public NormalShader() {
-		super(new ShaderModuleData("normalVertex.glsl", GL20.GL_VERTEX_SHADER), new ShaderModuleData("normalGeometry.glsl", GL32.GL_GEOMETRY_SHADER), new ShaderModuleData("normalFragment.glsl", GL20.GL_FRAGMENT_SHADER));
+		super(
+				new ShaderModuleData(SHADERS.with("normalVertex.glsl"), GL_VERTEX_SHADER),
+				new ShaderModuleData(SHADERS.with("normalGeometry.glsl"), GL_GEOMETRY_SHADER),
+				new ShaderModuleData(SHADERS.with("normalFragment.glsl"), GL_FRAGMENT_SHADER));
 		storeAllUniformLocations(projection, view, model);
 	}
 	

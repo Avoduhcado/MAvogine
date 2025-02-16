@@ -12,7 +12,6 @@ import org.lwjgl.opengl.*;
 import com.avogine.logging.AvoLog;
 import com.avogine.render.shader.uniform.Uniform;
 import com.avogine.util.ResourceUtils;
-import com.avogine.util.resource.ResourceConstants;
 
 /**
  * Wrapper class for an OpenGL shader program object.
@@ -39,7 +38,7 @@ public abstract class ShaderProgram {
 		programId = glCreateProgram();
 		List<Integer> shaderIds = new ArrayList<>();
 		for (ShaderModuleData shader : shaders) {
-			shaderIds.add(createShader(shader.fileName, shader.type));
+			shaderIds.add(createShader(shader.filePath, shader.type));
 		}
 		link(shaderIds);
 	}
@@ -58,13 +57,6 @@ public abstract class ShaderProgram {
 		glUseProgram(0);
 	}
 	
-	/**
-	 * @return the programId
-	 */
-	public int getProgramId() {
-		return programId;
-	}
-
 	protected void storeAllUniformLocations(Uniform... uniforms) {
 		// Via reflection, collect all of the public fields of the shader program and map them to instance and field
 		// so that the uniform variables can link up directly with the name supplied to the variable.
@@ -103,7 +95,7 @@ public abstract class ShaderProgram {
 	 * @throws Exception If there are any errors reading, creating, or compiling the shader
 	 */
 	protected int createShader(String shaderFile, int shaderType) {
-		String shaderCode = ResourceUtils.readResource(ResourceConstants.SHADERS.with(shaderFile));
+		String shaderCode = ResourceUtils.readResource(shaderFile);
 		
 		int shaderId = glCreateShader(shaderType);
 		if (shaderId == 0) {
@@ -159,8 +151,15 @@ public abstract class ShaderProgram {
 	}
 	
 	/**
+	 * @return the programId
+	 */
+	public int getProgramId() {
+		return programId;
+	}
+	
+	/**
 	 * A tuple of a shader file name and its shader type.
-	 * @param fileName The name of the file to load the shader code from.
+	 * @param filePath The relative path of the resource file to load the shader code from.
 	 * @param type The type of the shader. One of:<br>
 	 * <table><tr>
 	 * <td>{@link GL20C#GL_VERTEX_SHADER VERTEX_SHADER}</td>
@@ -171,7 +170,7 @@ public abstract class ShaderProgram {
 	 * <td>{@link GL40#GL_TESS_EVALUATION_SHADER TESS_EVALUATION_SHADER}</td>
 	 * </tr></table>
 	 */
-	public record ShaderModuleData(String fileName, int type) {
+	public record ShaderModuleData(String filePath, int type) {
 		
 	}
 	

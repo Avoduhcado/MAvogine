@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import com.avogine.ecs.*;
 import com.avogine.render.TextureCache;
 import com.avogine.render.data.Model;
-import com.avogine.render.loader.assimp.StaticModelLoader;
+import com.avogine.render.util.assimp.StaticModelLoader;
 
 /**
  * TODO Should this be a singleton? Could be possible to support multiple model caches, but I'm not sure why.

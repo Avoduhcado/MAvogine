@@ -1,8 +1,7 @@
 package com.avogine.entity.light;
 
-import java.lang.Math;
-
-import org.joml.*;
+import org.joml.Math;
+import org.joml.Vector3f;
 
 /**
  *
@@ -74,7 +73,7 @@ public class SpotLight extends Light {
 	 * @return The cosine of the innerCutOff value converted to radians
 	 */
 	public float getInnerCutOffCosineRadians() {
-		return (float) Math.cos(Math.toRadians(innerCutOff));
+		return Math.cos(Math.toRadians(innerCutOff));
 	}
 	
 	/**
@@ -96,7 +95,7 @@ public class SpotLight extends Light {
 	 * @return The cosine of the innerCutOff value converted to radians
 	 */
 	public float getOuterCutOffCosineRadians() {
-		return (float) Math.cos(Math.toRadians(outerCutOff));
+		return Math.cos(Math.toRadians(outerCutOff));
 	}
 	
 	/**

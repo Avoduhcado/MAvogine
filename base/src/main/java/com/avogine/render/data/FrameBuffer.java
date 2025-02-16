@@ -6,15 +6,12 @@ import static org.lwjgl.opengl.GL30.*;
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
 
-import com.avogine.experimental.annotation.MemoryManaged;
 import com.avogine.io.Window;
 import com.avogine.logging.AvoLog;
 
 /**
- * @author Dominus
  *
  */
-@MemoryManaged
 public class FrameBuffer {
 
 	protected final int fbo;
@@ -32,6 +29,8 @@ public class FrameBuffer {
 		this.width = width;
 		this.height = height;
 		fbo = glGenFramebuffers();
+		
+		generateBuffers();
 	}
 	
 	/**
@@ -53,11 +52,7 @@ public class FrameBuffer {
 		this(window, window::getWidth, window::getHeight);
 	}
 	
-	/**
-	 * TODO XXX Call this automatically? I keep forgetting to call it and things just don't work, who knows
-	 * Create and attach a color attachment to this {@code FrameBuffer}.
-	 */
-	public void init() {
+	private void generateBuffers() {
 		bind();
 		
 		// Create a color texture
@@ -108,7 +103,16 @@ public class FrameBuffer {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, window.getWidth(), window.getHeight());
 	}
-
+	
+	/**
+	 * Delete any texture attachments, renderbuffers, and finally the framebuffer itself from OpenGL memory.
+	 */
+	public void cleanup() {
+		glDeleteTextures(colorAttachment);
+		glDeleteRenderbuffers(rbo);
+		glDeleteFramebuffers(fbo);
+	}
+	
 	/**
 	 * @return The ID of this framebuffer object
 	 */
@@ -121,15 +125,6 @@ public class FrameBuffer {
 	 */
 	public int getColorAttachment() {
 		return colorAttachment;
-	}
-	
-	/**
-	 * Delete any texture attachments, renderbuffers, and finally the framebuffer itself from OpenGL memory.
-	 */
-	public void cleanup() {
-		glDeleteTextures(colorAttachment);
-		glDeleteRenderbuffers(rbo);
-		glDeleteFramebuffers(fbo);
 	}
 	
 }

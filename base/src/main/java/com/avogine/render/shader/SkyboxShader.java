@@ -1,24 +1,23 @@
 package com.avogine.render.shader;
 
-import com.avogine.render.shader.uniform.UniformMat4;
-import com.avogine.render.shader.uniform.UniformSampler;
+import com.avogine.render.shader.uniform.*;
 
 /**
  *
  */
 public class SkyboxShader extends ShaderProgram {
 
-	public UniformMat4 projection = new UniformMat4();
-	public UniformMat4 view = new UniformMat4();
+	public final UniformMat4 projection = new UniformMat4();
+	public final UniformMat4 view = new UniformMat4();
 	
-	public UniformSampler skybox = new UniformSampler();
+	public final UniformSampler skybox = new UniformSampler();
 	
 	/**
-	 * @param vertexShaderFile
-	 * @param fragmentShaderFile
+	 * @param vertexShaderFilePath
+	 * @param fragmentShaderFilePath
 	 */
-	public SkyboxShader(String vertexShaderFile, String fragmentShaderFile) {
-		super(vertexShaderFile, fragmentShaderFile);
+	public SkyboxShader(String vertexShaderFilePath, String fragmentShaderFilePath) {
+		super(vertexShaderFilePath, fragmentShaderFilePath);
 		storeAllUniformLocations(projection, view, skybox);
 		loadTexUnit();
 	}
