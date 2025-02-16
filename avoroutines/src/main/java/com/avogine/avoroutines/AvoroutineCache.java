@@ -1,8 +1,8 @@
-package com.avogines.avoroutines;
+package com.avogine.avoroutines;
 
 import java.util.*;
 
-import com.avogines.avoroutines.Avoroutine.*;
+import com.avogine.avoroutines.Avoroutine.*;
 
 /**
  * This is currently designed to only store time updated {@link Avoroutine}s with no concern for what their output is.

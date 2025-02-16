@@ -1,4 +1,4 @@
-package com.avogines.avoroutines;
+package com.avogine.avoroutines;
 
 /**
  * @param <I> 

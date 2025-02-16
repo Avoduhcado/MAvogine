@@ -1,7 +1,7 @@
 package com.avogine.junk;
 
-import com.avogines.avoroutines.*;
-import com.avogines.avoroutines.Avoroutine.*;
+import com.avogine.avoroutines.*;
+import com.avogine.avoroutines.Avoroutine.*;
 
 /**
  *
