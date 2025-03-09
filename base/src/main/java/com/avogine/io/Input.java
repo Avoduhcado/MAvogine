@@ -157,16 +157,32 @@ public class Input {
 					fireMouseMotionEvent(new MouseDraggedEvent(window, i, (float) xPos, (float) yPos));
 				}
 			}
-			if (!dragged) {
+//			if (!dragged) {
 				fireMouseMotionEvent(new MouseMovedEvent(window, (float) xPos, (float) yPos));
-			}
+//			}
 			lastMouseX = (float) xPos;
 			lastMouseY = (float) yPos;
 		});
 	}
 	
 	private void configureScrollCallback() {
-		GLFW.glfwSetScrollCallback(windowID, (window, xOffset, yOffset) -> fireMouseScrollEvent(new MouseWheelEvent(window, xOffset, yOffset)));
+		GLFW.glfwSetScrollCallback(windowID, (window, xOffset, yOffset) -> fireMouseScrollEvent(new MouseWheelEvent(window, lastMouseX, lastMouseY, xOffset, yOffset)));
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean[] getKeys() {
+		return keys;
+	}
+	
+	/**
+	 * @param keyCode
+	 * @return
+	 */
+	public boolean isKeyDown(int keyCode) {
+		Objects.checkIndex(keyCode, keys.length);
+		return keys[keyCode];
 	}
 	
 	/**
@@ -191,43 +207,46 @@ public class Input {
 	
 	private void fireKeyboardEvent(KeyEvent event) {
 		for (var listener : listeners) {
-			if (listener instanceof KeyListener kl && !event.consumed()) {
-				event = switch (event) {
+			if (listener instanceof KeyListener kl && !event.isConsumed()) {
+				switch (event) {
 					case KeyPressedEvent e -> kl.keyPressed(e);
 					case KeyReleasedEvent e -> kl.keyReleased(e);
 					case KeyTypedEvent e -> kl.keyTyped(e);
-				};
+				}
 			}
 		}
 	}
 	
 	private void fireMouseButtonEvent(MouseButtonEvent event) {
 		for (var listener : listeners) {
-			if (listener instanceof MouseButtonListener mbl && !event.consumed()) {
-				event = switch (event) {
+			if (listener instanceof MouseButtonListener mbl && !event.isConsumed()) {
+				switch (event) {
 					case MousePressedEvent e -> mbl.mousePressed(e);
 					case MouseReleasedEvent e -> mbl.mouseReleased(e);
 					case MouseClickedEvent e -> mbl.mouseClicked(e);
-				};
+					case MouseDraggedEvent e -> {
+						// Drag events should be handled by MouseMotionListeners
+					}
+				}
 			}
 		}
 	}
 	
 	private void fireMouseMotionEvent(MouseMotionEvent event) {
 		for (var listener : listeners) {
-			if (listener instanceof MouseMotionListener mml && !event.consumed()) {
-				event = switch (event) {
+			if (listener instanceof MouseMotionListener mml && !event.isConsumed()) {
+				switch (event) {
 					case MouseDraggedEvent e -> mml.mouseDragged(e);
 					case MouseMovedEvent e -> mml.mouseMoved(e);
-				};
+				}
 			}
 		}
 	}
 	
 	private void fireMouseScrollEvent(MouseWheelEvent event) {
 		for (var listener : listeners) {
-			if (listener instanceof MouseWheelListener mwl && !event.consumed()) {
-				event = mwl.mouseWheelMoved(event);
+			if (listener instanceof MouseWheelListener mwl && !event.isConsumed()) {
+				mwl.mouseWheelMoved(event);
 			}
 		}
 	}

@@ -24,7 +24,7 @@ public enum FrameProfiler implements Profilable {
 		private long inputStart;
 		private long updateStart;
 		private long renderStart;
-		private final DecimalFormat df = new DecimalFormat("###000,000.00μs");
+		private final DecimalFormat df = new DecimalFormat("###000,000.00ns");
 
 		@Override
 		public void startFrame() {

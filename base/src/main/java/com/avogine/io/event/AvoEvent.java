@@ -10,7 +10,7 @@ public interface AvoEvent {
 	/**
 	 * @return true if this event has been consumed and should no longer propagate to further listeners.
 	 */
-	public default boolean consumed() {
+	public default boolean isConsumed() {
 		return false;
 	}
 	

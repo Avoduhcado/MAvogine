@@ -18,7 +18,8 @@ public class EasingUtils {
 	 * @return a value linearly interpolated between {@code begin} and {@code begin + change} after {@code time} over {@code duration}.
 	 */
 	public static float linear(float time, float begin, float change, float duration) {
-		return change * time / duration + begin;
+		time /= duration;
+		return change * time + begin;
 	}
 	
 	/**
@@ -30,8 +31,8 @@ public class EasingUtils {
 	 * @return a value interpolated between {@code begin} and {@code begin + change} after {@code time} over {@code duration} with an ease-in formula.
 	 */
 	public static float easeInQuad(float time, float begin, float change, float duration) {
-		var timeOverDuration = time / duration;
-		return change * timeOverDuration * time + begin;
+		time /= duration;
+		return change * time * time + begin;
 	}
 	
 	/**
@@ -43,8 +44,8 @@ public class EasingUtils {
 	 * @return a value interpolated between {@code begin} and {@code begin + change} after {@code time} over {@code duration} with an ease-out formula.
 	 */
 	public static float easeOutQuad(float time, float begin, float change, float duration) {
-		var timeOverDuration = time / duration;
-		return -change * timeOverDuration * (time - 2) + begin;
+		time /= duration;
+		return -change * time * (time - 2) + begin;
 	}
 	
 	/**
@@ -56,8 +57,8 @@ public class EasingUtils {
 	 * @return a value interpolated between {@code begin} and {@code begin + change} after {@code time} over {@code duration} with an ease-in-out formula.
 	 */
 	public static float easeInOutQuad(float time, float begin, float change, float duration) {
-		var timeOverDuration = time / duration;
-		if ((timeOverDuration / 2) < 1) {
+		time /= duration;
+		if ((time / 2) < 1) {
 			return change / 2 * time * time + begin;
 		}
 		return -change / 2 * ((--time) * (time - 2) - 1) + begin;
