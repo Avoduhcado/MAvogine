@@ -90,7 +90,6 @@ public class TextRender {
 		fontShader.bind();
 		
 		glBindVertexArray(textVao);
-		glBindBuffer(GL_ARRAY_BUFFER, textVbo);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, font.getTextureId());
@@ -130,8 +129,10 @@ public class TextRender {
 				}
 			});
 			vertexData.flip();
-			
+
+			glBindBuffer(GL_ARRAY_BUFFER, textVbo);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData);
+			
 			glDrawArrays(GL_TRIANGLES, 0, numVertices.get());
 		}
 		
@@ -158,6 +159,7 @@ public class TextRender {
 			fontShader.cleanup();
 		}
 		glDeleteVertexArrays(textVao);
+		glDeleteBuffers(textVbo);
 	}
 	
 }

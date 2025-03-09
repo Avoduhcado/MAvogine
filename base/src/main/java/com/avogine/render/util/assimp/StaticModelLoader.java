@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.joml.*;
 import org.joml.Math;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryStack;
 
@@ -42,8 +43,9 @@ public class StaticModelLoader {
 	 * @param flags
 	 * @return
 	 */
+	@SuppressWarnings("squid:S2095") // AIFileIO allocates memory through it's Open/CloseProcs which are being manually freed. Closing fileIo seems to cause native crashes with no stacktrace/thread dump.
 	public static Model loadModel(String id, String modelPath, TextureCache textureCache, int flags) {
-		try (AIFileIO fileIo = AIFileIO.create()
+		AIFileIO fileIo = AIFileIO.create()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					String fileNameUtf8 = memUTF8(fileName);
 					ByteBuffer data = ResourceUtils.readResourceToBuffer(fileNameUtf8);
@@ -74,32 +76,33 @@ public class StaticModelLoader {
 					aiFile.ReadProc().free();
 					aiFile.SeekProc().free();
 					aiFile.FileSizeProc().free();
-				});) {
+				});
+		
+		AIScene aiScene = Assimp.aiImportFileEx(modelPath, flags, fileIo);
 
-			AIScene aiScene = Assimp.aiImportFileEx(modelPath, flags, fileIo);
+		fileIo.OpenProc().free();
+		fileIo.CloseProc().free();
 
-			fileIo.OpenProc().free();
-			fileIo.CloseProc().free();
-
-			if (aiScene == null) {
-				throw new IllegalStateException(Assimp.aiGetErrorString());
-			}
-
-			String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
-
-			int numMaterials = aiScene.mNumMaterials();
-			List<Material> materials = new ArrayList<>();
-			for (int i = 0; i < numMaterials; ++i) {
-				AIMaterial aiMaterial = AIMaterial.create(aiScene.mMaterials().get(i));
-				materials.add(processMaterial(aiMaterial, modelDirectory, textureCache));
-			}
-
-			List<Mesh> meshes = processNode(aiScene.mRootNode(), aiScene);
-
-			Assimp.aiReleaseImport(aiScene);
-
-			return new Model(id, meshes, materials);
+		if (aiScene == null) {
+			throw new IllegalStateException(Assimp.aiGetErrorString());
 		}
+
+		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
+
+		int numMaterials = aiScene.mNumMaterials();
+		PointerBuffer materialsBuffer = aiScene.mMaterials();
+		List<Material> materials = new ArrayList<>();
+		for (int i = 0; i < numMaterials; ++i) {
+			AIMaterial aiMaterial = AIMaterial.create(materialsBuffer.get(i));
+			materials.add(processMaterial(aiMaterial, modelDirectory, textureCache));
+		}
+
+		List<Mesh> meshes = processNode(aiScene.mRootNode(), aiScene);
+
+		// XXX I think this can't actually be released for some reason while the model is in use
+//		Assimp.aiReleaseImport(aiScene);
+
+		return new Model(id, meshes, materials);
 	}
 
 	/**
@@ -151,16 +154,19 @@ public class StaticModelLoader {
 	}
 	
 	protected static List<Mesh> processNode(AINode node, AIScene scene) {
+		PointerBuffer meshesBuffer = scene.mMeshes();
+		IntBuffer nodeMeshesBuffer = node.mMeshes();
 		List<Mesh> meshes = new ArrayList<>();
 		// process all the node's meshes (if any)
 		for (int i = 0; i < node.mNumMeshes(); i++) {
-			AIMesh mesh = AIMesh.create(scene.mMeshes().get(node.mMeshes().get(i)));
+			AIMesh mesh = AIMesh.create(meshesBuffer.get(nodeMeshesBuffer.get(i)));
 			meshes.add(processMesh(mesh));
 		}
 		
+		PointerBuffer nodeChildrenBuffer = node.mChildren();
 		// then do the same for each of its children
 		for (int i = 0; i < node.mNumChildren(); i++) {
-			meshes.addAll(processNode(AINode.create(node.mChildren().get(i)), scene));
+			meshes.addAll(processNode(AINode.create(nodeChildrenBuffer.get(i)), scene));
 		}
 		return meshes;
 	}
