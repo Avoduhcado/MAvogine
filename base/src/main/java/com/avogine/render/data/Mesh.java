@@ -102,8 +102,8 @@ public class Mesh {
 	 * Free all GPU memory.
 	 */
 	public void cleanup() {
-		vboIdList.forEach(GL30::glDeleteBuffers);
 		glDeleteVertexArrays(vaoId);
+		vboIdList.forEach(GL30::glDeleteBuffers);
 	}
 
 	/**

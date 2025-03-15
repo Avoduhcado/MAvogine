@@ -45,7 +45,6 @@ public class StaticModelLoader {
 	 * @return a {@link Model} loaded from the given modelPath.
 	 * @throws IllegalStateException if the model file could not be opened.
 	 */
-	
 	@SuppressWarnings({
 		"java:S2095" // The actual AIFileIO instance holds very little of its own memory which should be fine to be GC'd and its AIFile proc's are being manually freed which provide the bulk of the memory footprint.
 	})
