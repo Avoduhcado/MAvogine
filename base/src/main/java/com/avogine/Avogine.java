@@ -1,6 +1,7 @@
 package com.avogine;
 
-import java.util.concurrent.*;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import com.avogine.game.*;
 import com.avogine.io.Window;
@@ -14,7 +15,7 @@ import com.avogine.util.FrameProfiler;
  * to and a {@link Game} to run, then call {@link #start()}.
  *
  */
-public class Avogine implements Runnable {
+public class Avogine {
 
 	/**
 	 * When sleeping the game loop thread per frame, the system will issue {@code Thread.sleep(1)} requests for as long as the
@@ -26,14 +27,17 @@ public class Avogine implements Runnable {
 	 */
 	private static final long SLEEP_PRECISION = TimeUnit.MILLISECONDS.toNanos(2);
 
-	private final Thread gameLoopThread;
 	private final FrameProfiler profiler;
+	private boolean highPrecisionSleep;
 	
 	private final Window window;
 	private final Game game;
 	
 	private final Timer timer;
 	
+	/**
+	 * A fixed delta time frame duration approximation that all update cycles will be stepped forward by.
+	 */
 	private double updateInterval;
 	private double updateAccumulator;
 	
@@ -42,9 +46,9 @@ public class Avogine implements Runnable {
 	 * @param game An implementation of {@link Game} that contains the main game logic
 	 */
 	public Avogine(Window window, Game game) {
-		gameLoopThread = new Thread(this, "GAME_LOOP_THREAD");
 		profiler = FrameProfiler.NO_OP;
-		
+		highPrecisionSleep = false;
+
 		this.window = window;
 		this.game = game;
 		
@@ -52,30 +56,19 @@ public class Avogine implements Runnable {
 	}
 	
 	/**
-	 * Call this method to begin the game loop.
-	 * <p>
-	 * This has minor tweaks for running threads on Mac, namely setting the System property "java.awt.headless" to
-	 * true to avoid conflicts between GLFW and AWT.
+	 * Call this method to initialize and begin the game loop.
 	 */
-	@SuppressWarnings("squid:S1217") // Presumed to be a false positive until actual testing on a Mac can confirm the need to use Thread.run()
 	public void start() {
-		String osName = System.getProperty("os.name");
-		if (osName.contains("Mac")) {
-			System.setProperty("java.awt.headless", "true");
-			AvoLog.log().info("Setting java.awt.headless to true");
-			gameLoopThread.run();
-		} else {
-			gameLoopThread.start();
-		}
+		run();
 	}
 	
-	@Override
-	public void run() {
+	private void run() {
 		try {
 			init();
 			loop();
 		} catch (Exception e) {
 			AvoLog.log().error("An error occurred.", e);
+			System.exit(-1);
 		} finally {
 			cleanup();
 		}
@@ -106,9 +99,9 @@ public class Avogine implements Runnable {
 				profiler.printAverages();
 				loopTime = 0;
 			}
-
+			
 			input();
-
+			
 			update();
 			
 			render();
@@ -119,7 +112,7 @@ public class Avogine implements Runnable {
 			long sleepTime = (long) (Math.max(window.getTargetFps() - frameProcessTimeNanos, 0) * 1_000_000_000); // Convert to nanoseconds
 			
 			try {
-				sleepNanos(sleepTime);
+				delayLoop(sleepTime);
 			} catch (InterruptedException e) {
 				AvoLog.log().warn("Sync operation was interrupted?", e);
 				Thread.currentThread().interrupt();
@@ -140,7 +133,7 @@ public class Avogine implements Runnable {
 	private void update() {
 		profiler.updateStart();
 		
-		while (updateAccumulator > updateInterval) {
+		while (updateAccumulator >= updateInterval) {
 			game.update((float) updateInterval);
 			updateAccumulator -= updateInterval;
 		}
@@ -157,20 +150,26 @@ public class Avogine implements Runnable {
 		profiler.renderEnd();
 	}
 	
+	private void cleanup() {
+		game.cleanup();
+		
+		window.cleanup();
+	}
+	
 	/**
-	 * Perform regular {@link Thread#sleep()} while the remaining sleep duration is greater than {@code Avogine.SLEEP_PRECISION}.
+	 * Perform regular {@link Thread#sleep(long)} while the remaining sleep duration is greater than {@code Avogine.SLEEP_PRECISION}.
 	 * If the remaining time is less than {@code Avogine.SLEEP_PRECISION} then perform {@link Thread#onSpinWait()} for the remainder of the time.
 	 * </p>
-	 * This method is preferable than just relying on {@code Thread.sleep()} since not only does {@code Thread.sleep()} not support sleeping for less
+	 * This method is preferable than just relying on {@code Thread.sleep()} for precision since not only does {@code Thread.sleep()} not support sleeping for less
 	 * than a millisecond, but also because there's about a 0.5-3ms error rate on waking from the sleep so using a busy wait loop allows us to more 
-	 * quickly recover from smaller sleep durations.
+	 * quickly recover from smaller sleep durations. However, it does result in higher CPU usage so may not be the right fit for all applications.
 	 * 
 	 * @see <a href="http://andy-malakov.blogspot.com/2010/06/alternative-to-threadsleep.html">http://andy-malakov.blogspot.com/2010/06/alternative-to-threadsleep.html</a>
 	 * 
 	 * @param nanoDuration The amount of time to sleep for in nanoseconds.
 	 * @throws InterruptedException
 	 */
-	private static void sleepNanos(long nanoDuration) throws InterruptedException {
+	private static void sleepHighPrecision(long nanoDuration) throws InterruptedException {
 		final long end = System.nanoTime() + nanoDuration;
 
 		long timeLeft = nanoDuration;
@@ -189,14 +188,12 @@ public class Avogine implements Runnable {
 		}
 	}
 	
-	private void cleanup() {
-		game.cleanup();
-		
-		window.cleanup();
-		
-		// When using coroutines, the default context utilizes the commonPool, which needs to be manually stopped before the system exits.
-		ForkJoinPool.commonPool().awaitQuiescence(1000, TimeUnit.MILLISECONDS);
-		System.exit(0);
+	private void delayLoop(long nanos) throws InterruptedException {
+		if (highPrecisionSleep) {
+			sleepHighPrecision(nanos);
+		} else {
+			Thread.sleep(Duration.ofNanos(nanos));
+		}
 	}
-
+	
 }

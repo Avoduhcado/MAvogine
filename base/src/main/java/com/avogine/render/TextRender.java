@@ -118,7 +118,7 @@ public class TextRender {
 				} else if (c < 32 || c > 128) {
 					// Only concerned with rendering the ASCII character set
 				} else {
-					stbtt_GetPackedQuad(font.getCharData(), 1024, 1024, c - 32, xpos, ypos, q, false);
+					stbtt_GetPackedQuad(font.getCdata(), 1024, 1024, c - 32, xpos, ypos, q, false);
 					
 					vertexData.put(q.x0()).put(q.y1()).put(q.s0()).put(q.t1());
 					vertexData.put(q.x1()).put(q.y0()).put(q.s1()).put(q.t0());

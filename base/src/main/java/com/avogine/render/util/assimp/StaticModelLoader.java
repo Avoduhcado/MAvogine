@@ -7,8 +7,9 @@ import java.util.*;
 
 import org.joml.*;
 import org.joml.Math;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.*;
 
 import com.avogine.render.TextureCache;
 import com.avogine.render.data.*;
@@ -27,7 +28,8 @@ public class StaticModelLoader {
 	 * @param id 
 	 * @param modelPath
 	 * @param textureCache 
-	 * @return
+	 * @return a {@link Model} loaded from the given modelPath.
+	 * @throws IllegalStateException if the model file could not be opened.
 	 */
 	public static Model loadModel(String id, String modelPath, TextureCache textureCache) {
 		return loadModel(id, modelPath, textureCache, Assimp.aiProcess_GenSmoothNormals | Assimp.aiProcess_JoinIdenticalVertices |
@@ -40,10 +42,15 @@ public class StaticModelLoader {
 	 * @param modelPath
 	 * @param textureCache 
 	 * @param flags
-	 * @return
+	 * @return a {@link Model} loaded from the given modelPath.
+	 * @throws IllegalStateException if the model file could not be opened.
 	 */
+	
+	@SuppressWarnings({
+		"java:S2095" // The actual AIFileIO instance holds very little of its own memory which should be fine to be GC'd and its AIFile proc's are being manually freed which provide the bulk of the memory footprint.
+	})
 	public static Model loadModel(String id, String modelPath, TextureCache textureCache, int flags) {
-		try (AIFileIO fileIo = AIFileIO.create()
+		AIFileIO fileIo = AIFileIO.create()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					String fileNameUtf8 = memUTF8(fileName);
 					ByteBuffer data = ResourceUtils.readResourceToBuffer(fileNameUtf8);
@@ -74,32 +81,32 @@ public class StaticModelLoader {
 					aiFile.ReadProc().free();
 					aiFile.SeekProc().free();
 					aiFile.FileSizeProc().free();
-				});) {
+				});
+		
+		AIScene aiScene = Assimp.aiImportFileEx(modelPath, flags, fileIo);
 
-			AIScene aiScene = Assimp.aiImportFileEx(modelPath, flags, fileIo);
+		fileIo.OpenProc().free();
+		fileIo.CloseProc().free();
 
-			fileIo.OpenProc().free();
-			fileIo.CloseProc().free();
-
-			if (aiScene == null) {
-				throw new IllegalStateException(Assimp.aiGetErrorString());
-			}
-
-			String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
-
-			int numMaterials = aiScene.mNumMaterials();
-			List<Material> materials = new ArrayList<>();
-			for (int i = 0; i < numMaterials; ++i) {
-				AIMaterial aiMaterial = AIMaterial.create(aiScene.mMaterials().get(i));
-				materials.add(processMaterial(aiMaterial, modelDirectory, textureCache));
-			}
-
-			List<Mesh> meshes = processNode(aiScene.mRootNode(), aiScene);
-
-			Assimp.aiReleaseImport(aiScene);
-
-			return new Model(id, meshes, materials);
+		if (aiScene == null) {
+			throw new IllegalStateException(Assimp.aiGetErrorString());
 		}
+
+		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
+
+		int numMaterials = aiScene.mNumMaterials();
+		PointerBuffer materialsBuffer = aiScene.mMaterials();
+		List<Material> materials = new ArrayList<>();
+		for (int i = 0; i < numMaterials; ++i) {
+			AIMaterial aiMaterial = AIMaterial.create(materialsBuffer.get(i));
+			materials.add(processMaterial(aiMaterial, modelDirectory, textureCache));
+		}
+
+		List<Mesh> meshes = processNode(aiScene.mRootNode(), aiScene);
+
+		Assimp.aiReleaseImport(aiScene);
+		
+		return new Model(id, meshes, materials);
 	}
 
 	/**
@@ -151,122 +158,95 @@ public class StaticModelLoader {
 	}
 	
 	protected static List<Mesh> processNode(AINode node, AIScene scene) {
+		PointerBuffer meshesBuffer = scene.mMeshes();
+		IntBuffer nodeMeshesBuffer = node.mMeshes();
 		List<Mesh> meshes = new ArrayList<>();
 		// process all the node's meshes (if any)
 		for (int i = 0; i < node.mNumMeshes(); i++) {
-			AIMesh mesh = AIMesh.create(scene.mMeshes().get(node.mMeshes().get(i)));
+			AIMesh mesh = AIMesh.create(meshesBuffer.get(nodeMeshesBuffer.get(i)));
 			meshes.add(processMesh(mesh));
 		}
 		
+		PointerBuffer nodeChildrenBuffer = node.mChildren();
 		// then do the same for each of its children
 		for (int i = 0; i < node.mNumChildren(); i++) {
-			meshes.addAll(processNode(AINode.create(node.mChildren().get(i)), scene));
+			meshes.addAll(processNode(AINode.create(nodeChildrenBuffer.get(i)), scene));
 		}
 		return meshes;
 	}
 	
 	protected static Mesh processMesh(AIMesh aiMesh) {
-		var vertexData = new VertexData(processVertices(aiMesh), processNormals(aiMesh), processTangents(aiMesh), processBitangents(aiMesh), processTextureCoordinates(aiMesh), processIndices(aiMesh));
-		int materialIndex = aiMesh.mMaterialIndex();
-		AIAABB aabb = aiMesh.mAABB();
-		Vector3f aabbMin = new Vector3f(aabb.mMin().x(), aabb.mMin().y(), aabb.mMin().z());
-		Vector3f aabbMax = new Vector3f(aabb.mMax().x(), aabb.mMax().y(), aabb.mMax().z());
+		try (var vertexData = new VertexData(processVertices(aiMesh), processNormals(aiMesh), processTangents(aiMesh), processBitangents(aiMesh), processTextureCoordinates(aiMesh), processIndices(aiMesh))) {
+			int materialIndex = aiMesh.mMaterialIndex();
+			AIAABB aabb = aiMesh.mAABB();
+			Vector3f aabbMin = new Vector3f(aabb.mMin().x(), aabb.mMin().y(), aabb.mMin().z());
+			Vector3f aabbMax = new Vector3f(aabb.mMax().x(), aabb.mMax().y(), aabb.mMax().z());
 
-		return new Mesh(vertexData, materialIndex, aabbMin, aabbMax);
+			return new Mesh(vertexData, materialIndex, aabbMin, aabbMax);
+		}
 	}
 	
-	private static float[] processVertices(AIMesh aiMesh) {
+	private static FloatBuffer processVertices(AIMesh aiMesh) {
 		AIVector3D.Buffer buffer = aiMesh.mVertices();
-		float[] data = new float[buffer.remaining() * 3];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D vertex = buffer.get();
-			data[pos++] = vertex.x();
-			data[pos++] = vertex.y();
-			data[pos++] = vertex.z();
-		}
-		return data;
+		FloatBuffer data = MemoryUtil.memAllocFloat(buffer.remaining() * 3);
+		buffer.stream().forEach(vertex -> data.put(vertex.x()).put(vertex.y()).put(vertex.z()));
+		return data.flip();
 	}
 	
-	private static float[] processNormals(AIMesh aiMesh) {
+	private static FloatBuffer processNormals(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MNORMALS)) {
-			return new float[aiMesh.mNumVertices() * 3];
+			return MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * 3);
 		}
-		
 		AIVector3D.Buffer buffer = aiMesh.mNormals();
-		float[] data = new float[buffer.remaining() * 3];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D normal = buffer.get();
-			data[pos++] = normal.x();
-			data[pos++] = normal.y();
-			data[pos++] = normal.z();
-		}
-		return data;
+		var data = MemoryUtil.memAllocFloat(buffer.remaining() * 3);
+		buffer.stream().forEach(normal -> data.put(normal.x()).put(normal.y()).put(normal.z()));
+		
+		return data.flip();
 	}
 	
-	private static float[] processTangents(AIMesh aiMesh) {
+	private static FloatBuffer processTangents(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MTANGENTS)) {
-			return new float[aiMesh.mNumVertices() * 3];
+			return MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * 3);
 		}
-		
 		AIVector3D.Buffer buffer = aiMesh.mTangents();
-		float[] data = new float[buffer.remaining() * 3];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D tangent = buffer.get();
-			data[pos++] = tangent.x();
-			data[pos++] = tangent.y();
-			data[pos++] = tangent.z();
-		}
-		return data;
+		var data = MemoryUtil.memAllocFloat(buffer.remaining() * 3);
+		buffer.stream().forEach(tangent -> data.put(tangent.x()).put(tangent.y()).put(tangent.z()));
+		
+		return data.flip();
 	}
 	
-	private static float[] processBitangents(AIMesh aiMesh) {
+	private static FloatBuffer processBitangents(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MBITANGENTS)) {
-			return new float[aiMesh.mNumVertices() * 3];
+			return MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * 3);
 		}
-		
 		AIVector3D.Buffer buffer = aiMesh.mBitangents();
-		float[] data = new float[buffer.remaining() * 3];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D bitangent = buffer.get();
-			data[pos++] = bitangent.x();
-			data[pos++] = bitangent.y();
-			data[pos++] = bitangent.z();
-		}
-		return data;
-	}
-	
-	private static float[] processTextureCoordinates(AIMesh aiMesh) {
-		if (aiMesh.isNull(AIMesh.MTEXTURECOORDS)) {
-			return new float[aiMesh.mNumVertices() * 2];
-		}
+		var data = MemoryUtil.memAllocFloat(buffer.remaining() * 3);
+		buffer.stream().forEach(bitangent -> data.put(bitangent.x()).put(bitangent.y()).put(bitangent.z()));
 		
-		AIVector3D.Buffer buffer = aiMesh.mTextureCoords(0);
-		float[] data = new float[buffer.remaining() * 2];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D textureCoordinate = buffer.get();
-			data[pos++] = textureCoordinate.x();
-			data[pos++] = textureCoordinate.y();
-		}
-		return data;
+		return data.flip();
 	}
 	
-	private static int[] processIndices(AIMesh aiMesh) {
-		List<Integer> indices = new ArrayList<>();
+	private static FloatBuffer processTextureCoordinates(AIMesh aiMesh) {
+		if (aiMesh.isNull(AIMesh.MTEXTURECOORDS)) {
+			return MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * 2);
+		}
+		AIVector3D.Buffer buffer = aiMesh.mTextureCoords(0);
+		var data = MemoryUtil.memAllocFloat(buffer.remaining() * 2);
+		buffer.stream().forEach(textureCoordinate -> data.put(textureCoordinate.x()).put(textureCoordinate.y()));
+		
+		return data.flip();
+	}
+	
+	private static IntBuffer processIndices(AIMesh aiMesh) {
 		int numFaces = aiMesh.mNumFaces();
+		IntBuffer indices = MemoryUtil.memAllocInt(numFaces * 3);
 		AIFace.Buffer aiFaces = aiMesh.mFaces();
 		for (int i = 0; i < numFaces; i++) {
 			AIFace aiFace = aiFaces.get(i);
 			IntBuffer buffer = aiFace.mIndices();
-			while (buffer.hasRemaining()) {
-				indices.add(buffer.get());
-			}
+			indices.put(buffer);
 		}
-		return indices.stream().mapToInt(Integer::intValue).toArray();
+		return indices.flip();
 	}
 	
 }

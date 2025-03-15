@@ -5,12 +5,10 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
-import java.nio.*;
 import java.util.*;
 
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.system.MemoryUtil;
 
 /**
  * Used by {@link Model}.
@@ -41,102 +39,63 @@ public class Mesh {
 	 * @param aabbMax 
 	 */
 	public Mesh(VertexData vertexData, int materialIndex, Vector3f aabbMin, Vector3f aabbMax) {
-		FloatBuffer positionsBuffer = null;
-		FloatBuffer normalsBuffer = null;
-		FloatBuffer tangentsBuffer = null;
-		FloatBuffer bitangentsBuffer = null;
-		FloatBuffer textCoordsBuffer = null;
-		IntBuffer indicesBuffer = null;
-		try {
-			this.aabbMin = aabbMin;
-			this.aabbMax = aabbMax;
-			numVertices = vertexData.indices().length;
-			vboIdList = new ArrayList<>();
-			this.materialIndex = materialIndex;
+		this.aabbMin = aabbMin;
+		this.aabbMax = aabbMax;
+		numVertices = vertexData.indices().remaining();
+		vboIdList = new ArrayList<>();
+		this.materialIndex = materialIndex;
 
-			vaoId = glGenVertexArrays();
-			glBindVertexArray(vaoId);
+		vaoId = glGenVertexArrays();
+		glBindVertexArray(vaoId);
 
-			// Positions VBO
-			int vboId = glGenBuffers();
-			vboIdList.add(vboId);
-			positionsBuffer = MemoryUtil.memCallocFloat(vertexData.positions().length);
-			positionsBuffer.put(0, vertexData.positions());
-			glBindBuffer(GL_ARRAY_BUFFER, vboId);
-			glBufferData(GL_ARRAY_BUFFER, positionsBuffer, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+		// Positions VBO
+		int vboId = glGenBuffers();
+		vboIdList.add(vboId);
+		glBindBuffer(GL_ARRAY_BUFFER, vboId);
+		glBufferData(GL_ARRAY_BUFFER, vertexData.positions(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
 
-			// Normals VBO
-			vboId = glGenBuffers();
-			vboIdList.add(vboId);
-			normalsBuffer = MemoryUtil.memCallocFloat(vertexData.normals().length);
-			normalsBuffer.put(0, vertexData.normals());
-			glBindBuffer(GL_ARRAY_BUFFER, vboId);
-			glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(1);
-			glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+		// Normals VBO
+		vboId = glGenBuffers();
+		vboIdList.add(vboId);
+		glBindBuffer(GL_ARRAY_BUFFER, vboId);
+		glBufferData(GL_ARRAY_BUFFER, vertexData.normals(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
 
-			// Tangents VBO
-			vboId = glGenBuffers();
-			vboIdList.add(vboId);
-			tangentsBuffer = MemoryUtil.memCallocFloat(vertexData.tangents().length);
-			tangentsBuffer.put(0, vertexData.tangents());
-			glBindBuffer(GL_ARRAY_BUFFER, vboId);
-			glBufferData(GL_ARRAY_BUFFER, tangentsBuffer, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(2);
-			glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
+		// Tangents VBO
+		vboId = glGenBuffers();
+		vboIdList.add(vboId);
+		glBindBuffer(GL_ARRAY_BUFFER, vboId);
+		glBufferData(GL_ARRAY_BUFFER, vertexData.tangents(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
 
-			// Bitangents VBO
-			vboId = glGenBuffers();
-			vboIdList.add(vboId);
-			bitangentsBuffer = MemoryUtil.memCallocFloat(vertexData.bitangents().length);
-			bitangentsBuffer.put(0, vertexData.bitangents());
-			glBindBuffer(GL_ARRAY_BUFFER, vboId);
-			glBufferData(GL_ARRAY_BUFFER, bitangentsBuffer, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(3);
-			glVertexAttribPointer(3, 3, GL_FLOAT, false, 0, 0);
+		// Bitangents VBO
+		vboId = glGenBuffers();
+		vboIdList.add(vboId);
+		glBindBuffer(GL_ARRAY_BUFFER, vboId);
+		glBufferData(GL_ARRAY_BUFFER, vertexData.bitangents(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, false, 0, 0);
 
-			// Texture coordinates VBO
-			vboId = glGenBuffers();
-			vboIdList.add(vboId);
-			textCoordsBuffer = MemoryUtil.memCallocFloat(vertexData.textureCoordinates().length);
-			textCoordsBuffer.put(0, vertexData.textureCoordinates());
-			glBindBuffer(GL_ARRAY_BUFFER, vboId);
-			glBufferData(GL_ARRAY_BUFFER, textCoordsBuffer, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(4);
-			glVertexAttribPointer(4, 2, GL_FLOAT, false, 0, 0);
-			
-			// Index VBO
-			vboId = glGenBuffers();
-			vboIdList.add(vboId);
-			indicesBuffer = MemoryUtil.memCallocInt(vertexData.indices().length);
-			indicesBuffer.put(0, vertexData.indices());
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
+		// Texture coordinates VBO
+		vboId = glGenBuffers();
+		vboIdList.add(vboId);
+		glBindBuffer(GL_ARRAY_BUFFER, vboId);
+		glBufferData(GL_ARRAY_BUFFER, vertexData.textureCoordinates(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 2, GL_FLOAT, false, 0, 0);
 
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glBindVertexArray(0);
-		} finally {
-			if (positionsBuffer != null) {
-				MemoryUtil.memFree(positionsBuffer);
-			}
-			if (normalsBuffer != null) {
-				MemoryUtil.memFree(normalsBuffer);
-			}
-			if (tangentsBuffer != null) {
-				MemoryUtil.memFree(tangentsBuffer);
-			}
-			if (bitangentsBuffer != null) {
-				MemoryUtil.memFree(bitangentsBuffer);
-			}
-			if (textCoordsBuffer != null) {
-				MemoryUtil.memFree(textCoordsBuffer);
-			}
-			if (indicesBuffer != null) {
-				MemoryUtil.memFree(indicesBuffer);
-			}
-		}
+		// Index VBO
+		vboId = glGenBuffers();
+		vboIdList.add(vboId);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexData.indices(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
 
 	/**

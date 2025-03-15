@@ -38,13 +38,12 @@ public class FontDetails {
 	private static final int BITMAP_HEIGHT = 1024;
 	
 	private String fontName;
-	
 	private int size;
+	private final ByteBuffer ttfBuffer;
+	private final STBTTPackedchar.Buffer cdata;
+	
 	private float descent;
 	private float scale;
-	
-	private STBTTFontinfo fontInfo;
-	private STBTTPackedchar.Buffer charData;
 	
 	private int textureId;
 	
@@ -55,11 +54,10 @@ public class FontDetails {
 	public FontDetails(String fileName, int fontHeight) {
 		this.fontName = fileName;
 		this.size = fontHeight;
+		ttfBuffer = ResourceUtils.readResourceToBuffer(fileName, 16 * 1024);
 		
-		ByteBuffer ttfBuffer = ResourceUtils.readResourceToBuffer(fileName, 16 * 1024);
-		
-		fontInfo = STBTTFontinfo.create();
-		charData = STBTTPackedchar.create(96);
+		STBTTFontinfo fontInfo = STBTTFontinfo.create();
+		cdata = STBTTPackedchar.create(96);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			stbtt_InitFont(fontInfo, ttfBuffer);
@@ -74,7 +72,7 @@ public class FontDetails {
 			STBTTPackContext packContext = STBTTPackContext.malloc(stack);
 			stbtt_PackBegin(packContext, bitmap, BITMAP_WIDTH, BITMAP_HEIGHT, 0, 1, MemoryUtil.NULL);
 			stbtt_PackSetOversampling(packContext, 4, 4);
-			stbtt_PackFontRange(packContext, ttfBuffer, 0, fontHeight, 32, charData);
+			stbtt_PackFontRange(packContext, ttfBuffer, 0, fontHeight, 32, cdata);
 			stbtt_PackEnd(packContext);
 			
 			generateFontTexture(bitmap);
@@ -106,8 +104,6 @@ public class FontDetails {
 	 */
 	public void cleanup() {
 		GL11.glDeleteTextures(textureId);
-		fontInfo.free();
-		charData.free();
 	}
 	
 	/**
@@ -125,6 +121,13 @@ public class FontDetails {
 	}
 	
 	/**
+	 * @return the cdata
+	 */
+	public STBTTPackedchar.Buffer getCdata() {
+		return cdata;
+	}
+	
+	/**
 	 * @return the descent
 	 */
 	public float getDescent() {
@@ -136,20 +139,6 @@ public class FontDetails {
 	 */
 	public float getScale() {
 		return scale;
-	}
-	
-	/**
-	 * @return the fontInfo
-	 */
-	public STBTTFontinfo getFontInfo() {
-		return fontInfo;
-	}
-	
-	/**
-	 * @return the charData
-	 */
-	public STBTTPackedchar.Buffer getCharData() {
-		return charData;
 	}
 	
 	/**
