@@ -20,7 +20,7 @@ import com.avogine.render.data.texture.FontMap;
 import com.avogine.util.ResourceUtils;
 
 /**
- *
+ * A data resource wrapper of TrueType fonts.
  */
 public class Font {
 

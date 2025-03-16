@@ -13,6 +13,7 @@ import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.data.font.Font;
+import com.avogine.render.data.font.FontIdentifier;
 import com.avogine.render.shader.FontShader;
 import com.avogine.util.resource.ResourceConstants;
 
@@ -69,7 +70,8 @@ public class TextRender {
 		
 		MemoryUtil.memFree(textVertices);
 		
-		defaultFont = fontCache.getFont(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 8.0f, 14.0f);
+		var fontID = new FontIdentifier(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
+		defaultFont = fontCache.getFont(fontID);
 	}
 	
 	/**
