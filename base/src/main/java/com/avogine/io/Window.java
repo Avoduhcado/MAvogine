@@ -5,7 +5,7 @@ import java.util.*;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.*;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
 
@@ -217,6 +217,8 @@ public class Window {
 	 * This should only be called when exiting the entire application.
 	 */
 	public void cleanup() {
+		GL.setCapabilities(null);
+		
 		close();
 		
 		GLFW.glfwTerminate();
@@ -229,7 +231,7 @@ public class Window {
 	 */
 	private void loadAndSetIcons(String...filePaths) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
-			List<GLFWImage> iconList = new ArrayList<>();
+			Map<GLFWImage, ByteBuffer> iconBufferMap = new HashMap<>();
 			
 			for (String filePath : filePaths) {
 				GLFWImage icon = GLFWImage.malloc(stack);
@@ -242,16 +244,17 @@ public class Window {
 				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, iconWidth, iconHeight, nrChannels, 0);
 				if (imageData != null) {
 					icon.set(iconWidth.get(), iconHeight.get(), imageData);
-					iconList.add(icon);
+					iconBufferMap.put(icon, imageData);
 				} else {
 					AvoLog.log().warn("Icon failed to load: {}", filePath);
 				}
 			}
 			
-			GLFWImage.Buffer iconBuffer = GLFWImage.malloc(iconList.size(), stack);
-			iconList.forEach(iconBuffer::put);
+			GLFWImage.Buffer iconBuffer = GLFWImage.malloc(iconBufferMap.size(), stack);
+			iconBufferMap.keySet().forEach(iconBuffer::put);
 			iconBuffer.flip();
 			GLFW.glfwSetWindowIcon(id, iconBuffer);
+			iconBufferMap.values().forEach(MemoryUtil::memFree);
 		}
 	}
 	
@@ -269,24 +272,6 @@ public class Window {
 	 */
 	public double getTargetFps() {
 		return targetFrameTime;
-	}
-	
-	/**
-	 * @param maxFps
-	 */
-	public void setFpsCap(int maxFps) {
-		this.maxFps = maxFps;
-		if (maxFps > 0) {
-			GLFW.glfwSwapInterval(0);
-			targetFrameTime = 1.0 / maxFps;
-			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFrameTime = 1.0 / (focused ? maxFps : maxBackgroundFps));
-		} else {
-			GLFW.glfwSwapInterval(1);
-		}
-	}
-	
-	public void setBackgroundFpsCap(int maxBackgroundFps) {
-		
 	}
 	
 	/**

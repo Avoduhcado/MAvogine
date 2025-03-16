@@ -2,7 +2,10 @@ package com.avogine.render.util.parshapes;
 
 import static org.lwjgl.util.par.ParShapes.*;
 
+import java.nio.*;
+
 import org.joml.Vector3f;
+import org.lwjgl.system.*;
 import org.lwjgl.util.par.*;
 
 import com.avogine.render.data.*;
@@ -170,31 +173,29 @@ public class ParShapesBuilder {
 	 * @return a new {@code Mesh}
 	 */
 	public Mesh build() {
-		float[] vertices = new float[parMesh.npoints() * 3];
-		float[] normals = new float[parMesh.npoints() * 3];
-		float[] tangents = new float[parMesh.npoints() * 3];
-		float[] bitangents = new float[parMesh.npoints() * 3];
-		float[] textureCoordinates = new float[parMesh.npoints() * 2];
-		parMesh.points(parMesh.npoints() * 3).get(vertices);
-		if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
-			parMesh.normals(parMesh.npoints() * 3).get(normals);
-		}
-		if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
-			parMesh.tcoords(parMesh.npoints() * 2).get(textureCoordinates);
-		}
-		
-		int[] indices = new int[parMesh.ntriangles() * 3];
-		parMesh.triangles(parMesh.ntriangles() * 3).get(indices);
-		
-		float[] aabb = new float[6];
-		par_shapes_compute_aabb(parMesh, aabb);
-		Vector3f aabbMin = new Vector3f(aabb[0], aabb[1], aabb[2]);
-		Vector3f aabbMax = new Vector3f(aabb[3], aabb[4], aabb[5]);
+		FloatBuffer vertices = MemoryUtil.memAllocFloat(parMesh.npoints() * 3);
+		FloatBuffer normals = MemoryUtil.memCallocFloat(parMesh.npoints() * 3);
+		FloatBuffer textureCoordinates = MemoryUtil.memCallocFloat(parMesh.npoints() * 2);
+		IntBuffer indices = MemoryUtil.memAllocInt(parMesh.ntriangles() * 3);
+		try (
+				var vertexData = new VertexData(
+						vertices.put(parMesh.points(parMesh.npoints() * 3)).flip(),
+						(!parMesh.isNull(ParShapesMesh.NORMALS) ? normals.put(parMesh.normals(parMesh.npoints() * 3)).flip() : normals),
+						MemoryUtil.memCallocFloat(parMesh.npoints() * 3),
+						MemoryUtil.memCallocFloat(parMesh.npoints() * 3),
+						(!parMesh.isNull(ParShapesMesh.TCOORDS) ? textureCoordinates.put(parMesh.tcoords(parMesh.npoints() * 2)).flip() : textureCoordinates),
+						indices.put(parMesh.triangles(parMesh.ntriangles() * 3)).flip());
+				MemoryStack stack = MemoryStack.stackPush();
+				) {
+			FloatBuffer aabb = stack.mallocFloat(6);
+			par_shapes_compute_aabb(parMesh, aabb);
+			Vector3f aabbMin = new Vector3f(aabb.get(), aabb.get(), aabb.get());
+			Vector3f aabbMax = new Vector3f(aabb.get(), aabb.get(), aabb.get());
 
-		var mesh = new Mesh(new VertexData(vertices, normals, tangents, bitangents, textureCoordinates, indices), 0, aabbMin, aabbMax);
-
-		parMesh.free();
-		return mesh;
+			return new Mesh(vertexData, 0, aabbMin, aabbMax);
+		} finally {
+			par_shapes_free_mesh(parMesh);
+		}
 	}
 	
 	/**

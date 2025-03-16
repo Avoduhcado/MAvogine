@@ -50,6 +50,7 @@ public class NuklearUI {
 	private final Matrix4f projectionMatrix;
 	
 	private NkContext context;
+	private ByteBuffer ttfBuffer;
 	private NkUserFont defaultFont;
 	
 	private NuklearShader nuklearShader;
@@ -90,6 +91,9 @@ public class NuklearUI {
 		float halfHeight = displayHeight / 2.0f;
 		projectionMatrix.ortho2D(-halfWidth, halfWidth, halfHeight, -halfHeight).translate(-halfWidth, -halfHeight, 0);
 
+		// Nuklear uses STBTrueType in order to easily render fonts, but the STBTT structs are only metadata and reference the allocated TTF buffer, so we must keep it in memory for the duration of use.
+		ttfBuffer = ResourceUtils.readResourceToBuffer(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 512 * 1024);
+		
 		// This is the Nuklear font object used for rendering text.
 		defaultFont = NkUserFont.create();
 		initFont();
@@ -106,8 +110,6 @@ public class NuklearUI {
 	}
 	
 	private void initFont() {
-		ByteBuffer ttfBuffer = ResourceUtils.readResourceToBuffer(ResourceConstants.FONTS.with("Roboto-Regular.ttf"), 512 * 1024);
-		
 		final int BITMAP_W = 1024;
 		final int BITMAP_H = 1024;
 
