@@ -2,14 +2,14 @@ package com.avogine.render;
 
 import java.util.*;
 
-import com.avogine.render.data.FontDetails;
+import com.avogine.render.data.font.Font;
 
 /**
  *
  */
 public class FontCache {
 
-	private final Map<String, FontDetails> fontMap;
+	private final Map<String, Font> fontMap;
 	
 	/**
 	 * 
@@ -20,16 +20,18 @@ public class FontCache {
 	
 	/**
 	 * @param filePath The file path to the resource file containing the Font data to load.
-	 * @return
+	 * @param fontSizes 
+	 * @return the cached {@link Font} for the given path, or if it didn't already exist, the newly loaded {@link Font}. 
 	 */
-	public FontDetails getFont(String filePath) {
-		return fontMap.computeIfAbsent(filePath, FontDetails::new);
+	public Font getFont(String filePath, float...fontSizes) {
+		return fontMap.computeIfAbsent(filePath, k -> new Font(k, fontSizes));
 	}
 	
 	/**
 	 * 
 	 */
 	public void cleanup() {
-		fontMap.values().forEach(FontDetails::cleanup);
+		fontMap.values().forEach(Font::cleanup);
 	}
+	
 }
