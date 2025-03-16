@@ -9,8 +9,7 @@ public interface MouseWheelListener extends InputListener {
 
 	/**
 	 * @param event
-	 * @return the event
 	 */
-	public MouseWheelEvent mouseWheelMoved(MouseWheelEvent event);
+	public void mouseWheelMoved(MouseWheelEvent event);
 	
 }

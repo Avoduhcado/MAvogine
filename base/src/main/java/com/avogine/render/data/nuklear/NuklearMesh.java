@@ -113,7 +113,6 @@ public class NuklearMesh {
 		// allocate vertex and element buffer
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
 		glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_BUFFER, GL_STREAM_DRAW);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_BUFFER, GL_STREAM_DRAW);
@@ -169,7 +168,7 @@ public class NuklearMesh {
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		// OpenGL law states to not unbind an EBO while a VAO is still bound, but idk what Nuklear is actually doing with this buffer mapping.
 		glBindVertexArray(0);
 	}
 	

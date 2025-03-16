@@ -1,11 +1,13 @@
 package com.avogine.io.event;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.avogine.io.listener.KeyListener;
 
 /**
  * Base interface for {@link InputEvent}s fired by key input.
  */
-public sealed interface KeyEvent extends InputEvent {
+public sealed interface KeyEvent extends InputEvent, ConsumableEvent {
 	/**
 	 * @return the key
 	 */
@@ -25,19 +27,19 @@ public sealed interface KeyEvent extends InputEvent {
 	 * @param codepoint The character produced by this event.
 	 * @param consumed true only if this event has been handled and consumed by a {@link KeyListener}.
 	 */
-	public record KeyPressedEvent(long window, int key, int codepoint, boolean consumed) implements KeyEvent, ConsumableEvent<KeyPressedEvent> {
+	public record KeyPressedEvent(long window, int key, int codepoint, AtomicBoolean consumed) implements KeyEvent {
 		/**
 		 * @param window The window ID the key was triggered from.
 		 * @param key The key that triggered the event
 		 * @param codepoint The character produced by this event.
 		 */
 		public KeyPressedEvent(long window, int key, int codepoint) {
-			this(window, key, codepoint, false);
+			this(window, key, codepoint, new AtomicBoolean());
 		}
 		
 		@Override
-		public KeyPressedEvent withConsume() {
-			return new KeyPressedEvent(window, key, codepoint, true);
+		public void consume() {
+			consumed.set(true);
 		}
 	}
 	
@@ -48,19 +50,19 @@ public sealed interface KeyEvent extends InputEvent {
 	 * @param codepoint The character produced by this event.
 	 * @param consumed true only if this event has been handled and consumed by a {@link KeyListener}.
 	 */
-	public record KeyReleasedEvent(long window, int key, int codepoint, boolean consumed) implements KeyEvent, ConsumableEvent<KeyReleasedEvent> {
+	public record KeyReleasedEvent(long window, int key, int codepoint, AtomicBoolean consumed) implements KeyEvent {
 		/**
 		 * @param window The window ID the key was triggered from.
 		 * @param key The key that triggered the event
 		 * @param codepoint The character produced by this event.
 		 */
 		public KeyReleasedEvent(long window, int key, int codepoint) {
-			this(window, key, codepoint, false);
+			this(window, key, codepoint, new AtomicBoolean());
 		}
 		
 		@Override
-		public KeyReleasedEvent withConsume() {
-			return new KeyReleasedEvent(window, key, codepoint, true);
+		public void consume() {
+			consumed.set(true);
 		}
 	}
 	

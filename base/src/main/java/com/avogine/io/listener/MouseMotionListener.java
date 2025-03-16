@@ -10,14 +10,12 @@ public interface MouseMotionListener extends InputListener {
 
 	/**
 	 * @param event
-	 * @return the event
 	 */
-	public MouseMotionEvent mouseMoved(MouseMovedEvent event);
+	public void mouseMoved(MouseMotionEvent event);
 	
 	/**
 	 * @param event
-	 * @return the event
 	 */
-	public MouseMotionEvent mouseDragged(MouseDraggedEvent event);
+	public void mouseDragged(MouseDraggedEvent event);
 	
 }

@@ -38,7 +38,7 @@ public class Window {
 	
 	private int maxFps;
 	private int maxBackgroundFps;
-	private double targetFPS;
+	private double targetFrameTime;
 	private int fps;
 	
 	private boolean debugMode;
@@ -126,8 +126,8 @@ public class Window {
 			GLFW.glfwSwapInterval(1);
 		} else {
 			GLFW.glfwSwapInterval(0);
-			targetFPS = 1.0 / maxFps;
-			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFPS = 1.0 / (focused ? maxFps : maxBackgroundFps));
+			targetFrameTime = 1.0 / maxFps;
+			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFrameTime = 1.0 / (focused ? maxFps : maxBackgroundFps));
 		}
 
 		// XXX Customize by WindowConfig?
@@ -268,7 +268,25 @@ public class Window {
 	 * @return target frames per second. Controls how often the screen is rendered in a single second.
 	 */
 	public double getTargetFps() {
-		return targetFPS;
+		return targetFrameTime;
+	}
+	
+	/**
+	 * @param maxFps
+	 */
+	public void setFpsCap(int maxFps) {
+		this.maxFps = maxFps;
+		if (maxFps > 0) {
+			GLFW.glfwSwapInterval(0);
+			targetFrameTime = 1.0 / maxFps;
+			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFrameTime = 1.0 / (focused ? maxFps : maxBackgroundFps));
+		} else {
+			GLFW.glfwSwapInterval(1);
+		}
+	}
+	
+	public void setBackgroundFpsCap(int maxBackgroundFps) {
+		
 	}
 	
 	/**

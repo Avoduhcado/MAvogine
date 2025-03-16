@@ -100,6 +100,7 @@ public class ParShapesBuilder {
 		par_shapes_merge_and_free(parMesh, cylinder);
 
 		ParShapesMesh bottomHemi = par_shapes_clone(topHemi, null);
+		par_shapes_free_mesh(topHemi);
 		par_shapes_rotate(bottomHemi, (float) Math.PI, new float[] {1, 0, 0});
 		par_shapes_translate(bottomHemi, 0, -2, 0);
 		par_shapes_merge_and_free(parMesh, bottomHemi);
@@ -185,28 +186,10 @@ public class ParShapesBuilder {
 		int[] indices = new int[parMesh.ntriangles() * 3];
 		parMesh.triangles(parMesh.ntriangles() * 3).get(indices);
 		
-		Vector3f aabbMin = new Vector3f();
-		Vector3f aabbMax = new Vector3f();
-		for (int i = 0; i < vertices.length; i += 3) {
-			float x = vertices[i];
-			float y = vertices[i + 1];
-			float z = vertices[i + 2];
-			if (x < aabbMin.x) {
-				aabbMin.x = x;
-			} else if (x > aabbMax.x) {
-				aabbMax.x = x;
-			}
-			if (y < aabbMin.y) {
-				aabbMin.y = y;
-			} else if (y > aabbMax.y) {
-				aabbMax.y = y;
-			}
-			if (z < aabbMin.z) {
-				aabbMin.z = z;
-			} else if (z > aabbMax.z) {
-				aabbMax.z = z;
-			}
-		}
+		float[] aabb = new float[6];
+		par_shapes_compute_aabb(parMesh, aabb);
+		Vector3f aabbMin = new Vector3f(aabb[0], aabb[1], aabb[2]);
+		Vector3f aabbMax = new Vector3f(aabb[3], aabb[4], aabb[5]);
 
 		var mesh = new Mesh(new VertexData(vertices, normals, tangents, bitangents, textureCoordinates, indices), 0, aabbMin, aabbMax);
 
