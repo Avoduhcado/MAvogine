@@ -275,24 +275,6 @@ public class Window {
 	}
 	
 	/**
-	 * @param maxFps
-	 */
-	public void setFpsCap(int maxFps) {
-		this.maxFps = maxFps;
-		if (maxFps > 0) {
-			GLFW.glfwSwapInterval(0);
-			targetFrameTime = 1.0 / maxFps;
-			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFrameTime = 1.0 / (focused ? maxFps : maxBackgroundFps));
-		} else {
-			GLFW.glfwSwapInterval(1);
-		}
-	}
-	
-	public void setBackgroundFpsCap(int maxBackgroundFps) {
-		
-	}
-	
-	/**
 	 * @return An estimate value of how many frames are being rendered in this second based on elapsed time in the current game loop.
 	 */
 	public int getFps() {

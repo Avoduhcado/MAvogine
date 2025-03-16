@@ -150,16 +150,12 @@ public class Input {
 	
 	private void configureCursorPosCallback() {
 		GLFW.glfwSetCursorPosCallback(windowID, (window, xPos, yPos) -> {
-			boolean dragged = false;
 			for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
 				if (GLFW.glfwGetMouseButton(windowID, i) == GLFW.GLFW_PRESS) {
-					dragged = true;
 					fireMouseMotionEvent(new MouseDraggedEvent(window, i, (float) xPos, (float) yPos));
 				}
 			}
-//			if (!dragged) {
-				fireMouseMotionEvent(new MouseMovedEvent(window, (float) xPos, (float) yPos));
-//			}
+			fireMouseMotionEvent(new MouseMovedEvent(window, (float) xPos, (float) yPos));
 			lastMouseX = (float) xPos;
 			lastMouseY = (float) yPos;
 		});
