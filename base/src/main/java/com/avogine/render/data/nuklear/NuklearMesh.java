@@ -174,6 +174,7 @@ public class NuklearMesh {
 	
 	/**
 	 * TODO This is caching framebuffer/window size and it probably shouldn't be.
+	 * Should this only be updating displayWidth/Height?
 	 */
 	public void setSize(int width, int height) {
 		this.displayWidth = width;
@@ -190,7 +191,6 @@ public class NuklearMesh {
 		glDeleteBuffers(vbo);
 		glDeleteBuffers(ebo);
 		glDeleteTextures(nullTexture.texture().id());
-		// TODO Somehow handle freeing up textures?
 	}
 
 }

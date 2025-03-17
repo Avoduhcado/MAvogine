@@ -2,7 +2,6 @@ package com.avogine.io;
 
 import java.nio.*;
 import java.util.*;
-
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -12,6 +11,7 @@ import org.lwjgl.system.*;
 import com.avogine.Avogine;
 import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.io.config.*;
+import com.avogine.io.listener.WindowResizeListener;
 import com.avogine.logging.AvoLog;
 import com.avogine.util.ResourceUtils;
 import com.avogine.util.resource.ResourceConstants;
@@ -46,7 +46,9 @@ public class Window {
 	private int monitorIndex;
 	private List<Long> monitorList = new ArrayList<>();
 	
-	private final Input input;
+	private final Input input;	
+	
+	private final List<WindowResizeListener> resizeListeners;
 	
 	private final List<NuklearUI> guiContexts;
 	
@@ -70,6 +72,7 @@ public class Window {
 		
 		input = new Input(this);
 		
+		resizeListeners = new ArrayList<>();
 		guiContexts = new ArrayList<>();
 	}
 	
@@ -99,11 +102,11 @@ public class Window {
 			throw new IllegalStateException("Failed to create window!");
 		}
 		
-		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> {
-			width = w;
-			height = h;
-			GL11.glViewport(0, 0, width, height);
-		});
+		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> resized(w, h)
+//			width = w;
+//			height = h;
+//			GL11.glViewport(0, 0, width, height);
+		);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -144,6 +147,12 @@ public class Window {
 
 		GLFW.glfwShowWindow(id);
 		
+		int[] arrWidth = new int[1];
+        int[] arrHeight = new int[1];
+        GLFW.glfwGetFramebufferSize(id, arrWidth, arrHeight);
+        width = arrWidth[0];
+        height = arrHeight[0];
+        
 		input.init(inputConfig);
 	}
 	
@@ -170,6 +179,25 @@ public class Window {
 		guiContexts.forEach(NuklearUI::inputEnd);
 		
 		input.update();
+	}
+	
+	/**
+	 * 
+	 * @param listener
+	 * @return
+	 */
+	public WindowResizeListener addResizeListener(WindowResizeListener listener) {
+		resizeListeners.add(listener);
+		return listener;
+	}
+	
+	/**
+	 * 
+	 * @param listener
+	 * @return
+	 */
+	public boolean removeResizeListener(WindowResizeListener listener) {
+		return resizeListeners.remove(listener);
 	}
 	
 	/**
@@ -223,6 +251,12 @@ public class Window {
 		
 		GLFW.glfwTerminate();
 		Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
+	}
+	
+	private void resized(int width, int height) {
+		this.width = width;
+		this.height = height;
+		resizeListeners.forEach(listener -> listener.windowFramebufferResized(width, height));
 	}
 	
 	/**

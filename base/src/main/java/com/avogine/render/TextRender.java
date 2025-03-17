@@ -75,6 +75,16 @@ public class TextRender {
 	}
 	
 	/**
+	 * 
+	 * @param projection
+	 */
+	public void updateProjection(Matrix4f projection) {
+		fontShader.bind();
+		fontShader.projection.loadMatrix(projection);
+		fontShader.unbind();
+	}
+	
+	/**
 	 * @param x 
 	 * @param y 
 	 * @param font 

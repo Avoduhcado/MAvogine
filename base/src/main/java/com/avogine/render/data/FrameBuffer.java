@@ -41,7 +41,6 @@ public class FrameBuffer {
 	 */
 	public FrameBuffer(Window window, int width, int height) {
 		this(window, () -> width, () -> height);
-		
 	}
 	
 	/**

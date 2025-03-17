@@ -35,7 +35,7 @@ import com.avogine.util.resource.ResourceConstants;
  * Initialize an instance of this class once to gain access to a {@link NkContext} so that you can render Nuklear elements.
  * Handlers for Input commands are automatically configured to translate to {@code nk_input_*} commands.
  */
-public class NuklearUI {
+public class NuklearUI implements WindowResizeListener {
 
 	private static final int BUFFER_INITIAL_SIZE = 4 * 1024;
 
@@ -107,6 +107,7 @@ public class NuklearUI {
 		mouseHandler = window.getInput().addInputListener(new NuklearMouseHandler());
 		
 		window.registerGUIContext(this);
+		window.addResizeListener(this);
 	}
 	
 	private void initFont() {
@@ -225,32 +226,28 @@ public class NuklearUI {
 		nk_input_end(context);
 	}
 	
+	@Override
+	public void windowFramebufferResized(int width, int height) {
+		displayWidth = width;
+		displayHeight = height;
+
+		float halfWidth = displayWidth / 2.0f;
+		float halfHeight = displayHeight / 2.0f;
+		projectionMatrix.setOrtho2D(-halfWidth, halfWidth, halfHeight, -halfHeight).translate(-halfWidth, -halfHeight, 0);
+		
+		mesh.setSize(displayWidth, displayHeight);
+	}
+	
 	/**
 	 * @param window
-	 * <a href="https://github.com/Avoduhcado/MAvogine/issues/42">Window resize handler #42</a>
 	 */
 	public void onRender(Window window) {
-		try (MemoryStack stack = stackPush()) {
-			IntBuffer w = stack.mallocInt(1);
-			IntBuffer h = stack.mallocInt(1);
-			
-			glfwGetFramebufferSize(window.getId(), w, h);
-			displayWidth = w.get(0);
-			displayHeight = h.get(0);
-
-			float halfWidth = displayWidth / 2.0f;
-			float halfHeight = displayHeight / 2.0f;
-			projectionMatrix.setOrtho2D(-halfWidth, halfWidth, halfHeight, -halfHeight).translate(-halfWidth, -halfHeight, 0);
-			
-			// TODO#42 Currently setting width/height and display values to just the framebuffer value, not ideal.
-			mesh.setSize(displayWidth, displayHeight);
-		}
-		
 		setupUIState();
 		
 		// setup program
 		nuklearShader.bind();
 		nuklearShader.projectionMatrix.loadMatrix(projectionMatrix);
+		// TODO Should we be doing this every frame??? (Or at all?)
 		GL11.glViewport(0, 0, displayWidth, displayHeight);
 
 		mesh.render(context, commands);
