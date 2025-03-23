@@ -1,8 +1,8 @@
 package com.avogine.render;
 
 import java.util.*;
-import com.avogine.render.data.font.Font;
-import com.avogine.render.data.font.FontIdentifier;
+
+import com.avogine.render.data.font.*;
 
 /**
  * A simple cache of {@link Font}s.
@@ -31,8 +31,8 @@ public class FontCache {
 	}
 	
 	/**
-	 * @param filePath The file path to the resource file containing the Font data to load.
-	 * @param fontSizes 
+	 * @param resourcePath The file path to the resource file containing the Font data to load.
+	 * @param sizes 
 	 * @return the cached {@link Font} for the given path, or if it didn't already exist, the newly loaded {@link Font}. 
 	 */
 	public Font getFont(String resourcePath, float...sizes) {

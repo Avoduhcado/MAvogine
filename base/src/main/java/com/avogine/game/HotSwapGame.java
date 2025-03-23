@@ -6,7 +6,6 @@ import com.avogine.audio.Audio;
 import com.avogine.audio.data.*;
 import com.avogine.game.scene.Scene;
 import com.avogine.game.state.*;
-import com.avogine.game.ui.nuklear.NuklearUI;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
 import com.avogine.util.Result;
@@ -37,7 +36,6 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 	protected Class<? extends GameState<? ,?>> queuedGameStateClass;
 	
 	protected Audio audio;
-	protected NuklearUI gui;
 
 	private int targetUps;
 	
@@ -129,13 +127,6 @@ public abstract class HotSwapGame extends RegisterableGame implements StateSwapp
 	 */
 	public Audio getAudio() {
 		return audio;
-	}
-	
-	/**
-	 * @return the {@link NuklearUI} instance associated with this {@code Game}.
-	 */
-	public NuklearUI getGUI() {
-		return gui;
 	}
 	
 	@Override

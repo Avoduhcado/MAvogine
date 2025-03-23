@@ -2,14 +2,15 @@ package com.avogine.io;
 
 import java.nio.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.*;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
-import com.avogine.game.ui.nuklear.NuklearUI;
+import com.avogine.game.util.Registerable;
 import com.avogine.io.config.*;
 import com.avogine.io.listener.WindowResizeListener;
 import com.avogine.logging.AvoLog;
@@ -33,24 +34,26 @@ public class Window {
 	
 	private int width;
 	private int height;
+	private int fbWidth;
+	private int fbHeight;
 	
 	private boolean fullscreen;
+	private int monitorIndex;
+	private List<Long> monitorList = new ArrayList<>();
 	
+	private boolean vsync;
 	private int maxFps;
 	private int maxBackgroundFps;
-	private double targetFrameTime;
+	private int targetFps;
 	private int fps;
 	
 	private boolean debugMode;
 	
-	private int monitorIndex;
-	private List<Long> monitorList = new ArrayList<>();
+	private final Input input;
 	
-	private final Input input;	
+	private final Queue<Registerable> queuedRegisters;
 	
 	private final List<WindowResizeListener> resizeListeners;
-	
-	private final List<NuklearUI> guiContexts;
 	
 	/**
 	 * @param title The window title
@@ -65,15 +68,15 @@ public class Window {
 		fullscreen = preferences.fullscreen();
 		monitorIndex = preferences.monitor();
 		
-		maxFps = Math.clamp(preferences.fpsCap(), 0, 1000);
-		if (maxFps > 0) {
-			maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
-		}
+		vsync = preferences.vsync();
+		maxFps = Math.clamp(preferences.fpsCap(), 1, 1000);
+		maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
 		
 		input = new Input(this);
 		
 		resizeListeners = new ArrayList<>();
-		guiContexts = new ArrayList<>();
+		
+		queuedRegisters = new ConcurrentLinkedQueue<>();
 	}
 	
 	/**
@@ -102,11 +105,7 @@ public class Window {
 			throw new IllegalStateException("Failed to create window!");
 		}
 		
-		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> resized(w, h)
-//			width = w;
-//			height = h;
-//			GL11.glViewport(0, 0, width, height);
-		);
+		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> resized(w, h));
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -122,17 +121,9 @@ public class Window {
 			
 			GLFW.glfwSetWindowPos(id, pX.get() + (videoMode.width() - pWidth.get(0)) / 2, pY.get() + (videoMode.height() - pHeight.get(0)) / 2);
 		}
-
-		GLFW.glfwMakeContextCurrent(id);
 		
-		if (maxFps == 0) {
-			GLFW.glfwSwapInterval(1);
-		} else {
-			GLFW.glfwSwapInterval(0);
-			targetFrameTime = 1.0 / maxFps;
-			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFrameTime = 1.0 / (focused ? maxFps : maxBackgroundFps));
-		}
-
+		targetFps = maxFps;
+		
 		// XXX Customize by WindowConfig?
 		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
 			GLFW.glfwSetWindowOpacity(id, 1.0f);
@@ -144,16 +135,31 @@ public class Window {
 		if (GLFW.glfwRawMouseMotionSupported()) {
 			GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
 		}
-
+		
 		GLFW.glfwShowWindow(id);
 		
 		int[] arrWidth = new int[1];
-        int[] arrHeight = new int[1];
-        GLFW.glfwGetFramebufferSize(id, arrWidth, arrHeight);
-        width = arrWidth[0];
-        height = arrHeight[0];
-        
+		int[] arrHeight = new int[1];
+		GLFW.glfwGetFramebufferSize(id, arrWidth, arrHeight);
+		width = arrWidth[0];
+		height = arrHeight[0];
+		fbWidth = arrWidth[0];
+		fbHeight = arrHeight[0];
+
 		input.init(inputConfig);
+		
+		addRegisterable((Window window) -> GLFW.glfwSetWindowFocusCallback(id, (windowC, focused) -> 
+			targetFps = focused ? maxFps : maxBackgroundFps
+		));
+	}
+	
+	/**
+	 * 
+	 */
+	public void makeCurrent() {
+		if (GLFW.glfwGetCurrentContext() != id) {
+			GLFW.glfwMakeContextCurrent(id);
+		}
 	}
 	
 	/**
@@ -163,28 +169,37 @@ public class Window {
 	 * and, if needed, set this window context to be current.
 	 */
 	public void swapBuffers() {
-		if (GLFW.glfwGetCurrentContext() != id) {
-			GLFW.glfwMakeContextCurrent(id);
-		}
+		makeCurrent();
 		
 		GLFW.glfwSwapBuffers(id);
 	}
 	
 	/**
 	 * Poll GLFW for events and process them in {@link Input}.
+	 * @deprecated
 	 */
+	@Deprecated(since="0.1.3", forRemoval=true)
 	public void pollEvents() {
-		guiContexts.forEach(NuklearUI::inputBegin);
 		GLFW.glfwPollEvents();
-		guiContexts.forEach(NuklearUI::inputEnd);
+	}
+	
+	/**
+	 * 
+	 */
+	public void waitEvents() {
+		while (!queuedRegisters.isEmpty()) {
+			var register = queuedRegisters.poll();
+			register.init(this);
+		}
 		
-		input.update();
+		// XXX Maybe use this with a timeout to target whatever the game's update loop interval is?
+		GLFW.glfwWaitEvents();
 	}
 	
 	/**
 	 * 
 	 * @param listener
-	 * @return
+	 * @return the {@link WindowResizeListener}
 	 */
 	public WindowResizeListener addResizeListener(WindowResizeListener listener) {
 		resizeListeners.add(listener);
@@ -194,29 +209,19 @@ public class Window {
 	/**
 	 * 
 	 * @param listener
-	 * @return
+	 * @return true if the listener was removed.
 	 */
 	public boolean removeResizeListener(WindowResizeListener listener) {
 		return resizeListeners.remove(listener);
 	}
 	
 	/**
-	 * Register a {@link NuklearUI} to this Window so that it's internal input state can be processed around calls to {@link #pollEvents()}.
-	 * @param gui The {@link NuklearUI} to register.
-	 * @return The {@link NuklearUI}.
+	 * @param register
+	 * @return the register
 	 */
-	public NuklearUI registerGUIContext(NuklearUI gui) {
-		guiContexts.add(gui);
-		return gui;
-	}
-	
-	/**
-	 * Unregister a {@link NuklearUI} from this Window.
-	 * @param gui The {@link NuklearUI} to remove.
-	 * @return {@code true} if the {@link NuklearUI} was removed.
-	 */
-	public boolean removeGUIContext(NuklearUI gui) {
-		return guiContexts.remove(gui);
+	public Registerable addRegisterable(Registerable register) {
+		queuedRegisters.add(register);
+		return register;
 	}
 	
 	/**
@@ -245,10 +250,6 @@ public class Window {
 	 * This should only be called when exiting the entire application.
 	 */
 	public void cleanup() {
-		GL.setCapabilities(null);
-		
-		close();
-		
 		GLFW.glfwTerminate();
 		Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
 	}
@@ -256,6 +257,8 @@ public class Window {
 	private void resized(int width, int height) {
 		this.width = width;
 		this.height = height;
+		this.fbWidth = width;
+		this.fbHeight = height;
 		resizeListeners.forEach(listener -> listener.windowFramebufferResized(width, height));
 	}
 	
@@ -300,12 +303,14 @@ public class Window {
 	}
 	
 	/**
-	 * Return target frames per second. Controls how often the screen is rendered in a single second.
+	 * Return maximum frames per second.
 	 * </p>
-	 * @return target frames per second. Controls how often the screen is rendered in a single second.
+	 * Controls how often the screen is rendered in a single second. This value may change when the window loses focus
+	 * to allow for the application to consume less processing power in the background.
+	 * @return the target maximum frames per second.
 	 */
-	public double getTargetFps() {
-		return targetFrameTime;
+	public int getTargetFps() {
+		return targetFps;
 	}
 	
 	/**
@@ -349,6 +354,27 @@ public class Window {
 	 */
 	public int getHeight() {
 		return height;
+	}
+
+	/**
+	 * @return the width of the main framebuffer in pixels.
+	 */
+	public int getFbWidth() {
+		return fbWidth;
+	}
+	
+	/**
+	 * @return the height of the main framebuffer in pixels.
+	 */
+	public int getFbHeight() {
+		return fbHeight;
+	}
+	
+	/**
+	 * @return true if VSync should be enabled.
+	 */
+	public boolean isVsync() {
+		return vsync;
 	}
 	
 	/**

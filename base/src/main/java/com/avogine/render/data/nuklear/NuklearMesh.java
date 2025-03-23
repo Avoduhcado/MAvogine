@@ -8,13 +8,12 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.lwjgl.nuklear.*;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.*;
 
 /**
  *
@@ -102,12 +101,12 @@ public class NuklearMesh {
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
-
+	
 	/**
 	 * @param context
 	 * @param commands
 	 */
-	public void render(NkContext context, NkBuffer commands) {
+	public void prepareCommandQueue(NkContext context, NkBuffer commands) {
 		// convert from command queue into draw list and draw to screen
 
 		// allocate vertex and element buffer
@@ -151,7 +150,7 @@ public class NuklearMesh {
 		float fbScaleX = displayWidth / width;
 		float fbScaleY = displayHeight / height;
 
-		long offset = NULL;
+		long offset = MemoryUtil.NULL;
 		for (NkDrawCommand cmd = nk__draw_begin(context, commands); cmd != null; cmd = nk__draw_next(cmd, commands, context)) {
 			if (cmd.elem_count() == 0) {
 				continue;
@@ -166,23 +165,14 @@ public class NuklearMesh {
 			glDrawElements(GL_TRIANGLES, cmd.elem_count(), GL_UNSIGNED_SHORT, offset);
 			offset += cmd.elem_count() * 2;
 		}
+		nk_clear(context);
+		nk_buffer_clear(commands);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		// OpenGL law states to not unbind an EBO while a VAO is still bound, but idk what Nuklear is actually doing with this buffer mapping.
 		glBindVertexArray(0);
 	}
 	
-	/**
-	 * TODO This is caching framebuffer/window size and it probably shouldn't be.
-	 * Should this only be updating displayWidth/Height?
-	 */
-	public void setSize(int width, int height) {
-		this.displayWidth = width;
-		this.displayHeight = height;
-		this.width = width;
-		this.height = height;
-	}
-
 	/**
 	 * Free all GPU memory.
 	 */
@@ -191,6 +181,20 @@ public class NuklearMesh {
 		glDeleteBuffers(vbo);
 		glDeleteBuffers(ebo);
 		glDeleteTextures(nullTexture.texture().id());
+	}
+	
+	/**
+	 * TODO This is caching framebuffer/window size and it probably shouldn't be.
+	 * Should this only be updating displayWidth/Height?
+	 * @param width 
+	 * @param height 
+	 */
+	public void setSize(int width, int height) {
+		this.displayWidth = width;
+		this.displayHeight = height;
+		// TODO Don't change width and height? These should be the actual size of the mesh?
+		this.width = width;
+		this.height = height;
 	}
 
 }

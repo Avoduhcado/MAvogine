@@ -251,7 +251,7 @@ public class Audio {
 	}
 
 	/**
-	 * @return 
+	 * @return a list of all available device specifiers.
 	 */
 	public List<String> enumerateAudioDevices() {
 		return ALUtil.getStringList(0, ALC_ALL_DEVICES_SPECIFIER);

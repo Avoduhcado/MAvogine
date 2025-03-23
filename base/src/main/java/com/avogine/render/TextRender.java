@@ -12,8 +12,7 @@ import org.joml.Matrix4f;
 import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.render.data.font.Font;
-import com.avogine.render.data.font.FontIdentifier;
+import com.avogine.render.data.font.*;
 import com.avogine.render.shader.FontShader;
 import com.avogine.util.resource.ResourceConstants;
 
@@ -29,7 +28,11 @@ public class TextRender {
 	
 	private FontShader fontShader;
 	
+	private final Matrix4f orthoMatrix;
 	private final Matrix4f modelMatrix;
+	
+	private int width;
+	private int height;
 	
 	private int textVao;
 	private int textVbo;
@@ -40,18 +43,20 @@ public class TextRender {
 	 * 
 	 */
 	public TextRender() {
+		orthoMatrix = new Matrix4f();
 		modelMatrix = new Matrix4f();
 	}
 	
 	/**
-	 * @param projection
+	 * @param width 
+	 * @param height 
 	 * @param fontCache 
 	 */
-	public void init(Matrix4f projection, FontCache fontCache) {
+	public void init(int width, int height, FontCache fontCache) {
 		fontShader = new FontShader();
-		fontShader.bind();
-		fontShader.projection.loadMatrix(projection);
-		fontShader.unbind();
+		this.width = width;
+		this.height = height;
+		orthoMatrix.setOrtho2D(0, width, height, 0);
 		
 		int textBufferCapacity = TEXT_LENGTH_LIMIT * 4 * 6;
 		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
@@ -75,16 +80,6 @@ public class TextRender {
 	}
 	
 	/**
-	 * 
-	 * @param projection
-	 */
-	public void updateProjection(Matrix4f projection) {
-		fontShader.bind();
-		fontShader.projection.loadMatrix(projection);
-		fontShader.unbind();
-	}
-	
-	/**
 	 * @param x 
 	 * @param y 
 	 * @param font 
@@ -99,7 +94,11 @@ public class TextRender {
 		}
 		int vertexCount = (int) totalRenderableChars * 6;
 		
+		glViewport(0, 0, width, height);
+		
 		fontShader.bind();
+
+		fontShader.projection.loadMatrix(orthoMatrix);
 		
 		glBindVertexArray(textVao);
 
@@ -181,6 +180,16 @@ public class TextRender {
 		}
 		glDeleteVertexArrays(textVao);
 		glDeleteBuffers(textVbo);
+	}
+	
+	/**
+	 * @param width
+	 * @param height
+	 */
+	public void updateOrthoProjection(int width, int height) {
+		this.width = width;
+		this.height = height;
+		orthoMatrix.setOrtho2D(0, width, height, 0);
 	}
 	
 }

@@ -84,33 +84,23 @@ public class Input {
 		configureScrollCallback();
 	}
 	
-	/**
-	 * 
-	 */
-	public void update() {
-		// GLFW_REPEAT has god awful lag, so we're going to roll our own keyDown events
-		// Perhaps in the future we'll only update the array of specified key bindings rather than all accessible keys.
-		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
-			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
-				if (!keys[i]) {
-					fireKeyboardEvent(new KeyTypedEvent(windowID, i, ' '));
-				}
-				keys[i] = true;
-			} else {
-				keys[i] = false;
-			}
-		}
-	}
-	
 	private void configureKeyCallback() {
 		GLFW.glfwSetKeyCallback(windowID, (window, key, scancode, action, mods) -> {
 			switch (action) {
 				case GLFW.GLFW_REPEAT -> {
-					return;
+					// No handling for GLFW_REPEAT
 				}
-				case GLFW.GLFW_PRESS -> fireKeyboardEvent(new KeyPressedEvent(window, key, ' '));
+				case GLFW.GLFW_PRESS ->  {
+					if (key >= GLFW.GLFW_KEY_SPACE && key < keys.length) {
+						keys[key] = true;
+					}
+					fireKeyboardEvent(new KeyPressedEvent(window, key, scancode, mods));
+				}
 				case GLFW.GLFW_RELEASE -> {
-					fireKeyboardEvent(new KeyReleasedEvent(window, key, ' '));
+					if (key >= GLFW.GLFW_KEY_SPACE && key < keys.length) {
+						keys[key] = false;
+					}
+					fireKeyboardEvent(new KeyReleasedEvent(window, key, scancode, mods));
 					if (key == GLFW.GLFW_KEY_F3) {
 						registeredWindow.setDebugMode(!registeredWindow.isDebugMode());
 					}
@@ -121,7 +111,7 @@ public class Input {
 	}
 	
 	private void configureCharCallback() {
-		GLFW.glfwSetCharCallback(windowID, (window, codepoint) -> fireKeyboardEvent(new KeyTypedEvent(window, -1, (char)codepoint)));
+		GLFW.glfwSetCharCallback(windowID, (window, codepoint) -> fireCharEvent(new CharEvent(window, codepoint)));
 	}
 	
 	private void configureMouseButtonCallback() {
@@ -166,15 +156,21 @@ public class Input {
 	}
 	
 	/**
-	 * @return
+	 * @return the keys
 	 */
 	public boolean[] getKeys() {
 		return keys;
 	}
 	
 	/**
+	 * Return true if the given keyCode is currently pressed.
+	 * </p>
+	 * If {@code keyCode} is outside the inclusive range of {@link GLFW#GLFW_KEY_SPACE} and {@link GLFW#GLFW_KEY_LAST} this will
+	 * throw an {@link IndexOutOfBoundsException}. 
+	 * 
 	 * @param keyCode
-	 * @return
+	 * @return true if the given keyCode is currently pressed.
+	 * @throws IndexOutOfBoundsException If {@code keyCode} is outside the inclusive range of {@link GLFW#GLFW_KEY_SPACE} and {@link GLFW#GLFW_KEY_LAST}.
 	 */
 	public boolean isKeyDown(int keyCode) {
 		Objects.checkIndex(keyCode, keys.length);
@@ -207,8 +203,15 @@ public class Input {
 				switch (event) {
 					case KeyPressedEvent e -> kl.keyPressed(e);
 					case KeyReleasedEvent e -> kl.keyReleased(e);
-					case KeyTypedEvent e -> kl.keyTyped(e);
 				}
+			}
+		}
+	}
+	
+	private void fireCharEvent(CharEvent event) {
+		for (var listener : listeners) {
+			if (listener instanceof CharListener cl) {
+				cl.charTyped(event);
 			}
 		}
 	}
