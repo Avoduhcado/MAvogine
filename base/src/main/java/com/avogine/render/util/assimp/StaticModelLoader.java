@@ -11,8 +11,8 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.*;
 
-import com.avogine.render.TextureCache;
 import com.avogine.render.data.*;
+import com.avogine.render.util.TextureCache;
 import com.avogine.util.ResourceUtils;
 
 /**

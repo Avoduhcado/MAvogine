@@ -17,10 +17,4 @@ public interface KeyListener extends InputListener {
 	 * @param event
 	 */
 	public void keyReleased(KeyEvent event);
-	
-	/**
-	 * Fired when a key is first pressed only once until it's released.
-	 * @param event
-	 */
-	public void keyTyped(KeyEvent event);
 }

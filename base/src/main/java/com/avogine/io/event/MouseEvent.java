@@ -2,6 +2,7 @@ package com.avogine.io.event;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.avogine.io.Window;
 import com.avogine.io.config.InputConfig;
 import com.avogine.io.event.MouseEvent.*;
 
@@ -48,7 +49,7 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 	 * @param mouseY
 	 * @param consumed
 	 */
-	public record MousePressedEvent(long window, int button, int clickCount, float mouseX, float mouseY, AtomicBoolean consumed) implements MouseButtonEvent {
+	public record MousePressedEvent(Window window, int button, int clickCount, float mouseX, float mouseY, AtomicBoolean consumed) implements MouseButtonEvent {
 		/**
 		 * @param window 
 		 * @param button 
@@ -56,7 +57,7 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 		 * @param mouseX 
 		 * @param mouseY 
 		 */
-		public MousePressedEvent(long window, int button, int clickCount, float mouseX, float mouseY) {
+		public MousePressedEvent(Window window, int button, int clickCount, float mouseX, float mouseY) {
 			this(window, button, clickCount, mouseX, mouseY, new AtomicBoolean());
 		}
 		
@@ -75,7 +76,7 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 	 * @param mouseY
 	 * @param consumed
 	 */
-	public record MouseReleasedEvent(long window, int button, int clickCount, float mouseX, float mouseY, AtomicBoolean consumed) implements MouseButtonEvent {
+	public record MouseReleasedEvent(Window window, int button, int clickCount, float mouseX, float mouseY, AtomicBoolean consumed) implements MouseButtonEvent {
 		/**
 		 * @param window 
 		 * @param button 
@@ -83,7 +84,7 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 		 * @param mouseX 
 		 * @param mouseY 
 		 */
-		public MouseReleasedEvent(long window, int button, int clickCount, float mouseX, float mouseY) {
+		public MouseReleasedEvent(Window window, int button, int clickCount, float mouseX, float mouseY) {
 			this(window, button, clickCount, mouseX, mouseY, new AtomicBoolean());
 		}
 		
@@ -101,7 +102,7 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 	 * @param mouseX
 	 * @param mouseY
 	 */
-	public record MouseClickedEvent(long window, int button, int clickCount, float mouseX, float mouseY) implements MouseButtonEvent {
+	public record MouseClickedEvent(Window window, int button, int clickCount, float mouseX, float mouseY) implements MouseButtonEvent {
 		
 	}
 
@@ -118,14 +119,14 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 	 * @param mouseY
 	 * @param consumed
 	 */
-	public record MouseDraggedEvent(long window, int button, int clickCount, float mouseX, float mouseY, AtomicBoolean consumed) implements MouseButtonEvent, MouseMotionEvent {
+	public record MouseDraggedEvent(Window window, int button, int clickCount, float mouseX, float mouseY, AtomicBoolean consumed) implements MouseButtonEvent, MouseMotionEvent {
 		/**
 		 * @param window 
 		 * @param button 
 		 * @param mouseX 
 		 * @param mouseY 
 		 */
-		public MouseDraggedEvent(long window, int button, float mouseX, float mouseY) {
+		public MouseDraggedEvent(Window window, int button, float mouseX, float mouseY) {
 			this(window, button, 1, mouseX, mouseY, new AtomicBoolean());
 		}
 		
@@ -142,13 +143,13 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 	 * @param mouseY
 	 * @param consumed
 	 */
-	public record MouseMovedEvent(long window, float mouseX, float mouseY, AtomicBoolean consumed) implements MouseMotionEvent {
+	public record MouseMovedEvent(Window window, float mouseX, float mouseY, AtomicBoolean consumed) implements MouseMotionEvent {
 		/**
 		 * @param window 
 		 * @param mouseX 
 		 * @param mouseY 
 		 */
-		public MouseMovedEvent(long window, float mouseX, float mouseY) {
+		public MouseMovedEvent(Window window, float mouseX, float mouseY) {
 			this(window, mouseX, mouseY, new AtomicBoolean());
 		}
 		
@@ -167,7 +168,7 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 	 * @param yOffset
 	 * @param consumed
 	 */
-	public record MouseWheelEvent(long window, float mouseX, float mouseY, double xOffset, double yOffset, AtomicBoolean consumed) implements MouseEvent {
+	public record MouseWheelEvent(Window window, float mouseX, float mouseY, double xOffset, double yOffset, AtomicBoolean consumed) implements MouseEvent {
 		/**
 		 * @param window 
 		 * @param mouseX 
@@ -175,7 +176,7 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 		 * @param xOffset 
 		 * @param yOffset 
 		 */
-		public MouseWheelEvent(long window, float mouseX, float mouseY, double xOffset, double yOffset) {
+		public MouseWheelEvent(Window window, float mouseX, float mouseY, double xOffset, double yOffset) {
 			this(window, mouseX, mouseY, xOffset, yOffset, new AtomicBoolean());
 		}
 		

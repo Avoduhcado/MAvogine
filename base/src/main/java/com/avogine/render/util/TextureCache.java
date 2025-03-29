@@ -1,4 +1,4 @@
-package com.avogine.render;
+package com.avogine.render.util;
 
 import java.nio.ByteBuffer;
 import java.util.*;

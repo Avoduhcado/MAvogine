@@ -1,16 +1,7 @@
 package com.avogine.io;
 
-import java.nio.DoubleBuffer;
-import java.util.*;
-
-import org.joml.Vector2f;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryStack;
-
 import com.avogine.io.config.InputConfig;
-import com.avogine.io.event.*;
-import com.avogine.io.event.KeyEvent.*;
-import com.avogine.io.event.MouseEvent.*;
+import com.avogine.io.event.AvoEvent;
 import com.avogine.io.listener.*;
 
 /**
@@ -22,229 +13,66 @@ import com.avogine.io.listener.*;
  */
 public class Input {
 	
-	private Window registeredWindow;
-	private long windowID;
-	
-	private final Set<InputListener> listeners;
-	// True if the key at index is currently pressed
-	private final boolean[] keys;
-	
-	private float lastMouseX;
-	private float lastMouseY;
-	private final Vector2f lastMouseClick;
-	
-	private final Map<Integer, Double> clickTimes;
-	private float clickDriftTolerance;
-	private float doubleClickDelayTolerance;
+	private final KeyboardInput keyboard;
+	private final MouseInput mouse;
 	
 	/**
 	 * Create a new {@link Input} and register it to a given {@link Window} to process {@link AvoEvent}s for.
 	 * <p>
 	 * Populates an initial {@code boolean} array to map all button presses along with click delay times for all mouse buttons.
-	 * @param window the {@code Window} to process {@code Event}s for.
 	 */
-	public Input(Window window) {
-		registeredWindow = window;
-		
-		listeners = new HashSet<>();
-		
-		keys = new boolean[GLFW.GLFW_KEY_LAST];
-		Arrays.fill(keys, false);
-		clickTimes = new HashMap<>();
-		for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
-			clickTimes.put(i, 0.0);
-		}
-		lastMouseClick = new Vector2f();
+	public Input() {
+		keyboard = new KeyboardInput();
+		mouse = new MouseInput();
 	}
 	
 	/**
 	 * 
 	 * @param config
+	 * @param window 
 	 */
-	public void init(InputConfig config) {
-		clickDriftTolerance = config.clickDriftTolerance();
-		doubleClickDelayTolerance = config.doubleClickDelayTolerance();
-
-		windowID = registeredWindow.getId();
-		
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			DoubleBuffer xPos = stack.mallocDouble(1);
-			DoubleBuffer yPos = stack.mallocDouble(1);
-			
-			GLFW.glfwGetCursorPos(windowID, xPos, yPos);
-			lastMouseX = (float) xPos.get();
-			lastMouseY = (float) yPos.get();
-		}
-		
-		configureKeyCallback();
-		configureCharCallback();
-		
-		configureMouseButtonCallback();
-		configureCursorPosCallback();
-		configureScrollCallback();
+	public void init(InputConfig config, Window window) {
+		keyboard.init(window);
+		mouse.init(config, window);
 	}
 	
 	/**
-	 * 
-	 */
-	public void update() {
-		// GLFW_REPEAT has god awful lag, so we're going to roll our own keyDown events
-		// Perhaps in the future we'll only update the array of specified key bindings rather than all accessible keys.
-		for (int i = GLFW.GLFW_KEY_SPACE; i < keys.length; i++) {
-			if (GLFW.glfwGetKey(windowID, i) == GLFW.GLFW_PRESS) {
-				if (!keys[i]) {
-					fireKeyboardEvent(new KeyTypedEvent(windowID, i, ' '));
-				}
-				keys[i] = true;
-			} else {
-				keys[i] = false;
-			}
-		}
-	}
-	
-	private void configureKeyCallback() {
-		GLFW.glfwSetKeyCallback(windowID, (window, key, scancode, action, mods) -> {
-			switch (action) {
-				case GLFW.GLFW_REPEAT -> {
-					return;
-				}
-				case GLFW.GLFW_PRESS -> fireKeyboardEvent(new KeyPressedEvent(window, key, ' '));
-				case GLFW.GLFW_RELEASE -> {
-					fireKeyboardEvent(new KeyReleasedEvent(window, key, ' '));
-					if (key == GLFW.GLFW_KEY_F3) {
-						registeredWindow.setDebugMode(!registeredWindow.isDebugMode());
-					}
-				}
-				default -> throw new IllegalArgumentException("Cannot process key callback event for action: " + action);
-			}
-		});
-	}
-	
-	private void configureCharCallback() {
-		GLFW.glfwSetCharCallback(windowID, (window, codepoint) -> fireKeyboardEvent(new KeyTypedEvent(window, -1, (char)codepoint)));
-	}
-	
-	private void configureMouseButtonCallback() {
-		GLFW.glfwSetMouseButtonCallback(windowID, (window, button, action, mods) -> {
-			int clickCount = 1;
-			switch (action) {
-				case GLFW.GLFW_PRESS -> {
-					lastMouseClick.set(lastMouseX, lastMouseY);
-					fireMouseButtonEvent(new MousePressedEvent(window, button, clickCount, lastMouseX, lastMouseY));
-				}
-				case GLFW.GLFW_RELEASE -> {
-					fireMouseButtonEvent(new MouseReleasedEvent(window, button, clickCount, lastMouseX, lastMouseY));
-					if (lastMouseClick.distance(lastMouseX, lastMouseY) <= clickDriftTolerance) {
-						double time = GLFW.glfwGetTime();
-						if (time - clickTimes.replace(button, time) <= doubleClickDelayTolerance) {
-							clickCount += 1;
-						}
-						lastMouseClick.set(lastMouseX, lastMouseY);
-						fireMouseButtonEvent(new MouseClickedEvent(window, button, clickCount, lastMouseX, lastMouseY));
-					}
-				}
-				default -> throw new IllegalArgumentException("Cannot process mouse button callback event for action: " + action);
-			}
-		});
-	}
-	
-	private void configureCursorPosCallback() {
-		GLFW.glfwSetCursorPosCallback(windowID, (window, xPos, yPos) -> {
-			for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
-				if (GLFW.glfwGetMouseButton(windowID, i) == GLFW.GLFW_PRESS) {
-					fireMouseMotionEvent(new MouseDraggedEvent(window, i, (float) xPos, (float) yPos));
-				}
-			}
-			fireMouseMotionEvent(new MouseMovedEvent(window, (float) xPos, (float) yPos));
-			lastMouseX = (float) xPos;
-			lastMouseY = (float) yPos;
-		});
-	}
-	
-	private void configureScrollCallback() {
-		GLFW.glfwSetScrollCallback(windowID, (window, xOffset, yOffset) -> fireMouseScrollEvent(new MouseWheelEvent(window, lastMouseX, lastMouseY, xOffset, yOffset)));
-	}
-	
-	/**
-	 * @return
-	 */
-	public boolean[] getKeys() {
-		return keys;
-	}
-	
-	/**
-	 * @param keyCode
-	 * @return
-	 */
-	public boolean isKeyDown(int keyCode) {
-		Objects.checkIndex(keyCode, keys.length);
-		return keys[keyCode];
-	}
-	
-	/**
-	 * Register an {@link InputListener} to this {@link Input} and store
+	 * Register an {@link InputListener} to this {@link KeyboardInput} and/or {@link MouseInput} and store
 	 * a reference to it for potential de-registering later.
 	 * @param l The {@code InputListener} to add.
 	 * @return the {@code InputListener}.
 	 */
 	public InputListener addInputListener(InputListener l) {
-		listeners.add(l);
+		if (l instanceof KeyListener || l instanceof CharListener) {
+			keyboard.addInputListener(l);
+		}
+		if (l instanceof MouseButtonListener || l instanceof MouseMotionListener || l instanceof MouseWheelListener) {
+			mouse.addInputListener(l);
+		}
 		return l;
 	}
 	
 	/**
 	 * @param listener
-	 * @return the removed {@link InputListener}
+	 * @return true if either the {@link MouseInput} or {@link KeyboardInput} contained the listener.
 	 */
-	public InputListener removeInputListener(InputListener listener) {
-		listeners.remove(listener);
-		return listener;
+	public boolean removeInputListener(InputListener listener) {
+		boolean keyboardRemoved = keyboard.removeInputListener(listener);
+		boolean mouseRemoved = mouse.removeInputListener(listener);
+		return keyboardRemoved || mouseRemoved;
 	}
 	
-	private void fireKeyboardEvent(KeyEvent event) {
-		for (var listener : listeners) {
-			if (listener instanceof KeyListener kl && !event.isConsumed()) {
-				switch (event) {
-					case KeyPressedEvent e -> kl.keyPressed(e);
-					case KeyReleasedEvent e -> kl.keyReleased(e);
-					case KeyTypedEvent e -> kl.keyTyped(e);
-				}
-			}
-		}
+	/**
+	 * @return the keyboard
+	 */
+	public Keyboard getKeyboard() {
+		return keyboard.getKeyboard();
 	}
 	
-	private void fireMouseButtonEvent(MouseButtonEvent event) {
-		for (var listener : listeners) {
-			if (listener instanceof MouseButtonListener mbl && !event.isConsumed()) {
-				switch (event) {
-					case MousePressedEvent e -> mbl.mousePressed(e);
-					case MouseReleasedEvent e -> mbl.mouseReleased(e);
-					case MouseClickedEvent e -> mbl.mouseClicked(e);
-					case MouseDraggedEvent e -> {
-						// Drag events should be handled by MouseMotionListeners
-					}
-				}
-			}
-		}
+	/**
+	 * @return the mouse
+	 */
+	public Mouse getMouse() {
+		return mouse.getMouse();
 	}
-	
-	private void fireMouseMotionEvent(MouseMotionEvent event) {
-		for (var listener : listeners) {
-			if (listener instanceof MouseMotionListener mml && !event.isConsumed()) {
-				switch (event) {
-					case MouseDraggedEvent e -> mml.mouseDragged(e);
-					case MouseMovedEvent e -> mml.mouseMoved(e);
-				}
-			}
-		}
-	}
-	
-	private void fireMouseScrollEvent(MouseWheelEvent event) {
-		for (var listener : listeners) {
-			if (listener instanceof MouseWheelListener mwl && !event.isConsumed()) {
-				mwl.mouseWheelMoved(event);
-			}
-		}
-	}
-	
 }

@@ -13,8 +13,8 @@ import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.data.font.Font;
-import com.avogine.render.data.font.FontIdentifier;
 import com.avogine.render.shader.FontShader;
+import com.avogine.render.util.FontCache;
 import com.avogine.util.resource.ResourceConstants;
 
 /**
@@ -29,7 +29,13 @@ public class TextRender {
 	
 	private FontShader fontShader;
 	
+	private final Matrix4f orthoMatrix;
 	private final Matrix4f modelMatrix;
+	
+	private int width;
+	private int height;
+	
+	private boolean retainResolution;
 	
 	private int textVao;
 	private int textVbo;
@@ -40,18 +46,22 @@ public class TextRender {
 	 * 
 	 */
 	public TextRender() {
+		orthoMatrix = new Matrix4f();
 		modelMatrix = new Matrix4f();
+		
+		retainResolution = true;
 	}
 	
 	/**
-	 * @param projection
+	 * @param width 
+	 * @param height 
 	 * @param fontCache 
 	 */
-	public void init(Matrix4f projection, FontCache fontCache) {
+	public void init(int width, int height, FontCache fontCache) {
 		fontShader = new FontShader();
-		fontShader.bind();
-		fontShader.projection.loadMatrix(projection);
-		fontShader.unbind();
+		this.width = width;
+		this.height = height;
+		orthoMatrix.setOrtho2D(0, width, height, 0);
 		
 		int textBufferCapacity = TEXT_LENGTH_LIMIT * 4 * 6;
 		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
@@ -70,8 +80,7 @@ public class TextRender {
 		
 		MemoryUtil.memFree(textVertices);
 		
-		var fontID = new FontIdentifier(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
-		defaultFont = fontCache.getFont(fontID);
+		defaultFont = fontCache.getFont(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
 	}
 	
 	/**
@@ -89,12 +98,19 @@ public class TextRender {
 		}
 		int vertexCount = (int) totalRenderableChars * 6;
 		
+		glEnable(GL_BLEND);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
+
+		glViewport(0, 0, width, height);
+		
 		fontShader.bind();
+		fontShader.projection.loadMatrix(orthoMatrix);
 		
 		glBindVertexArray(textVao);
 
 		glActiveTexture(GL_TEXTURE0);
-		font.getTexture().bind();
+		font.getTexture(size).bind();
 		
 		modelMatrix.identity();
 		fontShader.model.loadMatrix(modelMatrix);
@@ -131,6 +147,10 @@ public class TextRender {
 		glBindVertexArray(0);
 		
 		fontShader.unbind();
+		
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
 	}
 	
 	/**
@@ -171,6 +191,32 @@ public class TextRender {
 		}
 		glDeleteVertexArrays(textVao);
 		glDeleteBuffers(textVbo);
+	}
+	
+	/**
+	 * @param width
+	 * @param height
+	 */
+	public void resize(int width, int height) {
+		this.width = width;
+		this.height = height;
+		if (retainResolution) {
+			orthoMatrix.setOrtho2D(0, width, height, 0);
+		}
+	}
+	
+	/**
+	 * @return the retainResolution
+	 */
+	public boolean isRetainResolution() {
+		return retainResolution;
+	}
+	
+	/**
+	 * @param retainResolution the retainResolution to set
+	 */
+	public void setRetainResolution(boolean retainResolution) {
+		this.retainResolution = retainResolution;
 	}
 	
 }

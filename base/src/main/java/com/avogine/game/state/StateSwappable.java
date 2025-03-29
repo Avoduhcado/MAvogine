@@ -69,6 +69,7 @@ public interface StateSwappable<T extends GameState<?, ?>> {
 		public void swapState(Window window) {
 			Objects.requireNonNull(queuedStateSupplier);
 			
+			currentState.prepareForSwap(window);
 			currentState.cleanup();
 			currentState = queuedStateSupplier.get();
 			queuedStateSupplier = null;
