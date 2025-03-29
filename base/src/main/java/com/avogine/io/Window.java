@@ -73,7 +73,7 @@ public class Window {
 		maxFps = Math.clamp(preferences.fpsCap(), 1, 1000);
 		maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
 		
-		input = new Input(this);
+		input = new Input();
 		
 		resizeListeners = new HashSet<>();
 		
@@ -148,7 +148,7 @@ public class Window {
 		fbWidth = arrWidth[0];
 		fbHeight = arrHeight[0];
 		
-		input.init(inputConfig);
+		input.init(inputConfig, this);
 	}
 	
 	/**
@@ -177,15 +177,6 @@ public class Window {
 	 */
 	public void update() {
 		input.getMouse().newFrame();
-	}
-	
-	/**
-	 * Poll GLFW for events and process them in {@link Input}.
-	 * @deprecated
-	 */
-	@Deprecated(since="0.1.3", forRemoval=true)
-	public void pollEvents() {
-		GLFW.glfwPollEvents();
 	}
 	
 	/**

@@ -26,11 +26,6 @@ public class AudioConfigUI {
 	
 	private NkVec2 comboBounds;
 	
-//	private int[] textLen = { 0 };
-//	private String editText = "Hello";
-//	
-//	private NkPluginFilterI asciiFilter;
-	
 	/**
 	 * @param audio 
 	 * 
@@ -51,9 +46,7 @@ public class AudioConfigUI {
 			.collect(Collectors.joining("\0"));
 		deviceSelection = deviceList.indexOf(audio.getDeviceSpecifier()) + 1;
 		
-		comboBounds = NkVec2.create().set(400, 400);
-		
-//		asciiFilter = NkPluginFilter.create(Nuklear::nnk_filter_ascii);
+		comboBounds = NkVec2.malloc().set(400, 400);
 	}
 
 	/**
@@ -67,13 +60,7 @@ public class AudioConfigUI {
 		if (previousVolume != volume[0]) {
 			changeVolume();
 		}
-
-		//				ByteBuffer buffer = stack.calloc(256);
-		//				int length = memASCII(editText, false, buffer);
-		//				IntBuffer len = stack.ints(length);
-		//				nk_edit_string(context, NK_EDIT_SIMPLE, buffer, len, 128, asciiFilter);
-		//				editText = memASCII(buffer, len.get(0));
-
+		
 		nk_label(context, "Playback Device:", NK_TEXT_LEFT);
 		int currentSelection = deviceSelection;
 		deviceSelection = nk_combo_string(context, deviceListString, deviceSelection, deviceList.size() + 1, 25, comboBounds);
@@ -95,7 +82,7 @@ public class AudioConfigUI {
 	}
 	
 	private float getALVolume() {
-		return ((float) volume[0]) / 100.0f;
+		return volume[0] / 100.0f;
 	}
 	
 	private void setUIVolume(float alVolume) {
