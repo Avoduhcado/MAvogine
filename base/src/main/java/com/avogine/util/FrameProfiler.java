@@ -1,6 +1,7 @@
 package com.avogine.util;
 
 import java.text.*;
+import java.time.Duration;
 import java.util.*;
 
 import com.avogine.logging.AvoLog;
@@ -25,9 +26,15 @@ public enum FrameProfiler implements Profilable {
 		private long updateStart;
 		private long renderStart;
 		private final DecimalFormat df = new DecimalFormat("###000,000.00ns");
-
+		
+		private boolean profiling;
+		
 		@Override
 		public void startFrame() {
+			if (!profiling) {
+				new Timer("Debug-Profiler-Timer", true).scheduleAtFixedRate(new ProfilerTimerTask(this), Duration.ofSeconds(1).toMillis(), Duration.ofSeconds(1).toMillis());
+				profiling = true;
+			}
 			frameStart = System.nanoTime();
 		}
 
@@ -148,6 +155,19 @@ public enum FrameProfiler implements Profilable {
 	 * A No-OP profiler that performs no actions while profiling.
 	 */
 	NO_OP;
+}
+
+final class ProfilerTimerTask extends TimerTask {
+	private final FrameProfiler profiler;
+	
+	ProfilerTimerTask(FrameProfiler profiler) {
+		this.profiler = profiler;
+	}
+	
+	@Override
+	public void run() {
+		profiler.printAverages();
+	}
 }
 
 sealed interface Profilable permits FrameProfiler {

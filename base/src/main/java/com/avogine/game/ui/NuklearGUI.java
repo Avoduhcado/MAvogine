@@ -10,15 +10,15 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 import java.nio.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.lwjgl.nuklear.*;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.game.ui.nuklear.NuklearUIElement;
-import com.avogine.io.Window;
+import com.avogine.io.*;
 import com.avogine.io.event.*;
-import com.avogine.io.event.KeyEvent.KeyPressedEvent;
 import com.avogine.io.event.MouseEvent.*;
 import com.avogine.io.listener.*;
 import com.avogine.util.ResourceUtils;
@@ -42,6 +42,12 @@ public class NuklearGUI implements GUI {
 				.mfree((handle, ptr) -> nmemFree(ptr));
 	}
 	
+	private record NkKeyEvent(int key, boolean pressed) {}
+	private record NkCharEvent(int unicode) {}
+	private record NkMouseButtonEvent(int button, int x, int y, boolean pressed) {}
+	private record NkMouseMotionEvent(int x, int y) {}
+	private record NkMouseWheelEvent(float xOffset, float yOffset) {}
+	
 	private NkContext context;
 	private ByteBuffer ttfBuffer;
 	private NkUserFont defaultFont;
@@ -50,9 +56,13 @@ public class NuklearGUI implements GUI {
 
 	private final List<NuklearUIElement> uiElements;
 	
-	private InputListener keyboardHandler;
-	private InputListener scrollHandler;
-	private InputListener mouseHandler;
+	private final Queue<NkKeyEvent> delayedKeyEvents;
+	private final Queue<NkCharEvent> delayedCharEvents;
+	private final Queue<NkMouseButtonEvent> delayedMouseButtonEvents;
+	private final Queue<NkMouseMotionEvent> delayedMouseMotionEvents;
+	private final Queue<NkMouseWheelEvent> delayedMouseWheelEvents;
+	
+	private InputListener nkInputHandler;
 	
 	/**
 	 * 
@@ -66,6 +76,12 @@ public class NuklearGUI implements GUI {
 		nk_buffer_init(commands, ALLOCATOR, BUFFER_INITIAL_SIZE);
 		
 		uiElements = new ArrayList<>();
+		
+		delayedKeyEvents = new ConcurrentLinkedQueue<>();
+		delayedCharEvents = new ConcurrentLinkedQueue<>();
+		delayedMouseButtonEvents = new ConcurrentLinkedQueue<>();
+		delayedMouseMotionEvents = new ConcurrentLinkedQueue<>();
+		delayedMouseWheelEvents = new ConcurrentLinkedQueue<>();
 	}
 	
 	/**
@@ -79,9 +95,7 @@ public class NuklearGUI implements GUI {
 		defaultFont = NkUserFont.create();
 		initFont();
 
-		keyboardHandler = window.getInput().addInputListener(new NuklearKeyboardHandler());
-		scrollHandler = window.getInput().addInputListener(new NuklearScrollHandler());
-		mouseHandler = window.getInput().addInputListener(new NuklearMouseHandler());
+		nkInputHandler = window.addInputListener(new NuklearInputHandler());
 	}
 	
 	private void initFont() {
@@ -187,15 +201,113 @@ public class NuklearGUI implements GUI {
 	}
 	
 	/**
+	 * @param window
+	 */
+	public void input(Window window) {
+		nk_input_begin(context);
+		
+		drainKeyEvents(window.getKeyboard());
+		drainCharEvents();
+		
+		drainMouseWheelEvents();
+		
+		drainMouseButtonEvents();
+		drainMouseMotionEvents();
+		
+		nk_input_end(context);
+	}
+	
+	private void drainKeyEvents(Keyboard keyboard) {
+		while (!delayedKeyEvents.isEmpty()) {
+			var keyEvent = delayedKeyEvents.poll();
+			switch (keyEvent.key()) {
+				case GLFW_KEY_DELETE -> nk_input_key(context, NK_KEY_DEL, keyEvent.pressed());
+				case GLFW_KEY_ENTER -> nk_input_key(context, NK_KEY_ENTER, keyEvent.pressed());
+				case GLFW_KEY_TAB -> nk_input_key(context, NK_KEY_TAB, keyEvent.pressed());
+				case GLFW_KEY_BACKSPACE -> nk_input_key(context, NK_KEY_BACKSPACE, keyEvent.pressed());
+				case GLFW_KEY_UP -> nk_input_key(context, NK_KEY_UP, keyEvent.pressed());
+				case GLFW_KEY_DOWN -> nk_input_key(context, NK_KEY_DOWN, keyEvent.pressed());
+				case GLFW_KEY_HOME -> {
+					nk_input_key(context, NK_KEY_TEXT_START, keyEvent.pressed());
+					nk_input_key(context, NK_KEY_SCROLL_START, keyEvent.pressed());
+				}
+				case GLFW_KEY_END -> {
+					nk_input_key(context, NK_KEY_TEXT_END, keyEvent.pressed());
+					nk_input_key(context, NK_KEY_SCROLL_END, keyEvent.pressed());
+				}
+				case GLFW_KEY_PAGE_DOWN -> nk_input_key(context, NK_KEY_SCROLL_DOWN, keyEvent.pressed());
+				case GLFW_KEY_PAGE_UP -> nk_input_key(context, NK_KEY_SCROLL_UP, keyEvent.pressed());
+				case GLFW_KEY_LEFT_SHIFT | GLFW_KEY_RIGHT_SHIFT -> nk_input_key(context, NK_KEY_SHIFT, keyEvent.pressed());
+				case GLFW_KEY_LEFT_CONTROL | GLFW_KEY_RIGHT_CONTROL -> {
+					if (keyEvent.pressed()) {
+						nk_input_key(context, NK_KEY_COPY, keyboard.isKeyDown(GLFW_KEY_C));
+						nk_input_key(context, NK_KEY_PASTE, keyboard.isKeyDown(GLFW_KEY_P));
+						nk_input_key(context, NK_KEY_CUT, keyboard.isKeyDown(GLFW_KEY_X));
+						nk_input_key(context, NK_KEY_TEXT_UNDO, keyboard.isKeyDown(GLFW_KEY_Z));
+						nk_input_key(context, NK_KEY_TEXT_REDO, keyboard.isKeyDown(GLFW_KEY_R));
+						nk_input_key(context, NK_KEY_TEXT_WORD_LEFT, keyboard.isKeyDown(GLFW_KEY_LEFT));
+						nk_input_key(context, NK_KEY_TEXT_WORD_RIGHT, keyboard.isKeyDown(GLFW_KEY_RIGHT));
+						nk_input_key(context, NK_KEY_TEXT_LINE_START, keyboard.isKeyDown(GLFW_KEY_B));
+						nk_input_key(context, NK_KEY_TEXT_LINE_END, keyboard.isKeyDown(GLFW_KEY_E));
+					} else {
+						nk_input_key(context, NK_KEY_LEFT, keyboard.isKeyDown(GLFW_KEY_LEFT));
+						nk_input_key(context, NK_KEY_RIGHT, keyboard.isKeyDown(GLFW_KEY_RIGHT));
+						nk_input_key(context, NK_KEY_COPY, false);
+						nk_input_key(context, NK_KEY_PASTE, false);
+						nk_input_key(context, NK_KEY_CUT, false);
+						nk_input_key(context, NK_KEY_SHIFT, false);
+					}
+				}
+				default -> {
+					// Action not implemented
+				}
+			}
+		}
+	}
+	
+	private void drainCharEvents() {
+		while (!delayedCharEvents.isEmpty()) {
+			var charEvent = delayedCharEvents.poll();
+			nk_input_unicode(context, charEvent.unicode());
+		}
+	}
+	
+	private void drainMouseWheelEvents() {
+		while (!delayedMouseWheelEvents.isEmpty()) {
+			var mouseWheelEvent = delayedMouseWheelEvents.poll();
+			try (MemoryStack stack = stackPush()) {
+				NkVec2 scroll = NkVec2.malloc(stack)
+						.x(mouseWheelEvent.xOffset())
+						.y(mouseWheelEvent.yOffset());
+				nk_input_scroll(context, scroll);
+			}
+		}
+	}
+	
+	private void drainMouseButtonEvents() {
+		while (!delayedMouseButtonEvents.isEmpty()) {
+			var mouseButtonEvent = delayedMouseButtonEvents.poll();
+			int nkButton = switch (mouseButtonEvent.button()) {
+				case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
+				case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
+				default -> NK_BUTTON_LEFT;
+			};
+			
+			nk_input_button(context, nkButton, mouseButtonEvent.x(), mouseButtonEvent.y(), mouseButtonEvent.pressed());
+		}
+	}
+	
+	private void drainMouseMotionEvents() {
+		while (!delayedMouseMotionEvents.isEmpty()) {
+			var mouseMotionEvent = delayedMouseMotionEvents.poll();
+			nk_input_motion(context, mouseMotionEvent.x(), mouseMotionEvent.y());
+		}
+	}
+	
+	/**
 	 * 
 	 */
 	public void cleanup() {
-		/* Event handling is done on a separate Thread from rendering, so input_begin/end calls basically run whenever we're not laying out UI elements
-		 * in order to allow events to be mirrored properly from their callback listeners. XXX I'm not entirely sure if this input_end call is necessary
-		 * or harmful one way or the other, but for now it remains.
-		 */
-		endInput();
-		
 		nk_free(context);
 		nk_buffer_free(commands);
 		Objects.requireNonNull(defaultFont.query()).free();
@@ -209,26 +321,9 @@ public class NuklearGUI implements GUI {
 	 * @param window
 	 */
 	public void layoutElements(Window window) {
-		// TODO To handle input mirroring correctly I should probably remove the InputListeners and add a regular input() method that basically does all of it manually by reading directly from Input state
-		endInput();
 		for (NuklearUIElement uiElement : uiElements) {
 			uiElement.layout(context, window);
 		}
-		beginInput();
-	}
-	
-	/**
-	 * 
-	 */
-	public void beginInput() {
-		nk_input_begin(context);
-	}
-	
-	/**
-	 * 
-	 */
-	public void endInput() {
-		nk_input_end(context);
 	}
 	
 	/**
@@ -270,86 +365,25 @@ public class NuklearGUI implements GUI {
 	}
 	
 	/**
-	 * @return the keyboardHandler
+	 * @return the nkInputHandler
 	 */
-	public InputListener getKeyboardHandler() {
-		return keyboardHandler;
+	public InputListener getNkInputHandler() {
+		return nkInputHandler;
 	}
 	
-	/**
-	 * @return the scrollHandler
-	 */
-	public InputListener getScrollHandler() {
-		return scrollHandler;
-	}
-	
-	/**
-	 * @return the mouseHandler
-	 */
-	public InputListener getMouseHandler() {
-		return mouseHandler;
-	}
-	
-	private class NuklearKeyboardHandler implements KeyListener, CharListener {
+	private class NuklearInputHandler extends InputAdapter {
 		@Override
 		public void keyReleased(KeyEvent event) {
-			handleKeyEvent(event);
+			delayedKeyEvents.add(new NkKeyEvent(event.key(), false));
+			
+			if (nk_item_is_any_active(context)) {
+				event.consume();
+			}
 		}
 
 		@Override
 		public void keyPressed(KeyEvent event) {
-			handleKeyEvent(event);
-		}
-		
-		@Override
-		public void charTyped(CharEvent event) {
-			nk_input_unicode(context, event.codepoint());
-		}
-		
-		private void handleKeyEvent(KeyEvent event) {
-			boolean press = event instanceof KeyPressedEvent;
-			switch (event.key()) {
-				case GLFW_KEY_DELETE -> nk_input_key(context, NK_KEY_DEL, press);
-				case GLFW_KEY_ENTER -> nk_input_key(context, NK_KEY_ENTER, press);
-				case GLFW_KEY_TAB -> nk_input_key(context, NK_KEY_TAB, press);
-				case GLFW_KEY_BACKSPACE -> nk_input_key(context, NK_KEY_BACKSPACE, press);
-				case GLFW_KEY_UP -> nk_input_key(context, NK_KEY_UP, press);
-				case GLFW_KEY_DOWN -> nk_input_key(context, NK_KEY_DOWN, press);
-				case GLFW_KEY_HOME -> {
-					nk_input_key(context, NK_KEY_TEXT_START, press);
-					nk_input_key(context, NK_KEY_SCROLL_START, press);
-				}
-				case GLFW_KEY_END -> {
-					nk_input_key(context, NK_KEY_TEXT_END, press);
-					nk_input_key(context, NK_KEY_SCROLL_END, press);
-				}
-				case GLFW_KEY_PAGE_DOWN -> nk_input_key(context, NK_KEY_SCROLL_DOWN, press);
-				case GLFW_KEY_PAGE_UP -> nk_input_key(context, NK_KEY_SCROLL_UP, press);
-				case GLFW_KEY_LEFT_SHIFT | GLFW_KEY_RIGHT_SHIFT -> nk_input_key(context, NK_KEY_SHIFT, press);
-				case GLFW_KEY_LEFT_CONTROL | GLFW_KEY_RIGHT_CONTROL -> {
-					if (press) {
-						nk_input_key(context, NK_KEY_COPY, glfwGetKey(event.window(), GLFW_KEY_C) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_PASTE, glfwGetKey(event.window(), GLFW_KEY_P) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_CUT, glfwGetKey(event.window(), GLFW_KEY_X) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_TEXT_UNDO, glfwGetKey(event.window(), GLFW_KEY_Z) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_TEXT_REDO, glfwGetKey(event.window(), GLFW_KEY_R) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_TEXT_WORD_LEFT, glfwGetKey(event.window(), GLFW_KEY_LEFT) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_TEXT_WORD_RIGHT, glfwGetKey(event.window(), GLFW_KEY_RIGHT) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_TEXT_LINE_START, glfwGetKey(event.window(), GLFW_KEY_B) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_TEXT_LINE_END, glfwGetKey(event.window(), GLFW_KEY_E) == GLFW_PRESS);
-					} else {
-						nk_input_key(context, NK_KEY_LEFT, glfwGetKey(event.window(), GLFW_KEY_LEFT) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_RIGHT, glfwGetKey(event.window(), GLFW_KEY_RIGHT) == GLFW_PRESS);
-						nk_input_key(context, NK_KEY_COPY, false);
-						nk_input_key(context, NK_KEY_PASTE, false);
-						nk_input_key(context, NK_KEY_CUT, false);
-						nk_input_key(context, NK_KEY_SHIFT, false);
-					}
-				}
-				default -> {
-					// Action not implemented
-				}
-			}
+			delayedKeyEvents.add(new NkKeyEvent(event.key(), true));
 			
 			if (nk_item_is_any_active(context)) {
 				event.consume();
@@ -357,49 +391,20 @@ public class NuklearGUI implements GUI {
 		}
 		
 		@Override
-		public EventLayer getLayer() {
-			return EventLayer.UI;
+		public void charTyped(CharEvent event) {
+			delayedCharEvents.add(new NkCharEvent(event.codepoint()));
 		}
-	}
-	
-	private class NuklearScrollHandler implements MouseWheelListener {
+		
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent event) {
-			try (MemoryStack stack = stackPush()) {
-				NkVec2 scroll = NkVec2.malloc(stack)
-						.x((float) event.xOffset())
-						.y((float) event.yOffset());
-				nk_input_scroll(context, scroll);
-			}
+			delayedMouseWheelEvents.add(new NkMouseWheelEvent((float) event.xOffset(), (float) event.yOffset()));
 			// XXX This may want to consume events as well
 		}
 		
 		@Override
-		public EventLayer getLayer() {
-			return EventLayer.UI;
-		}
-	}
-	
-	private class NuklearMouseHandler implements MouseButtonListener, MouseMotionListener {
-		
-		@Override
-		public void mouseClicked(MouseButtonEvent event) {
-			// Not implemented
-		}
-
-		@Override
 		public void mousePressed(MouseButtonEvent event) {
-			int x = (int) event.mouseX();
-			int y = (int) event.mouseY();
-
-			int nkButton = switch (event.button()) {
-				case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
-				case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
-				default -> NK_BUTTON_LEFT;
-			};
-			// XXX Input reports held mouse clicks as GLFW_REPEAT, unclear if that's correct.
-			nk_input_button(context, nkButton, x, y, true);
-
+			delayedMouseButtonEvents.add(new NkMouseButtonEvent(event.button(), (int) event.mouseX(), (int) event.mouseY(), true));
+			
 			if (nk_item_is_any_active(context)) {
 				event.consume();
 			}
@@ -407,17 +412,8 @@ public class NuklearGUI implements GUI {
 
 		@Override
 		public void mouseReleased(MouseButtonEvent event) {
-			int x = (int) event.mouseX();
-			int y = (int) event.mouseY();
+			delayedMouseButtonEvents.add(new NkMouseButtonEvent(event.button(), (int) event.mouseX(), (int) event.mouseY(), false));
 			
-			int nkButton = switch (event.button()) {
-				case GLFW_MOUSE_BUTTON_RIGHT -> NK_BUTTON_RIGHT;
-				case GLFW_MOUSE_BUTTON_MIDDLE -> NK_BUTTON_MIDDLE;
-				default -> NK_BUTTON_LEFT;
-			};
-			
-			nk_input_button(context, nkButton, x, y, false);
-
 			if (nk_item_is_any_active(context)) {
 				event.consume();
 			}
@@ -425,15 +421,7 @@ public class NuklearGUI implements GUI {
 
 		@Override
 		public void mouseMoved(MouseMotionEvent event) {
-			nk_input_motion(context, (int)event.mouseX(), (int)event.mouseY());
-		}
-
-		@Override
-		public void mouseDragged(MouseDraggedEvent event) {
-			nk_input_motion(context, (int)event.mouseX(), (int)event.mouseY());
-			if (nk_item_is_any_active(context)) {
-				event.consume();
-			}
+			delayedMouseMotionEvents.add(new NkMouseMotionEvent((int) event.mouseX(), (int) event.mouseY()));
 		}
 		
 		@Override

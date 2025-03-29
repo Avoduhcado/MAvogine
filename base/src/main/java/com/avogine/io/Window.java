@@ -12,7 +12,7 @@ import org.lwjgl.system.*;
 import com.avogine.Avogine;
 import com.avogine.game.util.Registerable;
 import com.avogine.io.config.*;
-import com.avogine.io.listener.WindowResizeListener;
+import com.avogine.io.listener.*;
 import com.avogine.logging.AvoLog;
 import com.avogine.util.ResourceUtils;
 import com.avogine.util.resource.ResourceConstants;
@@ -51,11 +51,12 @@ public class Window {
 	
 	private final Input input;
 	
+	private final Set<WindowResizeListener> resizeListeners;
+	
 	private final Queue<Registerable> queuedRegisters;
 	
-	private final List<WindowResizeListener> resizeListeners;
-	
 	/**
+	 * TODO Add WindowBuilder param that can take in a bunch of custom settings or just use defaults?
 	 * @param title The window title
 	 * @param preferences 
 	 */
@@ -74,7 +75,7 @@ public class Window {
 		
 		input = new Input(this);
 		
-		resizeListeners = new ArrayList<>();
+		resizeListeners = new HashSet<>();
 		
 		queuedRegisters = new ConcurrentLinkedQueue<>();
 	}
@@ -123,6 +124,7 @@ public class Window {
 		}
 		
 		targetFps = maxFps;
+		GLFW.glfwSetWindowFocusCallback(id, (windowC, focused) -> targetFps = focused ? maxFps : maxBackgroundFps);
 		
 		// XXX Customize by WindowConfig?
 		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
@@ -145,12 +147,8 @@ public class Window {
 		height = arrHeight[0];
 		fbWidth = arrWidth[0];
 		fbHeight = arrHeight[0];
-
-		input.init(inputConfig);
 		
-		addRegisterable((Window window) -> GLFW.glfwSetWindowFocusCallback(id, (windowC, focused) -> 
-			targetFps = focused ? maxFps : maxBackgroundFps
-		));
+		input.init(inputConfig);
 	}
 	
 	/**
@@ -175,6 +173,13 @@ public class Window {
 	}
 	
 	/**
+	 * 
+	 */
+	public void update() {
+		input.getMouse().newFrame();
+	}
+	
+	/**
 	 * Poll GLFW for events and process them in {@link Input}.
 	 * @deprecated
 	 */
@@ -194,6 +199,26 @@ public class Window {
 		
 		// XXX Maybe use this with a timeout to target whatever the game's update loop interval is?
 		GLFW.glfwWaitEvents();
+	}
+	
+	/**
+	 * Register an {@link InputListener} to this Window's {@link Input} and store
+	 * a reference to it for potential de-registering later.
+	 * @param l The {@code InputListener} to add.
+	 * @return the {@code InputListener}.
+	 */
+	public InputListener addInputListener(InputListener l) {
+		input.addInputListener(l);
+		return l;
+	}
+	
+	/**
+	 * @param listener
+	 * @return the removed {@link InputListener}
+	 */
+	public InputListener removeInputListener(InputListener listener) {
+		input.removeInputListener(listener);
+		return listener;
 	}
 	
 	/**
@@ -222,6 +247,15 @@ public class Window {
 	public Registerable addRegisterable(Registerable register) {
 		queuedRegisters.add(register);
 		return register;
+	}
+	
+	/**
+	 * Must only be called from the main thread.
+	 * @param inputMode
+	 */
+	public void setCursorInput(int inputMode) {
+		GLFW.glfwSetInputMode(id, GLFW.GLFW_CURSOR, inputMode);
+		input.getMouse().setCaptured(GLFW.glfwGetInputMode(id, GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_NORMAL);
 	}
 	
 	/**
@@ -296,10 +330,17 @@ public class Window {
 	}
 	
 	/**
-	 * @return the input
+	 * @return the keyboard
 	 */
-	public Input getInput() {
-		return input;
+	public Keyboard getKeyboard() {
+		return input.getKeyboard();
+	}
+	
+	/**
+	 * @return the mouse
+	 */
+	public Mouse getMouse() {
+		return input.getMouse();
 	}
 	
 	/**

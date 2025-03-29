@@ -267,7 +267,7 @@ public class Audio {
 		}
 		AvoLog.log().info("Scheduling default audio device poller.");
 
-		defaultDeviceReopenTimer = new Timer(true);
+		defaultDeviceReopenTimer = new Timer("OpenAL-Device-Reopen_Timer", true);
 		defaultDeviceReopenTimer.scheduleAtFixedRate(new DefaultDeviceReopenTask(), new Date(), TimeUnit.SECONDS.toMillis(1));
 	}
 

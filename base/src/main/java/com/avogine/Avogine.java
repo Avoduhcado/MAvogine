@@ -66,7 +66,7 @@ public class Avogine {
 		 * Start new thread to have the OpenGL context current in and which does
 		 * the rendering.
 		 */
-		new Thread(this::renderLoop).start();
+		new Thread(this::renderLoop, "GAME_LOOP").start();
 		
 		while (!window.shouldClose()) {
 			window.waitEvents();
@@ -77,6 +77,7 @@ public class Avogine {
 		profiler.inputStart();
 		
 		game.input(window);
+		window.update();
 		
 		profiler.inputEnd();
 	}
@@ -116,26 +117,17 @@ public class Avogine {
 		float updateInterval = 1.0f / game.getTargetUps();
 		float updateAccumulator = 0.0f;
 		
-		var renderTimer = new Timer();
+		var renderTimer = new Timer(true);
 		renderTimer.init();
-		
-		double loopTime = 0;
 		
 		while (!destroyed) {
 			profiler.startFrame();
 			double elapsedTime = renderTimer.getElapsedTime();
-			window.setFps((int) (1 / elapsedTime));
+			window.setFps((int) Math.round(1 / elapsedTime));
 			updateAccumulator += elapsedTime;
 			
-			// TODO This should probably be a stand-alone scheduled repeater
-			loopTime += elapsedTime;
-			if (loopTime >= 1.0) {
-				profiler.printAverages();
-				loopTime = 0;
-			}
-			
 			input();
-
+			
 			while (updateAccumulator >= updateInterval) {
 				update(updateInterval);
 				updateAccumulator -= updateInterval;
@@ -144,7 +136,6 @@ public class Avogine {
 			render();
 			
 			profiler.endFrame();
-			
 			synchronized (lock) {
 				if (!destroyed) {
 					if (!window.isVsync()) {

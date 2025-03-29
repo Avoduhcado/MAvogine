@@ -1,11 +1,8 @@
 package com.avogine.io;
 
-import java.nio.DoubleBuffer;
 import java.util.*;
 
-import org.joml.Vector2f;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryStack;
 
 import com.avogine.io.config.InputConfig;
 import com.avogine.io.event.*;
@@ -22,20 +19,12 @@ import com.avogine.io.listener.*;
  */
 public class Input {
 	
-	private Window registeredWindow;
-	private long windowID;
+	private final Window registeredWindow;
+	
+	private final Keyboard keyboard;
+	private final Mouse mouse;
 	
 	private final Set<InputListener> listeners;
-	// True if the key at index is currently pressed
-	private final boolean[] keys;
-	
-	private float lastMouseX;
-	private float lastMouseY;
-	private final Vector2f lastMouseClick;
-	
-	private final Map<Integer, Double> clickTimes;
-	private float clickDriftTolerance;
-	private float doubleClickDelayTolerance;
 	
 	/**
 	 * Create a new {@link Input} and register it to a given {@link Window} to process {@link AvoEvent}s for.
@@ -46,15 +35,10 @@ public class Input {
 	public Input(Window window) {
 		registeredWindow = window;
 		
-		listeners = new HashSet<>();
+		keyboard = new Keyboard();
+		mouse = new Mouse();
 		
-		keys = new boolean[GLFW.GLFW_KEY_LAST];
-		Arrays.fill(keys, false);
-		clickTimes = new HashMap<>();
-		for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
-			clickTimes.put(i, 0.0);
-		}
-		lastMouseClick = new Vector2f();
+		listeners = new HashSet<>();
 	}
 	
 	/**
@@ -62,19 +46,7 @@ public class Input {
 	 * @param config
 	 */
 	public void init(InputConfig config) {
-		clickDriftTolerance = config.clickDriftTolerance();
-		doubleClickDelayTolerance = config.doubleClickDelayTolerance();
-
-		windowID = registeredWindow.getId();
-		
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			DoubleBuffer xPos = stack.mallocDouble(1);
-			DoubleBuffer yPos = stack.mallocDouble(1);
-			
-			GLFW.glfwGetCursorPos(windowID, xPos, yPos);
-			lastMouseX = (float) xPos.get();
-			lastMouseY = (float) yPos.get();
-		}
+		mouse.init(config, getWindowHandle());
 		
 		configureKeyCallback();
 		configureCharCallback();
@@ -85,22 +57,22 @@ public class Input {
 	}
 	
 	private void configureKeyCallback() {
-		GLFW.glfwSetKeyCallback(windowID, (window, key, scancode, action, mods) -> {
+		GLFW.glfwSetKeyCallback(getWindowHandle(), (window, key, scancode, action, mods) -> {
+			if (action == GLFW.GLFW_REPEAT) {
+				return;
+			}
+			
+			if (key >= GLFW.GLFW_KEY_SPACE && key <= GLFW.GLFW_KEY_LAST) {
+				keyboard.setKey(key, action == GLFW.GLFW_PRESS);
+			} else {
+				keyboard.setScancode(scancode, action == GLFW.GLFW_PRESS);
+			}
+			keyboard.setMods(mods);
+			
 			switch (action) {
-				case GLFW.GLFW_REPEAT -> {
-					// No handling for GLFW_REPEAT
-				}
-				case GLFW.GLFW_PRESS ->  {
-					if (key >= GLFW.GLFW_KEY_SPACE && key < keys.length) {
-						keys[key] = true;
-					}
-					fireKeyboardEvent(new KeyPressedEvent(window, key, scancode, mods));
-				}
+				case GLFW.GLFW_PRESS -> fireKeyboardEvent(new KeyPressedEvent(registeredWindow, key, scancode, mods));
 				case GLFW.GLFW_RELEASE -> {
-					if (key >= GLFW.GLFW_KEY_SPACE && key < keys.length) {
-						keys[key] = false;
-					}
-					fireKeyboardEvent(new KeyReleasedEvent(window, key, scancode, mods));
+					fireKeyboardEvent(new KeyReleasedEvent(registeredWindow, key, scancode, mods));
 					if (key == GLFW.GLFW_KEY_F3) {
 						registeredWindow.setDebugMode(!registeredWindow.isDebugMode());
 					}
@@ -111,26 +83,21 @@ public class Input {
 	}
 	
 	private void configureCharCallback() {
-		GLFW.glfwSetCharCallback(windowID, (window, codepoint) -> fireCharEvent(new CharEvent(window, codepoint)));
+		GLFW.glfwSetCharCallback(getWindowHandle(), (window, codepoint) -> fireCharEvent(new CharEvent(registeredWindow, codepoint)));
 	}
 	
 	private void configureMouseButtonCallback() {
-		GLFW.glfwSetMouseButtonCallback(windowID, (window, button, action, mods) -> {
-			int clickCount = 1;
+		GLFW.glfwSetMouseButtonCallback(getWindowHandle(), (window, button, action, mods) -> {
+			mouse.setButton(button, action == GLFW.GLFW_PRESS);
+			int clickCount = mouse.getButtonClickCount(button);
+			
 			switch (action) {
-				case GLFW.GLFW_PRESS -> {
-					lastMouseClick.set(lastMouseX, lastMouseY);
-					fireMouseButtonEvent(new MousePressedEvent(window, button, clickCount, lastMouseX, lastMouseY));
-				}
+				case GLFW.GLFW_PRESS -> fireMouseButtonEvent(new MousePressedEvent(registeredWindow, button, clickCount, mouse.getPosition().x(), mouse.getPosition().y()));
 				case GLFW.GLFW_RELEASE -> {
-					fireMouseButtonEvent(new MouseReleasedEvent(window, button, clickCount, lastMouseX, lastMouseY));
-					if (lastMouseClick.distance(lastMouseX, lastMouseY) <= clickDriftTolerance) {
-						double time = GLFW.glfwGetTime();
-						if (time - clickTimes.replace(button, time) <= doubleClickDelayTolerance) {
-							clickCount += 1;
-						}
-						lastMouseClick.set(lastMouseX, lastMouseY);
-						fireMouseButtonEvent(new MouseClickedEvent(window, button, clickCount, lastMouseX, lastMouseY));
+					fireMouseButtonEvent(new MouseReleasedEvent(registeredWindow, button, clickCount, mouse.getPosition().x(), mouse.getPosition().y()));
+					
+					if (clickCount > 0) {
+						fireMouseButtonEvent(new MouseClickedEvent(registeredWindow, button, clickCount, mouse.getPosition().x(), mouse.getPosition().y()));
 					}
 				}
 				default -> throw new IllegalArgumentException("Cannot process mouse button callback event for action: " + action);
@@ -139,42 +106,28 @@ public class Input {
 	}
 	
 	private void configureCursorPosCallback() {
-		GLFW.glfwSetCursorPosCallback(windowID, (window, xPos, yPos) -> {
+		GLFW.glfwSetCursorPosCallback(getWindowHandle(), (window, xPos, yPos) -> {
+			mouse.setPosition(xPos, yPos);
+			
 			for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
-				if (GLFW.glfwGetMouseButton(windowID, i) == GLFW.GLFW_PRESS) {
-					fireMouseMotionEvent(new MouseDraggedEvent(window, i, (float) xPos, (float) yPos));
+				if (GLFW.glfwGetMouseButton(getWindowHandle(), i) == GLFW.GLFW_PRESS) {
+					fireMouseMotionEvent(new MouseDraggedEvent(registeredWindow, i, (float) xPos, (float) yPos));
 				}
 			}
-			fireMouseMotionEvent(new MouseMovedEvent(window, (float) xPos, (float) yPos));
-			lastMouseX = (float) xPos;
-			lastMouseY = (float) yPos;
+			fireMouseMotionEvent(new MouseMovedEvent(registeredWindow, (float) xPos, (float) yPos));
 		});
 	}
 	
 	private void configureScrollCallback() {
-		GLFW.glfwSetScrollCallback(windowID, (window, xOffset, yOffset) -> fireMouseScrollEvent(new MouseWheelEvent(window, lastMouseX, lastMouseY, xOffset, yOffset)));
+		GLFW.glfwSetScrollCallback(getWindowHandle(), (window, xOffset, yOffset) -> {
+			mouse.setScroll(xOffset, yOffset);
+			
+			fireMouseScrollEvent(new MouseWheelEvent(registeredWindow, mouse.getPosition().x(), mouse.getPosition().y(), xOffset, yOffset));
+		});
 	}
 	
-	/**
-	 * @return the keys
-	 */
-	public boolean[] getKeys() {
-		return keys;
-	}
-	
-	/**
-	 * Return true if the given keyCode is currently pressed.
-	 * </p>
-	 * If {@code keyCode} is outside the inclusive range of {@link GLFW#GLFW_KEY_SPACE} and {@link GLFW#GLFW_KEY_LAST} this will
-	 * throw an {@link IndexOutOfBoundsException}. 
-	 * 
-	 * @param keyCode
-	 * @return true if the given keyCode is currently pressed.
-	 * @throws IndexOutOfBoundsException If {@code keyCode} is outside the inclusive range of {@link GLFW#GLFW_KEY_SPACE} and {@link GLFW#GLFW_KEY_LAST}.
-	 */
-	public boolean isKeyDown(int keyCode) {
-		Objects.checkIndex(keyCode, keys.length);
-		return keys[keyCode];
+	private long getWindowHandle() {
+		return registeredWindow.getId();
 	}
 	
 	/**
@@ -195,6 +148,20 @@ public class Input {
 	public InputListener removeInputListener(InputListener listener) {
 		listeners.remove(listener);
 		return listener;
+	}
+	
+	/**
+	 * @return the keyboard
+	 */
+	public Keyboard getKeyboard() {
+		return keyboard;
+	}
+	
+	/**
+	 * @return the mouse
+	 */
+	public Mouse getMouse() {
+		return mouse;
 	}
 	
 	private void fireKeyboardEvent(KeyEvent event) {
