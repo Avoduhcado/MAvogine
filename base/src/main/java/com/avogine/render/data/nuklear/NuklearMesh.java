@@ -184,7 +184,6 @@ public class NuklearMesh {
 	}
 	
 	/**
-	 * TODO This is caching framebuffer/window size and it probably shouldn't be.
 	 * Should this only be updating displayWidth/Height?
 	 * @param width 
 	 * @param height 
@@ -192,7 +191,6 @@ public class NuklearMesh {
 	public void setSize(int width, int height) {
 		this.displayWidth = width;
 		this.displayHeight = height;
-		// TODO Don't change width and height? These should be the actual size of the mesh?
 		this.width = width;
 		this.height = height;
 	}

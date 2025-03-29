@@ -24,10 +24,17 @@ import com.avogine.util.ResourceUtils;
  */
 public class Font {
 
-	private static final float DEFAULT_SIZE = 24.0f;
+	private static final int DEFAULT_SIZE = 24;
 	
 	private static final int BITMAP_WIDTH = 1024;
 	private static final int BITMAP_HEIGHT = 1024;
+	
+	private record FontRenderData(List<Integer> sizes, STBTTPackedchar.Buffer cdata, FontMap texture) {
+		public void cleanup() {
+			cdata.free();
+			texture.cleanup();
+		}
+	}
 	
 	private final ByteBuffer ttf;
 	
@@ -37,24 +44,18 @@ public class Font {
 	private final FontNameInfo fontNameInfo;
 	private final FontMetrics fontMetrics;
 	
-	private final STBTTPackedchar.Buffer cdata;
-
-	private final FontMap texture;
+	private final SequencedMap<Integer, FontRenderData> renderCache;
 	
 	private final STBTTAlignedQuad quad;
 	
-	private final List<Float> sizes;
-	private final Map<Float, Float> scales;
 	
 	/**
 	 * @param resource 
 	 * @param fontSizes 
 	 * 
 	 */
-	public Font(String resource, float...fontSizes) {
+	public Font(String resource, int...fontSizes) {
 		ttf = ResourceUtils.readResourceToBuffer(resource);
-		sizes = new ArrayList<>();
-		scales = new LinkedHashMap<>();
 		
 		fontinfo = STBTTFontinfo.create();
 		if (!stbtt_InitFont(fontinfo, ttf)) {
@@ -63,15 +64,13 @@ public class Font {
 		
 		fontNameInfo = createFontNameInfo();
 		fontMetrics = createFontMetrics();
-		sizes.add(DEFAULT_SIZE);
-		computeScale(DEFAULT_SIZE);
-		for (float size : fontSizes) {
-			sizes.add(size);
-			computeScale(size);
-		}
 		
-		cdata = STBTTPackedchar.malloc(sizes.size() * 96);
-		texture = packFontMap();
+		renderCache = new LinkedHashMap<>();
+		if (fontSizes.length == 0) {
+			fontSizes = new int[] { DEFAULT_SIZE };
+		}
+		addRenderData(fontSizes);
+		
 		quad = STBTTAlignedQuad.malloc();
 	}
 	
@@ -79,8 +78,8 @@ public class Font {
 	 * 
 	 */
 	public void cleanup() {
-		cdata.free();
-		texture.cleanup();
+		renderCache.values().stream().distinct().forEach(FontRenderData::cleanup);
+		renderCache.clear();
 		quad.free();
 	}
 	
@@ -92,9 +91,10 @@ public class Font {
 	 * @param vertexData 
 	 */
 	public void packQuad(int c, FloatBuffer xPos, FloatBuffer yPos, float size, FloatBuffer vertexData) {
-		cdata.position((sizes.contains(size) ? sizes.indexOf(size) : 0) * 96);
+		var renderData = renderCache.getOrDefault((int) size, renderCache.firstEntry().getValue());
+		renderData.cdata.position((renderData.sizes.contains((int) size) ? renderData.sizes.indexOf((int) size) : 0) * 96);
 		
-		stbtt_GetPackedQuad(cdata, BITMAP_WIDTH, BITMAP_HEIGHT, c - 32, xPos, yPos, quad, false);
+		stbtt_GetPackedQuad(renderData.cdata, BITMAP_WIDTH, BITMAP_HEIGHT, c - 32, xPos, yPos, quad, false);
 		
 		vertexData.put(quad.x0()).put(quad.y1()).put(quad.s0()).put(quad.t1());
 		vertexData.put(quad.x1()).put(quad.y0()).put(quad.s1()).put(quad.t0());
@@ -102,6 +102,20 @@ public class Font {
 		vertexData.put(quad.x0()).put(quad.y1()).put(quad.s0()).put(quad.t1());
 		vertexData.put(quad.x1()).put(quad.y1()).put(quad.s1()).put(quad.t1());
 		vertexData.put(quad.x1()).put(quad.y0()).put(quad.s1()).put(quad.t0());
+	}
+	
+	/**
+	 * @param fontSizes
+	 * @return this
+	 */
+	public Font addRenderData(int...fontSizes) {
+		var cdata = STBTTPackedchar.malloc(fontSizes.length * 96);
+		FontMap fontMap = packFontMap(cdata, fontSizes);
+		var fontData = new FontRenderData(Arrays.stream(fontSizes).boxed().toList(), cdata, fontMap);
+		for (int size : fontSizes) {
+			renderCache.put(size, fontData);
+		}
+		return this;
 	}
 	
 	/**
@@ -122,25 +136,43 @@ public class Font {
 	}
 	
 	/**
+	 * @param size 
 	 * @return the texture
 	 */
-	public FontMap getTexture() {
-		return texture;
+	public FontMap getTexture(float size) {
+		return renderCache.getOrDefault((int) size, renderCache.firstEntry().getValue()).texture;
 	}
 	
 	/**
 	 * @return the defaultSize
 	 */
 	public float getDefaultSize() {
-		return sizes.getFirst();
+		return renderCache.firstEntry().getKey();
 	}
 	
-	private float computeScale(float size) {
-		return scales.computeIfAbsent(size, key -> stbtt_ScaleForPixelHeight(fontinfo, key));
+	/**
+	 * @param size
+	 * @return true if the given size is already packed in this {@link Font}.
+	 */
+	public boolean containsSize(int size) {
+		return renderCache.containsKey(size);
+	}
+	
+	/**
+	 * @param sizes
+	 * @return true if all of the given sizes are already packed in this {@link Font}.
+	 */
+	public boolean containsAllSizes(int...sizes) {
+		for (int size : sizes) {
+			if (!containsSize(size)) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	private float getScale(float size) {
-		return scales.getOrDefault(size, computeScale(DEFAULT_SIZE));
+		return stbtt_ScaleForPixelHeight(fontinfo, size);
 	}
 	
 	private String getFontNameString(int nameID) {
@@ -181,17 +213,17 @@ public class Font {
 		}
 	}
 	
-	private FontMap packFontMap() {
+	private FontMap packFontMap(STBTTPackedchar.Buffer cdata, int[] sizes) {
 		ByteBuffer bitmap = MemoryUtil.memAlloc(BITMAP_WIDTH * BITMAP_HEIGHT);
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			STBTTPackContext packContext = STBTTPackContext.malloc(stack);
 			stbtt_PackBegin(packContext, bitmap, BITMAP_WIDTH, BITMAP_HEIGHT, 0, 1, MemoryUtil.NULL);
-			for (int i = 0; i < sizes.size(); i++) {
+			for (int i = 0; i < sizes.length; i++) {
 				int p = i * 96;
 				cdata.limit(p + 96);
 				cdata.position(p);
 				stbtt_PackSetOversampling(packContext, 4, 4);
-				stbtt_PackFontRange(packContext, ttf, 0, sizes.get(i), 32, cdata);
+				stbtt_PackFontRange(packContext, ttf, 0, sizes[i], 32, cdata);
 			}
 			cdata.clear(); // Doesn't actually clear the data, just resets position/mark
 			stbtt_PackEnd(packContext);

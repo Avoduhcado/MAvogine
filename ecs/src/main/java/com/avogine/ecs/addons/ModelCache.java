@@ -4,8 +4,8 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.avogine.ecs.*;
-import com.avogine.render.TextureCache;
 import com.avogine.render.data.Model;
+import com.avogine.render.util.TextureCache;
 import com.avogine.render.util.assimp.StaticModelLoader;
 
 /**

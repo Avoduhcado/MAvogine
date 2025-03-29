@@ -27,7 +27,7 @@ public class NuklearRender {
 	private int displayHeight;
 	
 	/**
-	 * TODO Initialize a singular NkContext for all Nuklear operations, but create a unique NkBuffer for each distinct UI element? ie. Title Menu, in-game Menu 
+	 * 
 	 */
 	public NuklearRender() {
 		projectionMatrix = new Matrix4f();
