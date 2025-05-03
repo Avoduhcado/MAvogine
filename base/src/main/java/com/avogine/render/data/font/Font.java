@@ -12,11 +12,13 @@ import java.util.*;
 import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.render.data.texture.FontMap;
+import com.avogine.render.data.gl.Texture;
+import com.avogine.render.data.image.ImageMemory;
 import com.avogine.util.ResourceUtils;
 
 /**
@@ -29,7 +31,7 @@ public class Font {
 	private static final int BITMAP_WIDTH = 1024;
 	private static final int BITMAP_HEIGHT = 1024;
 	
-	private record FontRenderData(List<Integer> sizes, STBTTPackedchar.Buffer cdata, FontMap texture) {
+	private record FontRenderData(List<Integer> sizes, STBTTPackedchar.Buffer cdata, Texture texture) {
 		public void cleanup() {
 			cdata.free();
 			texture.cleanup();
@@ -47,7 +49,6 @@ public class Font {
 	private final SequencedMap<Integer, FontRenderData> renderCache;
 	
 	private final STBTTAlignedQuad quad;
-	
 	
 	/**
 	 * @param resource 
@@ -110,7 +111,7 @@ public class Font {
 	 */
 	public Font addRenderData(int...fontSizes) {
 		var cdata = STBTTPackedchar.malloc(fontSizes.length * 96);
-		FontMap fontMap = packFontMap(cdata, fontSizes);
+		Texture fontMap = packFontMap(cdata, fontSizes);
 		var fontData = new FontRenderData(Arrays.stream(fontSizes).boxed().toList(), cdata, fontMap);
 		for (int size : fontSizes) {
 			renderCache.put(size, fontData);
@@ -139,7 +140,7 @@ public class Font {
 	 * @param size 
 	 * @return the texture
 	 */
-	public FontMap getTexture(float size) {
+	public Texture getTexture(float size) {
 		return renderCache.getOrDefault((int) size, renderCache.firstEntry().getValue()).texture;
 	}
 	
@@ -213,10 +214,10 @@ public class Font {
 		}
 	}
 	
-	private FontMap packFontMap(STBTTPackedchar.Buffer cdata, int[] sizes) {
-		ByteBuffer bitmap = MemoryUtil.memAlloc(BITMAP_WIDTH * BITMAP_HEIGHT);
+	private Texture packFontMap(STBTTPackedchar.Buffer cdata, int[] sizes) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			STBTTPackContext packContext = STBTTPackContext.malloc(stack);
+			ByteBuffer bitmap = MemoryUtil.memAlloc(BITMAP_WIDTH * BITMAP_HEIGHT);
 			stbtt_PackBegin(packContext, bitmap, BITMAP_WIDTH, BITMAP_HEIGHT, 0, 1, MemoryUtil.NULL);
 			for (int i = 0; i < sizes.length; i++) {
 				int p = i * 96;
@@ -228,9 +229,16 @@ public class Font {
 			cdata.clear(); // Doesn't actually clear the data, just resets position/mark
 			stbtt_PackEnd(packContext);
 			
-			return new FontMap(BITMAP_WIDTH, BITMAP_HEIGHT, bitmap);
-		} finally {
-			MemoryUtil.memFree(bitmap);
+			try (ImageMemory fontPixels = new ImageMemory(BITMAP_WIDTH, BITMAP_HEIGHT, GL11.GL_RED, bitmap);) {
+				return Texture.gen().bind()
+						.texParameteri(GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR)
+						.texParameteri(GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR)
+						.texParameteri(GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT)
+						.texParameteri(GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT)
+						.texImage2D(fontPixels);
+			} finally {
+				Texture.unbind();
+			}
 		}
 	}
 	

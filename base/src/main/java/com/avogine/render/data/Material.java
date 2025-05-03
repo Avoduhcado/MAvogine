@@ -2,7 +2,7 @@ package com.avogine.render.data;
 
 import org.joml.Vector4f;
 
-import com.avogine.render.data.texture.Texture;
+import com.avogine.render.data.gl.Texture;
 
 /**
  *

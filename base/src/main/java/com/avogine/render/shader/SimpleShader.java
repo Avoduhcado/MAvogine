@@ -28,7 +28,7 @@ public class SimpleShader extends ShaderProgram {
 	public final UniformBoolean hasTexture = new UniformBoolean();
 	public final UniformVec3 objectColor = new UniformVec3();
 	public final UniformSampler objectTexture = new UniformSampler();
-
+	
 	/**
 	 * 
 	 */

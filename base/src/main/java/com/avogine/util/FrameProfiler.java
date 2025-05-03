@@ -3,6 +3,7 @@ package com.avogine.util;
 import java.text.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.avogine.logging.AvoLog;
 
@@ -15,11 +16,11 @@ public enum FrameProfiler implements Profilable {
 	 * Profiler to use when tracking game loop processing times.
 	 */
 	DEBUG {
-		private final List<Long> frameNanos = new ArrayList<>();
-		private final List<Long> inputNanos = new ArrayList<>();
-		private final List<Long> updateNanos = new ArrayList<>();
-		private final List<Long> renderNanos = new ArrayList<>();
-		private final List<Long> budgetNanos = new ArrayList<>();
+		private final Queue<Long> frameNanos = new ConcurrentLinkedQueue<>();
+		private final Queue<Long> inputNanos = new ConcurrentLinkedQueue<>();
+		private final Queue<Long> updateNanos = new ConcurrentLinkedQueue<>();
+		private final Queue<Long> renderNanos = new ConcurrentLinkedQueue<>();
+		private final Queue<Long> budgetNanos = new ConcurrentLinkedQueue<>();
 
 		private long frameStart;
 		private long inputStart;
@@ -31,11 +32,11 @@ public enum FrameProfiler implements Profilable {
 		
 		@Override
 		public void startFrame() {
-			if (!profiling) {
-				new Timer("Debug-Profiler-Timer", true).scheduleAtFixedRate(new ProfilerTimerTask(this), Duration.ofSeconds(1).toMillis(), Duration.ofSeconds(1).toMillis());
-				profiling = true;
-			}
 			frameStart = System.nanoTime();
+			if (!profiling) {
+				profiling = true;
+				new Timer("Debug-Profiler-Timer", true).scheduleAtFixedRate(new ProfilerTimerTask(this), Duration.ofSeconds(1).toMillis(), Duration.ofSeconds(1).toMillis());
+			}
 		}
 
 		@Override

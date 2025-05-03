@@ -21,6 +21,7 @@ import com.avogine.logging.AvoLog;
  */
 public class Audio {
 
+	// TODO#52 Create a real BufferCache and a SourceCache that allocates at least 32 or ALC_MONO_SOURCES sources to pull from possibly with the option to allocate "high priority" sources or BGM sources
 	private final List<SoundBuffer> soundBuffers;
 	private final Map<String, SoundSource> soundSourceCache;
 	

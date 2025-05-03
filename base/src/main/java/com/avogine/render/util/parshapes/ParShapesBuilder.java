@@ -1,29 +1,32 @@
 package com.avogine.render.util.parshapes;
 
+import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.util.par.ParShapes.*;
 
-import java.nio.*;
+import java.nio.FloatBuffer;
 
 import org.joml.Vector3f;
 import org.lwjgl.system.*;
 import org.lwjgl.util.par.*;
 
-import com.avogine.render.data.*;
+import com.avogine.render.data.mesh.StaticMesh;
+import com.avogine.render.data.simple.*;
+import com.avogine.render.data.vertices.array.*;
+import com.avogine.render.data.vertices.vertex.*;
 
 /**
- * Helper utility for constructing parametric shapes with the {@link ParShapes} library and converting them into usable {@link Mesh}s.
+ * Helper utility for constructing parametric shapes with the {@link ParShapes} library and converting them into usable {@link StaticMesh}s.
  */
 public class ParShapesBuilder {
 
 	protected ParShapesMesh parMesh;
 	
 	/**
-	 * {@link ParShapes#par_shapes_create_plane(int, int)}
-	 * <p>
 	 * XXX Planes created through ParShapes seem to be created "backwards"? May require calling par_shapes_invert.
 	 * @param slices
 	 * @param stacks
 	 * @return this
+	 * @see ParShapes#par_shapes_create_plane(int, int)
 	 */
 	public ParShapesBuilder createPlane(int slices, int stacks) {
 		parMesh = par_shapes_create_plane(slices, stacks);
@@ -31,10 +34,10 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * {@link ParShapes#par_shapes_create_parametric_sphere(int, int)}
 	 * @param slices
 	 * @param stacks
 	 * @return this
+	 * @see ParShapes#par_shapes_create_parametric_sphere(int, int)
 	 */
 	public ParShapesBuilder createSphere(int slices, int stacks) {
 		parMesh = par_shapes_create_parametric_sphere(slices, stacks);
@@ -42,9 +45,9 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * {@link ParShapes#par_shapes_create_subdivided_sphere(int)}
 	 * @param subdivisions
 	 * @return this
+	 * @see ParShapes#par_shapes_create_subdivided_sphere(int)
 	 */
 	public ParShapesBuilder createSphere(int subdivisions) {
 		parMesh = par_shapes_create_subdivided_sphere(subdivisions);
@@ -52,8 +55,8 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * {@link ParShapes#par_shapes_create_cube()}
 	 * @return this
+	 * @see ParShapes#par_shapes_create_cube()
 	 */
 	public ParShapesBuilder createCube() {
 		parMesh = par_shapes_create_cube();
@@ -61,10 +64,10 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * {@link ParShapes#par_shapes_create_rock(int, int)}
 	 * @param seed 
 	 * @param subdivisions 
 	 * @return this
+	 * @see ParShapes#par_shapes_create_rock(int, int)
 	 */
 	public ParShapesBuilder createRock(int seed, int subdivisions) {
 		parMesh = par_shapes_create_rock(seed, subdivisions);
@@ -72,11 +75,11 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * {@link ParShapes#par_shapes_create_lsystem(CharSequence, int, int, ParShapesRandFnI, long)}
 	 * @param program
 	 * @param slices
 	 * @param maxDepth
 	 * @return this
+	 * @see ParShapes#par_shapes_create_lsystem(CharSequence, int, int, ParShapesRandFnI, long)
 	 */
 	public ParShapesBuilder createLSystem(String program, int slices, int maxDepth) {
 		parMesh = par_shapes_create_lsystem(program, slices, maxDepth, null, 0);
@@ -86,10 +89,9 @@ public class ParShapesBuilder {
 	/**
 	 * Create 2 hemispheres with a cylinder between them.
 	 * <p>
-	 * {@link ParShapes#par_shapes_create_hemisphere(int, int)}
-	 * </br>
-	 * {@link ParShapes#par_shapes_create_cylinder(int, int)}
 	 * @return this
+	 * @see ParShapes#par_shapes_create_hemisphere(int, int)
+	 * @see ParShapes#par_shapes_create_cylinder(int, int)
 	 */
 	public ParShapesBuilder createCapsule() {
 		parMesh = par_shapes_create_empty();
@@ -112,11 +114,11 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * {@link ParShapes#par_shapes_translate(ParShapesMesh, float, float, float)}
 	 * @param x
 	 * @param y
 	 * @param z
 	 * @return this
+	 * @see ParShapes#par_shapes_translate(ParShapesMesh, float, float, float)
 	 */
 	public ParShapesBuilder translate(float x, float y, float z) {
 		par_shapes_translate(parMesh, x, y, z);
@@ -126,15 +128,15 @@ public class ParShapesBuilder {
 	/**
 	 * Rotate the mesh around a given axis.
 	 * <p>
-	 * {@link ParShapes#par_shapes_rotate(ParShapesMesh, float, float[])}
 	 * <p>
-	 * Use this to bake a rotation into the resulting {@link Mesh}. A particular use case would be for 2D
+	 * Use this to bake a rotation into the resulting {@link StaticMesh}. A particular use case would be for 2D
 	 * elements being painted onto a plane as planes generated from ParShapes seem to have UV coordinates starting in the bottom left
 	 * whereas a typical 2D orthographic projection matrix will likely have 0,0 position in the top left. So simply rotating 180 degrees
 	 * around the X axis should result in a properly oriented plane.
 	 * @param radians the amount to rotate in radians
 	 * @param axis the axis to rotate around
 	 * @return this
+	 * @see ParShapes#par_shapes_rotate(ParShapesMesh, float, float[])
 	 */
 	public ParShapesBuilder rotate(float radians, float[] axis) {
 		par_shapes_rotate(parMesh, radians, axis);
@@ -142,13 +144,13 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * {@link ParShapes#par_shapes_scale(ParShapesMesh, float, float, float)}
 	 * <p>
 	 * Applies scaling from the origin. Apply a half-offset translation before and after to scale from center.
 	 * @param x
 	 * @param y
 	 * @param z
 	 * @return this
+	 * @see ParShapes#par_shapes_scale(ParShapesMesh, float, float, float)
 	 */
 	public ParShapesBuilder scale(float x, float y, float z) {
 		par_shapes_scale(parMesh, x, y, z);
@@ -156,11 +158,11 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * {@link ParShapes#par_shapes_compute_normals(ParShapesMesh)}
 	 * <p>
 	 * <b>XXX</b> Don't call this on cylinders, potentially others.
 	 * @see <a href="https://github.com/prideout/par/issues/30">parshapes issue</a>
 	 * @return this
+	 * @see ParShapes#par_shapes_compute_normals(ParShapesMesh)
 	 */
 	public ParShapesBuilder computeNormals() {
 		par_shapes_compute_normals(parMesh);
@@ -169,30 +171,63 @@ public class ParShapesBuilder {
 	}
 	
 	/**
-	 * Construct a new {@link Mesh} from the internal {@code parMesh} with all transformations applied.
-	 * @return a new {@code Mesh}
+	 * Construct a new {@link SimpleMesh} from the internal {@code parMesh} with all transformations applied.
+	 * @return a new {@code SimpleMesh}
 	 */
-	public Mesh build() {
-		FloatBuffer vertices = MemoryUtil.memAllocFloat(parMesh.npoints() * 3);
-		FloatBuffer normals = MemoryUtil.memCallocFloat(parMesh.npoints() * 3);
-		FloatBuffer textureCoordinates = MemoryUtil.memCallocFloat(parMesh.npoints() * 2);
-		IntBuffer indices = MemoryUtil.memAllocInt(parMesh.ntriangles() * 3);
-		try (
-				var vertexData = new VertexData(
-						vertices.put(parMesh.points(parMesh.npoints() * 3)).flip(),
-						(!parMesh.isNull(ParShapesMesh.NORMALS) ? normals.put(parMesh.normals(parMesh.npoints() * 3)).flip() : normals),
-						MemoryUtil.memCallocFloat(parMesh.npoints() * 3),
-						MemoryUtil.memCallocFloat(parMesh.npoints() * 3),
-						(!parMesh.isNull(ParShapesMesh.TCOORDS) ? textureCoordinates.put(parMesh.tcoords(parMesh.npoints() * 2)).flip() : textureCoordinates),
-						indices.put(parMesh.triangles(parMesh.ntriangles() * 3)).flip());
-				MemoryStack stack = MemoryStack.stackPush();
-				) {
+	public SimpleMesh build() {
+		int vertexCount = parMesh.npoints();
+		int vert3 = vertexCount * 3;
+		int vert2 = vertexCount * 2;
+		
+		try (var position = new PositionVertex(memAllocFloat(vert3).put(parMesh.points(vert3)).flip());
+				var shading = new ShadingVertex(
+						(!parMesh.isNull(ParShapesMesh.NORMALS) ? memAllocFloat(vert3).put(parMesh.normals(vert3)).flip() : memCallocFloat(vert3)),
+						memCallocFloat(vert3),
+						memCallocFloat(vert3)
+						);
+				var textureCoordinate = new TextureCoordinateVertex((!parMesh.isNull(ParShapesMesh.TCOORDS) ? memAllocFloat(vert2).put(parMesh.tcoords(vert2)).flip() : memCallocFloat(vert2)));
+				var element = new ElementVertex(memAllocInt(parMesh.ntriangles() * 3).put(parMesh.triangles(parMesh.ntriangles() * 3)).flip());
+				MemoryStack stack = MemoryStack.stackPush();) {
+			var vertexData = new SimpleVertexArray(position, shading, textureCoordinate, element);
+
 			FloatBuffer aabb = stack.mallocFloat(6);
 			par_shapes_compute_aabb(parMesh, aabb);
-			Vector3f aabbMin = new Vector3f(aabb.get(), aabb.get(), aabb.get());
-			Vector3f aabbMax = new Vector3f(aabb.get(), aabb.get(), aabb.get());
+			var aabbMin = new Vector3f(aabb.get(), aabb.get(), aabb.get());
+			var aabbMax = new Vector3f(aabb.get(), aabb.get(), aabb.get());
 
-			return new Mesh(vertexData, 0, aabbMin, aabbMax);
+			return new SimpleMesh(vertexData, 0, aabbMin, aabbMax);
+		} finally {
+			par_shapes_free_mesh(parMesh);
+		}
+	}
+	
+	/**
+	 * Construct a new {@link SimpleInstanceMesh} from the internal {@code parMesh} with all transformations applied.
+	 * @param instanceCount the total number of instances to allocate.
+	 * @return a new {@code SimpleInstanceMesh}
+	 */
+	public SimpleInstanceMesh build(int instanceCount) {
+		int vertexCount = parMesh.npoints();
+		int vert3 = vertexCount * 3;
+		int vert2 = vertexCount * 2;
+		try (var position = new PositionVertex(memAllocFloat(vert3).put(parMesh.points(vert3)).flip());
+				var shading = new ShadingVertex(
+						(!parMesh.isNull(ParShapesMesh.NORMALS) ? memAllocFloat(vert3).put(parMesh.normals(vert3)).flip() : memCallocFloat(vert3)),
+						memCallocFloat(vert3),
+						memCallocFloat(vert3)
+						);
+				var textureCoordinate = new TextureCoordinateVertex((!parMesh.isNull(ParShapesMesh.TCOORDS) ? memAllocFloat(vert2).put(parMesh.tcoords(vert2)).flip() : memCallocFloat(vert2)));
+				var element = new ElementVertex(memAllocInt(parMesh.ntriangles() * 3).put(parMesh.triangles(parMesh.ntriangles() * 3)).flip());
+				var instanceTransform = new InstanceTransformVertex(MemoryUtil.memAllocFloat(instanceCount * 16), MemoryUtil.memAllocFloat(instanceCount * 16));
+				MemoryStack stack = MemoryStack.stackPush();) {
+			var vertexData = new SimpleInstanceVertexArray(new SimpleVertexArray(position, shading, textureCoordinate, element), instanceTransform);
+			
+			FloatBuffer aabb = stack.mallocFloat(6);
+			par_shapes_compute_aabb(parMesh, aabb);
+			var aabbMin = new Vector3f(aabb.get(), aabb.get(), aabb.get());
+			var aabbMax = new Vector3f(aabb.get(), aabb.get(), aabb.get());
+			
+			return new SimpleInstanceMesh(vertexData, 0, aabbMax, aabbMin, instanceCount);
 		} finally {
 			par_shapes_free_mesh(parMesh);
 		}

@@ -14,6 +14,7 @@ import com.avogine.ecs.components.*;
 import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
+import com.avogine.render.data.mesh.StaticMesh;
 import com.avogine.render.shader.BasicShader;
 
 /**
@@ -55,9 +56,7 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 		var modelCache = scene.getEntityManager().getAddon(ModelCache.class)
 				.orElseGet(ModelCache.registerModelCache(scene.getEntityManager()));
 		
-		scene.getEntityManager().query(Renderable.class).forEach(renderable -> {
-			renderEntity(renderable, modelCache);
-		});
+		scene.getEntityManager().query(Renderable.class).forEach(renderable -> renderEntity(renderable, modelCache));
 		
 		basicShader.unbind();
 	}
@@ -69,6 +68,8 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 			material.getDiffuseTexture().bind();
 			
 			realModel.getMeshes().stream()
+			.filter(StaticMesh.class::isInstance)
+			.map(StaticMesh.class::cast)
 			.filter(mesh -> mesh.getMaterialIndex() == realModel.getMaterials().indexOf(material))
 			.forEach(mesh -> {
 				glBindVertexArray(mesh.getVaoId());
@@ -79,7 +80,7 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 						entity.transform.scale().x, entity.transform.scale().y, entity.transform.scale().z);
 				basicShader.model.loadMatrix(model);
 				
-				glDrawElements(GL_TRIANGLES, mesh.getNumVertices(), GL_UNSIGNED_INT, 0);
+				glDrawElements(GL_TRIANGLES, mesh.getVertexCount(), GL_UNSIGNED_INT, 0);
 			});
 		});
 		
