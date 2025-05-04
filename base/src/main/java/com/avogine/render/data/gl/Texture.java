@@ -1,8 +1,9 @@
 package com.avogine.render.data.gl;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.*;
 
-import java.nio.ByteBuffer;
+import java.nio.*;
 
 import org.lwjgl.opengl.*;
 
@@ -70,6 +71,76 @@ public record Texture(int id, int target) {
 	}
 	
 	/**
+	 * @return this
+	 */
+	public Texture filterLinear() {
+		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		return this;
+	}
+	
+	/**
+	 * @return this
+	 */
+	public Texture filterNearest() {
+		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		return this;
+	}
+	
+	/**
+	 * @return this
+	 */
+	public Texture wrap2DRepeat() {
+		glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		return this;
+	}
+	
+	/**
+	 * @return this
+	 */
+	public Texture wrap3DClampEdge() {
+		glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		return this;
+	}
+	
+	/**
+	 * @param target
+	 * @param internalFormat
+	 * @param width
+	 * @param height
+	 * @param format
+	 * @param type
+	 * @param pixels
+	 * @return
+	 */
+	public Texture texImage2DTarget(int target, int internalFormat, int width, int height, int format, int type, Buffer pixels) {
+		switch (pixels) {
+			case ByteBuffer b -> glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, b);
+			case IntBuffer i -> glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, i);
+			case null -> glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, (ByteBuffer) null);
+			default -> throw new IllegalArgumentException("Buffer type not implemented for: " + pixels.getClass());
+		}
+		return this;
+	}
+	
+	/**
+	 * @param internalFormat
+	 * @param width
+	 * @param height
+	 * @param format
+	 * @param type
+	 * @param pixels
+	 * @return
+	 */
+	public Texture texImage2D(int internalFormat, int width, int height, int format, int type, Buffer pixels) {
+		return texImage2DTarget(target, internalFormat, width, height, format, type, pixels);
+	}
+
+	/**
 	 * @param target
 	 * @param internalFormat
 	 * @param width
@@ -78,7 +149,7 @@ public record Texture(int id, int target) {
 	 * @param pixels
 	 * @return this
 	 */
-	public Texture texImage2D(int target, int internalFormat, int width, int height, int format, ByteBuffer pixels) {
+	public Texture texImage2DTarget(int target, int internalFormat, int width, int height, int format, ByteBuffer pixels) {
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
 		return this;
 	}
@@ -92,7 +163,7 @@ public record Texture(int id, int target) {
 	 * @return this
 	 */
 	public Texture texImage2D(int internalFormat, int width, int height, int format, ByteBuffer pixels) {
-		return texImage2D(target, internalFormat, width, height, format, pixels);
+		return texImage2DTarget(target, internalFormat, width, height, format, pixels);
 	}
 	
 	/**
@@ -100,8 +171,8 @@ public record Texture(int id, int target) {
 	 * @param image2D
 	 * @return this
 	 */
-	public Texture texImage2D(int target, Image2D image2D) {
-		return texImage2D(target, image2D.internalFormat(), image2D.width(), image2D.height(), image2D.format(), image2D.pixels());
+	public Texture texImage2DTarget(int target, Image2D image2D) {
+		return texImage2DTarget(target, image2D.internalFormat(), image2D.width(), image2D.height(), image2D.format(), image2D.pixels());
 	}
 	
 	/**
@@ -109,7 +180,7 @@ public record Texture(int id, int target) {
 	 * @return this
 	 */
 	public Texture texImage2D(Image2D image2D) {
-		return texImage2D(target, image2D);
+		return texImage2DTarget(target, image2D);
 	}
 	
 	/**

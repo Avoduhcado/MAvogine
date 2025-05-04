@@ -15,6 +15,8 @@ import java.util.Objects;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
+import com.avogine.render.data.gl.Texture;
+
 /**
  *
  */
@@ -87,19 +89,17 @@ public class NuklearMesh {
 
 	private void setupTexture() {
 		// null texture setup
-		int nullTexID = glGenTextures();
-
-		nullTexture.texture().id(nullTexID);
-		nullTexture.uv().set(0.5f, 0.5f);
-
-		glBindTexture(GL_TEXTURE_2D, nullTexID);
 		try (MemoryStack stack = stackPush()) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF));
-		}
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			int nullTexID = Texture.gen().bind()
+					.filterNearest()
+					.texImage2D(GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF))
+					.id();
 
-		glBindTexture(GL_TEXTURE_2D, 0);
+			nullTexture.texture().id(nullTexID);
+			nullTexture.uv().set(0.5f, 0.5f);
+		} finally {
+			Texture.unbind();
+		}
 	}
 	
 	/**

@@ -231,10 +231,8 @@ public class Font {
 			
 			try (ImageMemory fontPixels = new ImageMemory(BITMAP_WIDTH, BITMAP_HEIGHT, GL11.GL_RED, bitmap);) {
 				return Texture.gen().bind()
-						.texParameteri(GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR)
-						.texParameteri(GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR)
-						.texParameteri(GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT)
-						.texParameteri(GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT)
+						.filterLinear()
+						.wrap2DRepeat()
 						.texImage2D(fontPixels);
 			} finally {
 				Texture.unbind();

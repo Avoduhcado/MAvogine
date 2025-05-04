@@ -1,7 +1,6 @@
 package com.avogine.render.util;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
 
 import java.nio.ByteBuffer;
@@ -39,10 +38,8 @@ public class TextureBuilder {
 			pixels.flip();
 			
 			return Texture.gen().bind()
-					.texParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-					.texParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-					.texParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT)
-					.texParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT)
+					.filterLinear()
+					.wrap2DRepeat()
 					.texImage2D(GL_RGBA8, width, height, GL_RGBA, pixels);
 		} finally {
 			Texture.unbind();
@@ -56,10 +53,8 @@ public class TextureBuilder {
 	public static Texture buildTexture(String texturePath) {
 		try (ImageSTB imageData = ImageLoader.loadImageSTB(texturePath);) {
 			return Texture.gen().bind()
-					.texParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-					.texParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-					.texParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT)
-					.texParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT)
+					.filterLinear()
+					.wrap2DRepeat()
 					.texImage2D(imageData)
 					.generateMipmap()
 					.anisotropicFiltering();
@@ -85,17 +80,14 @@ public class TextureBuilder {
 				ImageSTB posZImageData = ImageLoader.loadImageSTB(posZImagePath);
 				ImageSTB negZImageData = ImageLoader.loadImageSTB(negZImagePath);) {
 			return Texture.gen(GL_TEXTURE_CUBE_MAP).bind()
-					.texParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-					.texParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-					.texParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-					.texParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-					.texParameteri(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
-					.texImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, posXImageData)
-					.texImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, negXImageData)
-					.texImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, posYImageData)
-					.texImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, negYImageData)
-					.texImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, posZImageData)
-					.texImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, negZImageData);
+					.filterLinear()
+					.wrap3DClampEdge()
+					.texImage2DTarget(GL_TEXTURE_CUBE_MAP_POSITIVE_X, posXImageData)
+					.texImage2DTarget(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, negXImageData)
+					.texImage2DTarget(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, posYImageData)
+					.texImage2DTarget(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, negYImageData)
+					.texImage2DTarget(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, posZImageData)
+					.texImage2DTarget(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, negZImageData);
 		} finally {
 			Texture.unbind(GL_TEXTURE_CUBE_MAP);
 		}
