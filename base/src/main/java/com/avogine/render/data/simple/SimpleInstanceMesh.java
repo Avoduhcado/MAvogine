@@ -12,13 +12,12 @@ public class SimpleInstanceMesh extends StaticInstanceMesh<SimpleInstanceVertexA
 	
 	/**
 	 * @param vertexData
-	 * @param materialIndex
 	 * @param aabbMax
 	 * @param aabbMin
 	 * @param maxInstances
 	 */
-	public SimpleInstanceMesh(SimpleInstanceVertexArray vertexData, int materialIndex, Vector3f aabbMax, Vector3f aabbMin, int maxInstances) {
-		super(vertexData, materialIndex, aabbMax, aabbMin, maxInstances);
+	public SimpleInstanceMesh(SimpleInstanceVertexArray vertexData, Vector3f aabbMax, Vector3f aabbMin, int maxInstances) {
+		super(vertexData, aabbMax, aabbMin, maxInstances);
 	}
 
 }

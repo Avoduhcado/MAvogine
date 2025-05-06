@@ -19,13 +19,12 @@ public class StaticInstanceMesh<T extends IndexedVertexArray> extends StaticMesh
 	
 	/**
 	 * @param vertexData 
-	 * @param materialIndex 
 	 * @param aabbMax 
 	 * @param aabbMin 
 	 * @param maxInstances 
 	 */
-	public StaticInstanceMesh(T vertexData, int materialIndex, Vector3f aabbMax, Vector3f aabbMin, int maxInstances) {
-		super(vertexData, materialIndex, aabbMax, aabbMin);
+	public StaticInstanceMesh(T vertexData, Vector3f aabbMax, Vector3f aabbMin, int maxInstances) {
+		super(vertexData, aabbMax, aabbMin);
 		this.maxInstances = maxInstances;
 	}
 	

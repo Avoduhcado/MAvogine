@@ -4,7 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 import org.joml.Vector3f;
 
-import com.avogine.render.data.mesh.parameters.*;
+import com.avogine.render.data.mesh.parameters.Bound3D;
 import com.avogine.render.data.model.StaticModel;
 import com.avogine.render.data.vertices.array.IndexedVertexArray;
 
@@ -14,22 +14,18 @@ import com.avogine.render.data.vertices.array.IndexedVertexArray;
  * TODO#39 <a href="https://github.com/Avoduhcado/MAvogine/issues/39">Animated models #39</a>
  * @param <T> 
  */
-public class StaticMesh<T extends IndexedVertexArray> extends Mesh<T> implements Materialable, Bound3D {
-	
-	protected int materialIndex;
+public class StaticMesh<T extends IndexedVertexArray> extends Mesh<T> implements Bound3D {
 	
 	protected Vector3f aabbMax;
 	protected Vector3f aabbMin;
 	
 	/**
 	 * @param vertexData
-	 * @param materialIndex 
 	 * @param aabbMin 
 	 * @param aabbMax 
 	 */
-	public StaticMesh(T vertexData, int materialIndex, Vector3f aabbMin, Vector3f aabbMax) {
+	public StaticMesh(T vertexData, Vector3f aabbMin, Vector3f aabbMax) {
 		super(vertexData.vertexCount(), vertexData);
-		this.materialIndex = materialIndex;
 		
 		this.aabbMin = aabbMin;
 		this.aabbMax = aabbMax;
@@ -40,11 +36,6 @@ public class StaticMesh<T extends IndexedVertexArray> extends Mesh<T> implements
 		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
 	}
 
-	@Override
-	public int getMaterialIndex() {
-		return materialIndex;
-	}
-	
 	@Override
 	public Vector3f getAabbMax() {
 		return aabbMax;

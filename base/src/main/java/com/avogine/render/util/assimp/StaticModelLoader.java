@@ -98,17 +98,17 @@ public class StaticModelLoader {
 
 		int numMaterials = aiScene.mNumMaterials();
 		PointerBuffer materialsBuffer = aiScene.mMaterials();
-		List<Material> materials = new ArrayList<>();
+		SequencedMap<Material, List<SimpleMesh>> materialMeshMap = new LinkedHashMap<>();
 		for (int i = 0; i < numMaterials; ++i) {
 			AIMaterial aiMaterial = AIMaterial.create(materialsBuffer.get(i));
-			materials.add(processMaterial(aiMaterial, modelDirectory, textureCache));
+			materialMeshMap.putLast(processMaterial(aiMaterial, modelDirectory, textureCache), new ArrayList<>());
 		}
 
-		var meshes = processNode(aiScene.mRootNode(), aiScene);
+		processNode(aiScene.mRootNode(), aiScene, materialMeshMap);
 
 		Assimp.aiReleaseImport(aiScene);
 		
-		return new SimpleModel(id, meshes, materials);
+		return new SimpleModel(id, materialMeshMap);
 	}
 
 	/**
@@ -159,22 +159,30 @@ public class StaticModelLoader {
 		}
 	}
 	
-	protected static List<SimpleMesh> processNode(AINode node, AIScene scene) {
+	protected static void processNode(AINode node, AIScene scene, SequencedMap<Material, List<SimpleMesh>> materialMeshMap) {
 		PointerBuffer meshesBuffer = scene.mMeshes();
 		IntBuffer nodeMeshesBuffer = node.mMeshes();
-		List<SimpleMesh> meshes = new ArrayList<>();
 		// process all the node's meshes (if any)
 		for (int i = 0; i < node.mNumMeshes(); i++) {
-			AIMesh mesh = AIMesh.create(meshesBuffer.get(nodeMeshesBuffer.get(i)));
-			meshes.add(processMesh(mesh));
+			AIMesh aiMesh = AIMesh.create(meshesBuffer.get(nodeMeshesBuffer.get(i)));
+			SimpleMesh mesh = processMesh(aiMesh);
+			int materialIndex = aiMesh.mMaterialIndex();
+			if (materialIndex >= 0 && materialIndex < materialMeshMap.size()) {
+				materialMeshMap.sequencedValues().stream()
+				.skip(materialIndex)
+				.findFirst()
+				.ifPresent(meshList -> meshList.add(mesh));
+			} else {
+				// TODO#41 Adding the default material here may screw up the above index check? processNode may need to return Pairs of meshes and material indices
+				materialMeshMap.computeIfAbsent(new Material(), k -> new ArrayList<>()).add(mesh);
+			}
 		}
 		
 		PointerBuffer nodeChildrenBuffer = node.mChildren();
 		// then do the same for each of its children
 		for (int i = 0; i < node.mNumChildren(); i++) {
-			meshes.addAll(processNode(AINode.create(nodeChildrenBuffer.get(i)), scene));
+			processNode(AINode.create(nodeChildrenBuffer.get(i)), scene, materialMeshMap);
 		}
-		return meshes;
 	}
 	
 	protected static SimpleMesh processMesh(AIMesh aiMesh) {
@@ -184,12 +192,11 @@ public class StaticModelLoader {
 				var element = new ElementVertex(processIndices(aiMesh));) {
 			var vertexData = new SimpleVertexArray(position, shading, textureCoordinate, element);
 
-			int materialIndex = aiMesh.mMaterialIndex();
 			AIAABB aabb = aiMesh.mAABB();
 			Vector3f aabbMin = new Vector3f(aabb.mMin().x(), aabb.mMin().y(), aabb.mMin().z());
 			Vector3f aabbMax = new Vector3f(aabb.mMax().x(), aabb.mMax().y(), aabb.mMax().z());
 
-			return new SimpleMesh(vertexData, materialIndex, aabbMin, aabbMax);
+			return new SimpleMesh(vertexData, aabbMin, aabbMax);
 		}
 	}
 	

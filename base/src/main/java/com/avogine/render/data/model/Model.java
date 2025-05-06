@@ -12,19 +12,16 @@ import com.avogine.render.data.vertices.VertexArrayData;
 public class Model<T extends Mesh<? extends VertexArrayData>> {
 
 	protected final String id;
-	protected final List<T> meshes;
-	protected final List<Material> materials;
+	protected final Map<Material, List<T>> materialMeshMap;
 	
 
 	/**
 	 * @param id 
-	 * @param meshes 
-	 * @param materials 
+	 * @param materialMeshMap 
 	 */
-	public Model(String id, List<T> meshes, List<Material> materials) {
+	public Model(String id, Map<Material, List<T>> materialMeshMap) {
 		this.id = id;
-		this.meshes = meshes;
-		this.materials = materials;
+		this.materialMeshMap = materialMeshMap;
 	}
 	
 	/**
@@ -33,30 +30,14 @@ public class Model<T extends Mesh<? extends VertexArrayData>> {
 	 * @param material
 	 */
 	public Model(String id, T mesh, Material material) {
-		this(id, List.of(mesh), List.of(material));
-	}
-	
-	/**
-	 * @param id
-	 * @param meshes
-	 */
-	public Model(String id, List<T> meshes) {
-		this(id, meshes, new ArrayList<>());
-	}
-	
-	/**
-	 * @param id
-	 * @param mesh
-	 */
-	public Model(String id, T mesh) {
-		this(id, List.of(mesh));
+		this(id, Map.of(material, List.of(mesh)));
 	}
 	
 	/**
 	 * Free all of the meshes contained in this model.
 	 */
 	public void cleanup() {
-		meshes.forEach(Mesh::cleanup);
+		materialMeshMap.values().forEach(meshList -> meshList.forEach(Mesh::cleanup));
 	}
 
 	/**
@@ -67,16 +48,26 @@ public class Model<T extends Mesh<? extends VertexArrayData>> {
 	}
 	
 	/**
+	 * @return the materialMeshMap
+	 */
+	public Map<Material, List<T>> getMaterialMeshMap() {
+		return materialMeshMap;
+	}
+	
+	/**
 	 * @return the meshes
 	 */
 	public List<T> getMeshes() {
-		return meshes;
+		return materialMeshMap.values().stream()
+				.flatMap(List::stream)
+				.distinct()
+				.toList();
 	}
 	
 	/**
 	 * @return the materials
 	 */
 	public List<Material> getMaterials() {
-		return materials;
+		return materialMeshMap.keySet().stream().toList();
 	}
 }

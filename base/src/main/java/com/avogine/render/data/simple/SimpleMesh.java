@@ -11,19 +11,17 @@ import com.avogine.render.data.vertices.array.SimpleVertexArray;
 public class SimpleMesh extends StaticMesh<SimpleVertexArray> {
 	/**
 	 * @param vertexData
-	 * @param materialIndex 
 	 * @param aabbMin 
 	 * @param aabbMax 
 	 */
-	public SimpleMesh(SimpleVertexArray vertexData, int materialIndex, Vector3f aabbMin, Vector3f aabbMax) {
-		super(vertexData, materialIndex, aabbMin, aabbMax);
+	public SimpleMesh(SimpleVertexArray vertexData, Vector3f aabbMin, Vector3f aabbMax) {
+		super(vertexData, aabbMin, aabbMax);
 	}
 
 	/**
 	 * @param vertexData 
-	 * @param materialIndex 
 	 */
-	public SimpleMesh(SimpleVertexArray vertexData, int materialIndex) {
-		this(vertexData, materialIndex, new Vector3f(), new Vector3f());
+	public SimpleMesh(SimpleVertexArray vertexData) {
+		this(vertexData, new Vector3f(), new Vector3f());
 	}
 }

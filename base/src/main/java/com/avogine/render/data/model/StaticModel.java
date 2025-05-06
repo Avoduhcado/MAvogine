@@ -1,8 +1,8 @@
 package com.avogine.render.data.model;
 
-import java.util.List;
+import java.util.*;
 
-import com.avogine.render.data.*;
+import com.avogine.render.data.Material;
 import com.avogine.render.data.mesh.StaticMesh;
 import com.avogine.render.data.vertices.array.IndexedVertexArray;
 
@@ -14,11 +14,10 @@ public class StaticModel<T extends StaticMesh<? extends IndexedVertexArray>> ext
 	
 	/**
 	 * @param id 
-	 * @param meshes
-	 * @param materials 
+	 * @param materialMeshMap 
 	 */
-	public StaticModel(String id, List<T> meshes, List<Material> materials) {
-		super(id, meshes, materials);
+	public StaticModel(String id, Map<Material, List<T>> materialMeshMap) {
+		super(id, materialMeshMap);
 	}
 	
 	/**

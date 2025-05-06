@@ -1,6 +1,6 @@
 package com.avogine.render.data.simple;
 
-import java.util.List;
+import java.util.*;
 
 import com.avogine.render.data.Material;
 import com.avogine.render.data.model.StaticModel;
@@ -12,11 +12,10 @@ public class SimpleInstanceModel extends StaticModel<SimpleInstanceMesh> {
 
 	/**
 	 * @param id
-	 * @param meshes
-	 * @param materials
+	 * @param materialMeshMap 
 	 */
-	public SimpleInstanceModel(String id, List<SimpleInstanceMesh> meshes, List<Material> materials) {
-		super(id, meshes, materials);
+	public SimpleInstanceModel(String id, Map<Material, List<SimpleInstanceMesh>> materialMeshMap) {
+		super(id, materialMeshMap);
 	}
 	
 	/**

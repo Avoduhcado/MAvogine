@@ -195,7 +195,7 @@ public class ParShapesBuilder {
 			var aabbMin = new Vector3f(aabb.get(), aabb.get(), aabb.get());
 			var aabbMax = new Vector3f(aabb.get(), aabb.get(), aabb.get());
 
-			return new SimpleMesh(vertexData, 0, aabbMin, aabbMax);
+			return new SimpleMesh(vertexData, aabbMin, aabbMax);
 		} finally {
 			par_shapes_free_mesh(parMesh);
 		}
@@ -227,7 +227,7 @@ public class ParShapesBuilder {
 			var aabbMin = new Vector3f(aabb.get(), aabb.get(), aabb.get());
 			var aabbMax = new Vector3f(aabb.get(), aabb.get(), aabb.get());
 			
-			return new SimpleInstanceMesh(vertexData, 0, aabbMax, aabbMin, instanceCount);
+			return new SimpleInstanceMesh(vertexData, aabbMax, aabbMin, instanceCount);
 		} finally {
 			par_shapes_free_mesh(parMesh);
 		}
