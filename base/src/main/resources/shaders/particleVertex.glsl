@@ -6,8 +6,8 @@ layout (location=2) in vec4 color;
 
 uniform mat4 projection;
 uniform mat4 view;
-uniform vec3 cameraRight_worldspace;
-uniform vec3 cameraUp_worldspace;
+uniform vec3 cameraRightWorldspace;
+uniform vec3 cameraUpWorldspace;
 
 out vec2 UV;
 out vec4 vertColor;
@@ -18,8 +18,8 @@ void main() {
 	
 	vec3 vertexPosition_worldspace =
 		particleCenter_worldspace
-		+ cameraRight_worldspace * vertex.x * particleSize
-		+ cameraUp_worldspace * vertex.y * particleSize;
+		+ cameraRightWorldspace * vertex.x * particleSize
+		+ cameraUpWorldspace * vertex.y * particleSize;
 	
 	gl_Position = projection * view * vec4(vertexPosition_worldspace, 1.0);
 	

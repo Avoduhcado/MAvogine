@@ -13,7 +13,6 @@ import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
 import com.avogine.render.data.gl.VAO;
-import com.avogine.render.data.mesh.StaticMesh;
 import com.avogine.render.shader.BasicShader;
 
 /**
@@ -61,14 +60,12 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	}
 	
 	private void renderEntity(Renderable entity, ModelCache modelCache) {
-		var realModel = modelCache.getModel(entity.modelComponent.model(), "");
+		var realModel = modelCache.getStaticModel(entity.modelComponent.model(), "");
 		realModel.getMaterialMeshMap().forEach((material, meshList) -> {
 			glActiveTexture(GL_TEXTURE0);
 			material.getDiffuseTexture().bind();
 			
 			meshList.stream()
-			.filter(StaticMesh.class::isInstance)
-			.map(StaticMesh.class::cast)
 			.forEach(mesh -> {
 				mesh.getVao().bind();
 				

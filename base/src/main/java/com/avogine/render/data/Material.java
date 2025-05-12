@@ -7,7 +7,7 @@ import org.joml.Vector4f;
 import com.avogine.render.data.gl.Texture;
 
 /**
- * TODO Replace Texture members with String and reference via TextureCache
+ * TODO#41 Replace Texture members with String and reference via TextureCache
  */
 public class Material {
 

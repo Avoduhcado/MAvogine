@@ -4,16 +4,19 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.avogine.ecs.*;
+import com.avogine.render.data.mesh.Mesh;
 import com.avogine.render.data.model.Model;
+import com.avogine.render.data.simple.SimpleModel;
+import com.avogine.render.data.vertices.array.IndexedVertexArray;
 import com.avogine.render.util.TextureCache;
 import com.avogine.render.util.assimp.StaticModelLoader;
 
 /**
- * TODO Should this be a singleton? Could be possible to support multiple model caches, but I'm not sure why.
+ * 
  */
 public class ModelCache implements EntitySystemAddon {
 
-	private final Map<String, Model<?>> modelMap;
+	private final Map<String, Model<? extends Mesh<? extends IndexedVertexArray>>> modelMap;
 	private final TextureCache textureCache;
 	
 	/**
@@ -33,15 +36,15 @@ public class ModelCache implements EntitySystemAddon {
 	}
 	
 	/**
-	 * TODO This could be converted to return some sort of Optional or CompletableFuture in the case that the model does not exist already so that it's then up to the
+	 * XXX This could be converted to return some sort of Optional or CompletableFuture in the case that the model does not exist already so that it's then up to the
 	 * caller if they would like to go along with immediately loading the model, or in the case that this is being called from render code where we may not want to start
 	 * doing file IO it could defer the rendering and allow the loading to happen in the background.
 	 * @param modelFile
 	 * @param texturePath 
 	 * @return
 	 */
-	public Model<?> getModel(String modelFile, String texturePath) {
-		return modelMap.computeIfAbsent(modelFile, v -> StaticModelLoader.loadModel(modelFile, texturePath, textureCache));
+	public SimpleModel getStaticModel(String modelFile, String texturePath) {
+		return (SimpleModel) modelMap.computeIfAbsent(modelFile, v -> StaticModelLoader.loadModel(modelFile, texturePath, textureCache));
 	}
 	
 	/**
@@ -49,8 +52,8 @@ public class ModelCache implements EntitySystemAddon {
 	 * @param model
 	 * @return
 	 */
-	public Model<?> putModel(String modelName, Model<?> model) {
-		return modelMap.put(modelName, model);
+	public void putModel(String modelName, Model<? extends Mesh<? extends IndexedVertexArray>> model) {
+		modelMap.put(modelName, model);
 	}
 
 	/**
