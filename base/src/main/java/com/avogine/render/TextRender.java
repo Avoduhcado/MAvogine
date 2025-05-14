@@ -2,9 +2,7 @@ package com.avogine.render;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
 
 import java.nio.FloatBuffer;
 
@@ -13,6 +11,7 @@ import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.data.font.Font;
+import com.avogine.render.data.gl.*;
 import com.avogine.render.shader.FontShader;
 import com.avogine.render.util.FontCache;
 import com.avogine.util.resource.ResourceConstants;
@@ -37,8 +36,7 @@ public class TextRender {
 	
 	private boolean retainResolution;
 	
-	private int textVao;
-	private int textVbo;
+	private VAO textVao;
 	
 	private Font defaultFont;
 
@@ -65,22 +63,27 @@ public class TextRender {
 		
 		int textBufferCapacity = TEXT_LENGTH_LIMIT * 4 * 6;
 		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
-		
-		textVao = glGenVertexArrays();
-		
-		textVbo = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, textVbo);
-		glBufferData(GL_ARRAY_BUFFER, textVertices, GL_DYNAMIC_DRAW);
-		
-		glBindVertexArray(textVao);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 4, GL_FLOAT, false, 0, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-		
-		MemoryUtil.memFree(textVertices);
+		try {
+			textVao = VAO.gen().bind()
+					.addBuffer(VBO.gen().bind()
+							.bufferData(textVertices, GL_DYNAMIC_DRAW).enable(VertexAttrib.array(0).pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(4))));
+		} finally {
+			MemoryUtil.memFree(textVertices);
+		}
 		
 		defaultFont = fontCache.getFont(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
+	}
+	
+	/**
+	 * 
+	 */
+	public void cleanup() {
+		if (fontShader != null) {
+			fontShader.cleanup();
+		}
+		if (textVao != null) {
+			textVao.cleanup();
+		}
 	}
 	
 	/**
@@ -107,8 +110,6 @@ public class TextRender {
 		fontShader.bind();
 		fontShader.projection.loadMatrix(orthoMatrix);
 		
-		glBindVertexArray(textVao);
-
 		glActiveTexture(GL_TEXTURE0);
 		font.getTexture(size).bind();
 		
@@ -135,16 +136,14 @@ public class TextRender {
 			
 			vertexData.flip();
 			
-			glBindBuffer(GL_ARRAY_BUFFER, textVbo);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData);
+			textVao.bind().vertexBufferObjects().get(0).bind().bufferSubData(vertexData);
 		} finally {
 			MemoryUtil.memFree(vertexData);
 		}
 		
 		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 		
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
+		VAO.unbind();
 		
 		fontShader.unbind();
 		
@@ -180,17 +179,6 @@ public class TextRender {
 	 */
 	public void renderText(float x, float y, String text) {
 		renderText(x, y, defaultFont.getDefaultSize(), text);
-	}
-	
-	/**
-	 * 
-	 */
-	public void cleanup() {
-		if (fontShader != null) {
-			fontShader.cleanup();
-		}
-		glDeleteVertexArrays(textVao);
-		glDeleteBuffers(textVbo);
 	}
 	
 	/**
