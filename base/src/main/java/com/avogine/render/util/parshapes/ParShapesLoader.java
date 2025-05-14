@@ -1,9 +1,9 @@
 package com.avogine.render.util.parshapes;
 
-import com.avogine.render.data.Mesh;
+import com.avogine.render.data.simple.SimpleMesh;
 
 /**
- * Utility class for immediate {@link Mesh} creation via {@link ParShapesBuilder}.
+ * Utility class for immediate {@link SimpleMesh} creation via {@link ParShapesBuilder}.
  *
  */
 public class ParShapesLoader {
@@ -18,13 +18,13 @@ public class ParShapesLoader {
 	}
 
 	/**
-	 * Generate a new cube {@link Mesh}.
+	 * Generate a new cube {@link SimpleMesh}.
 	 * <p>
 	 * This will center the cube on [0, 0, 0].
 	 * @param scale size of the cube.
-	 * @return a cube {@code Mesh}
+	 * @return a cube {@code SimpleMesh}
 	 */
-	public static Mesh loadCube(float scale) {
+	public static SimpleMesh loadCube(float scale) {
 		return builder
 				.createCube()
 				.scale(scale, scale, scale)
@@ -33,11 +33,11 @@ public class ParShapesLoader {
 	}
 	
 	/**
-	 * Generate a plane {@link Mesh}.
+	 * Generate a plane {@link SimpleMesh}.
 	 * @param scale size of the plane.
-	 * @return a plane {@code Mesh}.
+	 * @return a plane {@code SimpleMesh}.
 	 */
-	public static Mesh loadPlane(float scale) {
+	public static SimpleMesh loadPlane(float scale) {
 		return builder.createPlane(100, 100)
 				.scale(scale, 1, scale)
 				.translate(-scale / 2, 0, -scale / 2)
@@ -45,11 +45,11 @@ public class ParShapesLoader {
 	}
 	
 	/**
-	 * Generate a sphere {@link Mesh}.
+	 * Generate a sphere {@link SimpleMesh}.
 	 * @param radius the radius of the sphere.
-	 * @return a sphere {@link Mesh}.
+	 * @return a sphere {@link SimpleMesh}.
 	 */
-	public static Mesh loadSphere(float radius) {
+	public static SimpleMesh loadSphere(float radius) {
 		float diameter = radius * 2;
 		return builder.createSphere(16, 16)
 				.scale(diameter, diameter, diameter)
@@ -58,11 +58,11 @@ public class ParShapesLoader {
 	}
 	
 	/**
-	 * Generate an L-System {@link Mesh}.
+	 * Generate an L-System {@link SimpleMesh}.
 	 * @param program instructions defining the L-System to create.
-	 * @return an L-System {@link Mesh}.
+	 * @return an L-System {@link SimpleMesh}.
 	 */
-	public static Mesh loadLSystem(String program) {
+	public static SimpleMesh loadLSystem(String program) {
 		return builder.createLSystem(program, 5, 60)
 				.build();
 	}

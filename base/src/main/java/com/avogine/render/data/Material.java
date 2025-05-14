@@ -1,13 +1,34 @@
 package com.avogine.render.data;
 
+import java.util.Objects;
+
 import org.joml.Vector4f;
 
-import com.avogine.render.data.texture.Texture;
+import com.avogine.render.data.gl.Texture;
 
 /**
- *
+ * TODO#41 Replace Texture members with String and reference via TextureCache
  */
 public class Material {
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(ambientColor, ambientTexture, diffuseColor, diffuseTexture, specularColor, specularTexture);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof Material))
+			return false;
+		Material other = (Material) obj;
+		return Objects.equals(ambientColor, other.ambientColor) && Objects.equals(ambientTexture, other.ambientTexture)
+				&& Objects.equals(diffuseColor, other.diffuseColor)
+				&& Objects.equals(diffuseTexture, other.diffuseTexture)
+				&& Objects.equals(specularColor, other.specularColor)
+				&& Objects.equals(specularTexture, other.specularTexture);
+	}
 
 	/**
 	 * 

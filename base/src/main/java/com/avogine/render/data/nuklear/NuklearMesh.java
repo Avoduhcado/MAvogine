@@ -5,8 +5,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
 import java.nio.ByteBuffer;
@@ -14,6 +13,8 @@ import java.util.Objects;
 
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
+
+import com.avogine.render.data.gl.*;
 
 /**
  *
@@ -34,9 +35,7 @@ public class NuklearMesh {
 				.flip();
 	}
 	
-	private int vao;
-	private int vbo;
-	private int ebo;
+	private VAO vao;
 
 	private NkDrawNullTexture nullTexture;
 	
@@ -67,39 +66,29 @@ public class NuklearMesh {
 
 	private void setupMesh() {
 		// buffer setup
-		vao = glGenVertexArrays();
-		vbo = glGenBuffers();
-		ebo = glGenBuffers();
-
-		glBindVertexArray(vao);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, false, 20, 0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, false, 20, 8);
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, true, 20, 16);
-
-		glBindVertexArray(0);
+		vao = VAO.gen().bind()
+				.addBuffer(VBO.gen().bind()
+						.enable(VertexAttrib.array(0).pointer(new VertexAttrib.Pointer(2, GL_FLOAT, false, 20, 0)))
+						.enable(VertexAttrib.array(1).pointer(new VertexAttrib.Pointer(2, GL_FLOAT, false, 20, 8)))
+						.enable(VertexAttrib.array(2).pointer(new VertexAttrib.Pointer(4, GL_UNSIGNED_BYTE, true, 20, 16))))
+				.addBuffer(VBO.genEBO().bind());
+		
+		VAO.unbind();
 	}
 
 	private void setupTexture() {
 		// null texture setup
-		int nullTexID = glGenTextures();
-
-		nullTexture.texture().id(nullTexID);
-		nullTexture.uv().set(0.5f, 0.5f);
-
-		glBindTexture(GL_TEXTURE_2D, nullTexID);
 		try (MemoryStack stack = stackPush()) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF));
-		}
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			int nullTexID = Texture.gen().bind()
+					.filterNearest()
+					.texImage2D(GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF))
+					.id();
 
-		glBindTexture(GL_TEXTURE_2D, 0);
+			nullTexture.texture().id(nullTexID);
+			nullTexture.uv().set(0.5f, 0.5f);
+		} finally {
+			Texture.unbind();
+		}
 	}
 	
 	/**
@@ -110,8 +99,8 @@ public class NuklearMesh {
 		// convert from command queue into draw list and draw to screen
 
 		// allocate vertex and element buffer
-		glBindVertexArray(vao);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		vao.bind();
+		vao.vertexBufferObjects().get(0).bind();
 
 		glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_BUFFER, GL_STREAM_DRAW);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_BUFFER, GL_STREAM_DRAW);
@@ -177,9 +166,9 @@ public class NuklearMesh {
 	 * Free all GPU memory.
 	 */
 	public void cleanup() {
-		glDeleteVertexArrays(vao);
-		glDeleteBuffers(vbo);
-		glDeleteBuffers(ebo);
+		if (vao != null) {
+			vao.cleanup();
+		}
 		glDeleteTextures(nullTexture.texture().id());
 	}
 	

@@ -11,7 +11,10 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.*;
 
-import com.avogine.render.data.*;
+import com.avogine.render.data.Material;
+import com.avogine.render.data.simple.*;
+import com.avogine.render.data.vertices.array.SimpleVertexArray;
+import com.avogine.render.data.vertices.vertex.*;
 import com.avogine.render.util.TextureCache;
 import com.avogine.util.ResourceUtils;
 
@@ -28,10 +31,10 @@ public class StaticModelLoader {
 	 * @param id 
 	 * @param modelPath
 	 * @param textureCache 
-	 * @return a {@link Model} loaded from the given modelPath.
+	 * @return a {@link SimpleModel} loaded from the given modelPath.
 	 * @throws IllegalStateException if the model file could not be opened.
 	 */
-	public static Model loadModel(String id, String modelPath, TextureCache textureCache) {
+	public static SimpleModel loadModel(String id, String modelPath, TextureCache textureCache) {
 		return loadModel(id, modelPath, textureCache, Assimp.aiProcess_GenSmoothNormals | Assimp.aiProcess_JoinIdenticalVertices |
 				Assimp.aiProcess_Triangulate | Assimp.aiProcess_FixInfacingNormals | Assimp.aiProcess_CalcTangentSpace | Assimp.aiProcess_LimitBoneWeights |
 				Assimp.aiProcess_GenBoundingBoxes);
@@ -42,13 +45,13 @@ public class StaticModelLoader {
 	 * @param modelPath
 	 * @param textureCache 
 	 * @param flags
-	 * @return a {@link Model} loaded from the given modelPath.
+	 * @return a {@link SimpleModel} loaded from the given modelPath.
 	 * @throws IllegalStateException if the model file could not be opened.
 	 */
 	@SuppressWarnings({
 		"java:S2095" // The actual AIFileIO instance holds very little of its own memory which should be fine to be GC'd and its AIFile proc's are being manually freed which provide the bulk of the memory footprint.
 	})
-	public static Model loadModel(String id, String modelPath, TextureCache textureCache, int flags) {
+	public static SimpleModel loadModel(String id, String modelPath, TextureCache textureCache, int flags) {
 		AIFileIO fileIo = AIFileIO.create()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					String fileNameUtf8 = memUTF8(fileName);
@@ -95,17 +98,17 @@ public class StaticModelLoader {
 
 		int numMaterials = aiScene.mNumMaterials();
 		PointerBuffer materialsBuffer = aiScene.mMaterials();
-		List<Material> materials = new ArrayList<>();
+		SequencedMap<Material, List<SimpleMesh>> materialMeshMap = new LinkedHashMap<>();
 		for (int i = 0; i < numMaterials; ++i) {
 			AIMaterial aiMaterial = AIMaterial.create(materialsBuffer.get(i));
-			materials.add(processMaterial(aiMaterial, modelDirectory, textureCache));
+			materialMeshMap.putLast(processMaterial(aiMaterial, modelDirectory, textureCache), new ArrayList<>());
 		}
 
-		List<Mesh> meshes = processNode(aiScene.mRootNode(), aiScene);
+		processNode(aiScene.mRootNode(), aiScene, materialMeshMap);
 
 		Assimp.aiReleaseImport(aiScene);
 		
-		return new Model(id, meshes, materials);
+		return new SimpleModel(id, materialMeshMap);
 	}
 
 	/**
@@ -156,32 +159,44 @@ public class StaticModelLoader {
 		}
 	}
 	
-	protected static List<Mesh> processNode(AINode node, AIScene scene) {
+	protected static void processNode(AINode node, AIScene scene, SequencedMap<Material, List<SimpleMesh>> materialMeshMap) {
 		PointerBuffer meshesBuffer = scene.mMeshes();
 		IntBuffer nodeMeshesBuffer = node.mMeshes();
-		List<Mesh> meshes = new ArrayList<>();
 		// process all the node's meshes (if any)
 		for (int i = 0; i < node.mNumMeshes(); i++) {
-			AIMesh mesh = AIMesh.create(meshesBuffer.get(nodeMeshesBuffer.get(i)));
-			meshes.add(processMesh(mesh));
+			AIMesh aiMesh = AIMesh.create(meshesBuffer.get(nodeMeshesBuffer.get(i)));
+			SimpleMesh mesh = processMesh(aiMesh);
+			int materialIndex = aiMesh.mMaterialIndex();
+			if (materialIndex >= 0 && materialIndex < materialMeshMap.size()) {
+				materialMeshMap.sequencedValues().stream()
+				.skip(materialIndex)
+				.findFirst()
+				.ifPresent(meshList -> meshList.add(mesh));
+			} else {
+				// TODO#41 Adding the default material here may screw up the above index check? processNode may need to return Pairs of meshes and material indices
+				materialMeshMap.computeIfAbsent(new Material(), k -> new ArrayList<>()).add(mesh);
+			}
 		}
 		
 		PointerBuffer nodeChildrenBuffer = node.mChildren();
 		// then do the same for each of its children
 		for (int i = 0; i < node.mNumChildren(); i++) {
-			meshes.addAll(processNode(AINode.create(nodeChildrenBuffer.get(i)), scene));
+			processNode(AINode.create(nodeChildrenBuffer.get(i)), scene, materialMeshMap);
 		}
-		return meshes;
 	}
 	
-	protected static Mesh processMesh(AIMesh aiMesh) {
-		try (var vertexData = new VertexData(processVertices(aiMesh), processNormals(aiMesh), processTangents(aiMesh), processBitangents(aiMesh), processTextureCoordinates(aiMesh), processIndices(aiMesh))) {
-			int materialIndex = aiMesh.mMaterialIndex();
+	protected static SimpleMesh processMesh(AIMesh aiMesh) {
+		try (var position = new PositionVertex(processVertices(aiMesh));
+				var shading = new ShadingVertex(processNormals(aiMesh), processTangents(aiMesh), processBitangents(aiMesh));
+				var textureCoordinate = new TextureCoordinateVertex(processTextureCoordinates(aiMesh));
+				var element = new ElementVertex(processIndices(aiMesh));) {
+			var vertexData = new SimpleVertexArray(position, shading, textureCoordinate, element);
+
 			AIAABB aabb = aiMesh.mAABB();
 			Vector3f aabbMin = new Vector3f(aabb.mMin().x(), aabb.mMin().y(), aabb.mMin().z());
 			Vector3f aabbMax = new Vector3f(aabb.mMax().x(), aabb.mMax().y(), aabb.mMax().z());
 
-			return new Mesh(vertexData, materialIndex, aabbMin, aabbMax);
+			return new SimpleMesh(vertexData, aabbMin, aabbMax);
 		}
 	}
 	
