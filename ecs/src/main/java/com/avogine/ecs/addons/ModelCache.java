@@ -4,19 +4,17 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.avogine.ecs.*;
-import com.avogine.render.data.mesh.Mesh;
-import com.avogine.render.data.model.Model;
-import com.avogine.render.data.simple.SimpleModel;
-import com.avogine.render.data.vertices.array.IndexedVertexArray;
+import com.avogine.render.data.mesh.StaticMesh;
+import com.avogine.render.data.model.*;
 import com.avogine.render.util.TextureCache;
-import com.avogine.render.util.assimp.StaticModelLoader;
+import com.avogine.render.util.assimp.ModelLoader;
 
 /**
  * 
  */
 public class ModelCache implements EntitySystemAddon {
 
-	private final Map<String, Model<? extends Mesh<? extends IndexedVertexArray>>> modelMap;
+	private final Map<String, Model<StaticMesh>> modelMap;
 	private final TextureCache textureCache;
 	
 	/**
@@ -43,8 +41,8 @@ public class ModelCache implements EntitySystemAddon {
 	 * @param texturePath 
 	 * @return
 	 */
-	public SimpleModel getStaticModel(String modelFile, String texturePath) {
-		return (SimpleModel) modelMap.computeIfAbsent(modelFile, v -> StaticModelLoader.loadModel(modelFile, texturePath, textureCache));
+	public StaticModel getStaticModel(String modelFile, String texturePath) {
+		return (StaticModel) modelMap.computeIfAbsent(modelFile, v -> ModelLoader.loadModel(modelFile, texturePath, textureCache));
 	}
 	
 	/**
@@ -52,7 +50,7 @@ public class ModelCache implements EntitySystemAddon {
 	 * @param model
 	 * @return
 	 */
-	public void putModel(String modelName, Model<? extends Mesh<? extends IndexedVertexArray>> model) {
+	public void putModel(String modelName, Model<StaticMesh> model) {
 		modelMap.put(modelName, model);
 	}
 

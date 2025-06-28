@@ -86,6 +86,11 @@
 			<version>${joml.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.joml</groupId>
+			<artifactId>joml-primitives</artifactId>
+			<version>1.10.0</version>
+		</dependency>
+		<dependency>
 			<groupId>com.avogine</groupId>
 			<artifactId>log</artifactId>
 		</dependency>

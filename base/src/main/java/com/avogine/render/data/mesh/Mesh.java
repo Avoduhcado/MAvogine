@@ -1,27 +1,20 @@
 package com.avogine.render.data.mesh;
 
+import com.avogine.render.data.*;
 import com.avogine.render.data.gl.VAO;
-import com.avogine.render.data.vertices.VertexArrayData;
 
 /**
  * @param <T> 
  */
-public abstract class Mesh<T extends VertexArrayData> {
+public abstract class Mesh<T extends MeshData> implements VertexArrayBuilder<T> {
 
 	protected int vertexCount;
 	
 	protected final VAO vao;
 	
-	protected Mesh(int vertexCount, T vertexData) {
-		this.vertexCount = vertexCount;
-		this.vao = setupData(vertexData);
-	}
-	
-	/**
-	 * @param vertexData
-	 */
-	protected VAO setupData(T vertexData) {
-		return vertexData.bind();
+	protected Mesh(T meshData) {
+		this.vertexCount = meshData.getVertexCount();
+		this.vao = buildVertexArray(meshData);
 	}
 	
 	/**

@@ -2,14 +2,13 @@ package com.avogine.render.data.model;
 
 import java.util.*;
 
-import com.avogine.render.data.Material;
+import com.avogine.render.data.*;
 import com.avogine.render.data.mesh.Mesh;
-import com.avogine.render.data.vertices.VertexArrayData;
 
 /**
  * @param <T> 
  */
-public class Model<T extends Mesh<? extends VertexArrayData>> {
+public class Model<T extends Mesh<? extends MeshData>> {
 
 	protected final String id;
 	protected final Map<Material, List<T>> materialMeshMap;

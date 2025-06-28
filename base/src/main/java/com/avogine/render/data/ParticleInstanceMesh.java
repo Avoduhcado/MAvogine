@@ -1,29 +1,60 @@
 package com.avogine.render.data;
 
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL15.GL_STREAM_DRAW;
+
 import java.nio.*;
 
+import org.lwjgl.opengl.GL31;
+
+import com.avogine.render.data.gl.*;
+import com.avogine.render.data.gl.VertexAttrib.Pointer;
 import com.avogine.render.data.mesh.Mesh;
 import com.avogine.render.data.mesh.parameters.Instanceable;
-import com.avogine.render.data.vertices.array.ParticleInstanceVertexArray;
 
 /**
  *
  */
-public class ParticleInstanceMesh extends Mesh<ParticleInstanceVertexArray> implements Instanceable {
+public class ParticleInstanceMesh extends Mesh<Particle2DMeshData> implements Instanceable {
 	
 	private int maxInstances;
+	private int currentInstances;
 	
 	/**
-	 * @param vertexData 
+	 * @param meshData 
 	 */
-	public ParticleInstanceMesh(ParticleInstanceVertexArray vertexData) {
-		super(vertexData.vertexCount(), vertexData);
-		this.maxInstances = vertexData.maxInstances();
+	public ParticleInstanceMesh(Particle2DMeshData meshData) {
+		super(meshData);
+		this.maxInstances = meshData.getMaxInstances();
+	}
+
+	@Override
+	public VAO buildVertexArray(Particle2DMeshData meshData) {
+		try (var vertexBuffers = meshData.getVertexBuffers()) {
+			return VAO.gen().bind()
+					.addBuffer(VBO.gen().bind()
+							.bufferData(vertexBuffers.positions())
+							.enable(VertexAttrib.array(0)
+									.pointer(Pointer.tightlyPackedUnnormalizedFloat(3))
+									.divisor(0)))
+					.addBuffer(VBO.gen().bind()
+							.bufferData(4L * Float.BYTES * meshData.getMaxInstances(), GL_STREAM_DRAW)
+							.enable(VertexAttrib.array(1)
+									.pointer(Pointer.tightlyPackedUnnormalizedFloat(4))
+									.divisor(1)))
+					.addBuffer(VBO.gen().bind()
+							.bufferData(4L * Byte.BYTES * meshData.getMaxInstances(), GL_STREAM_DRAW)
+							.enable(VertexAttrib.array(2)
+									.pointer(new Pointer(4, GL_UNSIGNED_BYTE, true, 0, 0))
+									.divisor(1)));
+		} finally {
+			VAO.unbind();
+		}
 	}
 	
 	@Override
 	public void draw() {
-		// Not implemented
+		GL31.glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, getVertexCount(), getCurrentInstances());
 	}
 	
 	/**
@@ -44,5 +75,19 @@ public class ParticleInstanceMesh extends Mesh<ParticleInstanceVertexArray> impl
 	@Override
 	public int getMaxInstances() {
 		return maxInstances;
+	}
+	
+	/**
+	 * @return the currentInstances
+	 */
+	public int getCurrentInstances() {
+		return currentInstances;
+	}
+	
+	/**
+	 * @param currentInstances the currentInstances to set
+	 */
+	public void setCurrentInstances(int currentInstances) {
+		this.currentInstances = currentInstances;
 	}
 }

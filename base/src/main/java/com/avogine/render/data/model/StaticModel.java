@@ -4,19 +4,17 @@ import java.util.*;
 
 import com.avogine.render.data.Material;
 import com.avogine.render.data.mesh.StaticMesh;
-import com.avogine.render.data.vertices.array.IndexedVertexArray;
 
 /**
- * @param <T> 
  * 
  */
-public class StaticModel<T extends StaticMesh<? extends IndexedVertexArray>> extends Model<T> {
+public class StaticModel extends Model<StaticMesh> {
 	
 	/**
 	 * @param id 
 	 * @param materialMeshMap 
 	 */
-	public StaticModel(String id, Map<Material, List<T>> materialMeshMap) {
+	public StaticModel(String id, Map<Material, List<StaticMesh>> materialMeshMap) {
 		super(id, materialMeshMap);
 	}
 	
@@ -25,7 +23,7 @@ public class StaticModel<T extends StaticMesh<? extends IndexedVertexArray>> ext
 	 * @param mesh
 	 * @param material
 	 */
-	public StaticModel(String id, T mesh, Material material) {
+	public StaticModel(String id, StaticMesh mesh, Material material) {
 		super(id, mesh, material);
 	}
 	
