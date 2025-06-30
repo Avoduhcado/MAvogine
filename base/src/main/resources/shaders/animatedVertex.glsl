@@ -13,6 +13,7 @@ uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 normalMatrix;
+
 uniform mat4 boneMatrices[MAX_BONES];
 
 out vec3 vertPosition;
@@ -20,9 +21,9 @@ out vec3 vertNormal;
 out vec2 vertTextureCoordinates;
 
 void main() {
-
-	vec4 initPosition = vec4(0);
-	vec4 initNormal = vec4(0);
+	
+	vec4 initPosition = vec4(0, 0, 0, 0);
+	vec4 initNormal = vec4(0, 0, 0, 0);
 	
 	int count = 0;
 	for (int i = 0; i < MAX_WEIGHTS; i++) {
@@ -30,8 +31,8 @@ void main() {
 		if (weight > 0) {
 			count++;
 			int boneIndex = boneIndices[i];
-			vec4 tmpPosition = boneMatrices[boneIndex] * vec4(position, 1.0);
-			initPosition += weight * tmpPosition;
+			vec4 tmpPos = boneMatrices[boneIndex] * vec4(position, 1.0);
+			initPosition += weight * tmpPos;
 			
 			vec4 tmpNormal = boneMatrices[boneIndex] * vec4(normal, 0.0);
 			initNormal += weight * tmpNormal;
@@ -43,11 +44,12 @@ void main() {
 	}
 	
 	mat4 modelViewMatrix = viewMatrix * modelMatrix;
-	mat4 mvPosition = modelViewMatrix * initPos;
+	vec4 mvPosition = modelViewMatrix * initPosition;
 	gl_Position = projectionMatrix * mvPosition;
 	
 	// Transform outs to view space
 	vertPosition = mvPosition.xyz;
+//	vertNormal = mat3(normalMatrix) * normal;
 	vertNormal = normalize(modelViewMatrix * initNormal).xyz;
 	vertTextureCoordinates = textureCoordinates;
 	

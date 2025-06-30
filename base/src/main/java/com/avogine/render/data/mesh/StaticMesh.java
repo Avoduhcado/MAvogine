@@ -11,8 +11,6 @@ import com.avogine.render.data.model.StaticModel;
 
 /**
  * Used by {@link StaticModel}.
- * <p>
- * TODO#39 <a href="https://github.com/Avoduhcado/MAvogine/issues/39">Animated models #39</a>
  */
 public class StaticMesh extends Mesh<MeshData> implements Bound3D {
 	

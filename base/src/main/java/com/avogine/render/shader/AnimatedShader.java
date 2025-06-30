@@ -7,19 +7,14 @@ import com.avogine.render.shader.uniform.*;
 /**
  *
  */
-public class SimpleAnimatedShader extends ShaderProgram {
-	
-	/**
-	 * This should match the const declared in the related GLSL shader file.
-	 */
-	private static final int MAX_BONES = 150;
-	
+public class AnimatedShader extends ShaderProgram {
+
 	public final UniformMat4 projectionMatrix = new UniformMat4();
 	public final UniformMat4 viewMatrix = new UniformMat4();
 	public final UniformMat4 modelMatrix = new UniformMat4();
 	
 	public final UniformMat4 normalMatrix = new UniformMat4();
-	public final UniformMat4Array boneMatrices = new UniformMat4Array(MAX_BONES);
+	public final UniformMat4Array boneMatrices = new UniformMat4Array();
 	public final UniformVec3 viewPosition = new UniformVec3();
 
 	public final UniformVec3 lightPosition = new UniformVec3();
@@ -32,8 +27,8 @@ public class SimpleAnimatedShader extends ShaderProgram {
 	/**
 	 * 
 	 */
-	public SimpleAnimatedShader() {
-		super(SHADERS.with("simpleAnimatedVertex.glsl"), SHADERS.with("simpleFragment.glsl"));
+	public AnimatedShader() {
+		super(SHADERS.with("animatedVertex.glsl"), SHADERS.with("simpleFragment.glsl"));
 		storeAllUniformLocations(projectionMatrix, viewMatrix, modelMatrix, normalMatrix, boneMatrices, viewPosition, lightPosition, lightColor, hasTexture, objectColor, objectTexture);
 		linkTextureUnits();
 	}

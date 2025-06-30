@@ -43,6 +43,8 @@ public class ModelLoader {
 	private record Bone(int boneId, String boneName, Matrix4f offsetMatrix) {}
 
 	private record VertexWeight(int boneId, int vertexId, float weight) {}
+	
+	private record ModelData(Map<Material, List<MeshData>> materialMeshMap, List<Animation> animations) {}
 
 	private ModelLoader() {
 		
@@ -140,11 +142,9 @@ public class ModelLoader {
 
 		int numMaterials = aiScene.mNumMaterials();
 		PointerBuffer materialsBuffer = aiScene.mMaterials();
-//		SequencedMap<Material, List<SimpleMesh>> materialMeshMap = new LinkedHashMap<>();
 		SequencedMap<Material, List<MeshData>> materials = new LinkedHashMap<>();
-		for (int i = 0; i < numMaterials; ++i) {
+		for (int i = 0; i < numMaterials; i++) {
 			AIMaterial aiMaterial = AIMaterial.create(materialsBuffer.get(i));
-//			materialMeshMap.putLast(processMaterial(aiMaterial, modelDirectory, textureCache), new ArrayList<>());
 			materials.putLast(processMaterial(aiMaterial, modelDirectory, textureCache), new ArrayList<>());
 		}
 		
@@ -169,8 +169,6 @@ public class ModelLoader {
 		if (!defaultMaterial.getValue().isEmpty()) {
 			materials.putLast(defaultMaterial.getKey(), defaultMaterial.getValue());
 		}
-		
-//		processNode(aiScene.mRootNode(), aiScene, materialMeshMap);
 		
 		List<Animation> animations = new ArrayList<>();
 		int numAnimations = aiScene.mNumAnimations();
@@ -280,14 +278,18 @@ public class ModelLoader {
 		FloatBuffer tangents = processTangents(aiMesh);
 		FloatBuffer bitangents = processBitangents(aiMesh);
 		FloatBuffer textureCoordinates = processTextureCoordinates(aiMesh);
-		IntBuffer indices = processIndices(aiMesh);
 		AnimMeshData animMeshData = processBones(aiMesh, bones);
+		IntBuffer indices = processIndices(aiMesh);
 		AABBf aabb = processAABB(aiMesh);
 
 		return new MeshData(new VertexBuffers(positions, normals, tangents, bitangents, textureCoordinates, animMeshData.weights(), animMeshData.boneIds(), indices), aabb);
 	}
 	
 	private static AnimMeshData processBones(AIMesh aiMesh, List<Bone> bones) {
+		if (aiMesh.isNull(AIMesh.MBONES)) {
+			return new AnimMeshData(MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * MAX_WEIGHTS), MemoryUtil.memCallocInt(aiMesh.mNumVertices() * MAX_WEIGHTS));
+		}
+		
 		Map<Integer, List<VertexWeight>> weightMap = new HashMap<>();
 		int numBones = aiMesh.mNumBones();
 		PointerBuffer aiBones = aiMesh.mBones();
@@ -311,8 +313,8 @@ public class ModelLoader {
 		}
 		
 		int numVertices = aiMesh.mNumVertices();
-		IntBuffer boneIds = MemoryUtil.memAllocInt(numVertices * MAX_WEIGHTS);
 		FloatBuffer weights = MemoryUtil.memAllocFloat(numVertices * MAX_WEIGHTS);
+		IntBuffer boneIds = MemoryUtil.memAllocInt(numVertices * MAX_WEIGHTS);
 		for (int i = 0; i < numVertices; i++) {
 			List<VertexWeight> vertexWeights = weightMap.get(i);
 			int size = vertexWeights != null ? vertexWeights.size() : 0;

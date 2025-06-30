@@ -16,6 +16,11 @@ public class Node {
 	
 	private Matrix4f nodeTransformation;
 	
+	/**
+	 * @param name
+	 * @param parent
+	 * @param nodeTransformation
+	 */
 	public Node(String name, Node parent, Matrix4f nodeTransformation) {
 		this.name = name;
 		this.parent = parent;
@@ -23,6 +28,9 @@ public class Node {
 		this.children = new ArrayList<>();
 	}
 	
+	/**
+	 * @param node
+	 */
 	public void addChild(Node node) {
 		children.add(node);
 	}

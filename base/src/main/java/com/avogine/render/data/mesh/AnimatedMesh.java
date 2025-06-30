@@ -19,6 +19,7 @@ public class AnimatedMesh extends StaticMesh {
 	public VAO buildVertexArray(MeshData meshData) {
 		try (var vertexBuffers = meshData.getVertexBuffers()) {
 			var vertexAttrib3f = VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(3);
+			var vertexAttrib4f = VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(4);
 			return VAO.gen().bind()
 					.addBuffer(VBO.gen().bind()
 							.bufferData(vertexBuffers.positions()).enable(VertexAttrib.array(0).pointer(vertexAttrib3f)))
@@ -31,9 +32,9 @@ public class AnimatedMesh extends StaticMesh {
 					.addBuffer(VBO.gen().bind()
 							.bufferData(vertexBuffers.textureCoordinates()).enable(VertexAttrib.array(4).pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(2))))
 					.addBuffer(VBO.gen().bind()
-							.bufferData(vertexBuffers.weights()).enable(VertexAttrib.array(5).pointer(vertexAttrib3f))) // TODO pointer data
+							.bufferData(vertexBuffers.weights()).enable(VertexAttrib.array(5).pointer(vertexAttrib4f)))
 					.addBuffer(VBO.gen().bind()
-							.bufferData(vertexBuffers.boneIds()).enable(VertexAttrib.array(6).pointer(vertexAttrib3f))) // TODO pointer data
+							.bufferData(vertexBuffers.boneIds()).enable(VertexAttrib.array(6).pointer(vertexAttrib4f)))
 					.addBuffer(VBO.genEBO().bind()
 							.bufferData(vertexBuffers.indices()));
 		} finally {

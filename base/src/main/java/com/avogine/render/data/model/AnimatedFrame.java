@@ -8,7 +8,7 @@ import org.joml.Matrix4f;
  * @param boneMatrices 
  */
 public record AnimatedFrame(Matrix4f[] boneMatrices) {
-
+	
 	@Override
 	public String toString() {
 		return "AnimatedFrame [boneMatrices=" + Arrays.toString(boneMatrices) + "]";

@@ -1,33 +1,22 @@
 package com.avogine.render.shader.uniform;
 
-import org.joml.*;
+import java.nio.FloatBuffer;
+
+import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.system.MemoryStack;
 
 public class UniformMat4Array extends Uniform {
 
-	private UniformMat4[] matrixUniforms;
-	
-	public UniformMat4Array(int size) {
-		matrixUniforms = new UniformMat4[size];
-		for (int i = 0; i < size; i++) {
-			matrixUniforms[i] = new UniformMat4();
-		}
-	}
-	
-	@Override
-	public void storeUniformLocation(int programID, String name) {
-		for (int i = 0; i < matrixUniforms.length; i++) {
-			matrixUniforms[i].storeUniformLocation(programID, name + "[" + i + "]");
-		}
-	}
-
 	public void loadMatrixArray(Matrix4f[] matrices) {
-		for (int i = 0; i < matrices.length; i++) {
-			matrixUniforms[i].loadMatrix(matrices[i]);
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			int length = matrices != null ? matrices.length : 0;
+			FloatBuffer matrixBuffer = stack.mallocFloat(16 * length);
+			for (int i = 0; i < length; i++) {
+				matrices[i].get(16 * i, matrixBuffer);
+			}
+			GL20.glUniformMatrix4fv(super.getLocation(), false, matrixBuffer);
 		}
-	}
-	
-	public void loadMatrix(Matrix4f matrix, int index) {
-		matrixUniforms[index].loadMatrix(matrix);
 	}
 	
 }
