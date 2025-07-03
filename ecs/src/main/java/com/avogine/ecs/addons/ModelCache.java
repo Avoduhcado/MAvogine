@@ -4,10 +4,11 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.avogine.ecs.*;
-import com.avogine.render.data.mesh.StaticMesh;
-import com.avogine.render.data.model.*;
-import com.avogine.render.util.TextureCache;
-import com.avogine.render.util.assimp.ModelLoader;
+import com.avogine.render.opengl.Texture;
+import com.avogine.render.opengl.image.util.TextureCache;
+import com.avogine.render.opengl.model.*;
+import com.avogine.render.opengl.model.mesh.StaticMesh;
+import com.avogine.render.opengl.model.util.ModelLoader;
 
 /**
  * 
@@ -52,6 +53,10 @@ public class ModelCache implements EntitySystemAddon {
 	 */
 	public void putModel(String modelName, Model<StaticMesh> model) {
 		modelMap.put(modelName, model);
+	}
+	
+	public Texture getTexture(String texturePath) {
+		return textureCache.getTexture(texturePath);
 	}
 
 	/**

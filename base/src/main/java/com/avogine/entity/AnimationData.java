@@ -4,16 +4,15 @@ import java.util.Arrays;
 
 import org.joml.Matrix4f;
 
-import com.avogine.render.data.Animation;
-import com.avogine.render.data.model.AnimatedFrame;
-import com.avogine.render.util.assimp.ModelLoader;
+import com.avogine.render.model.animation.*;
+import com.avogine.render.util.assimp.AssimpModelLoader;
 
 /**
  *
  */
 public class AnimationData {
 
-	public static final Matrix4f[] DEFAULT_BONES_MATRICES = new Matrix4f[ModelLoader.MAX_BONES];
+	public static final Matrix4f[] DEFAULT_BONES_MATRICES = new Matrix4f[AssimpModelLoader.MAX_BONES];
 
 	static {
 		Matrix4f zeroMatrix = new Matrix4f().zero();

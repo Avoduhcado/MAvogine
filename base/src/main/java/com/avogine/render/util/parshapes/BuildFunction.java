@@ -11,7 +11,7 @@ public interface BuildFunction<T> {
 
 	/**
 	 * @param parShapesMesh
-	 * @return
+	 * @return a built instance of {@code T} from the given {@link ParShapesMesh} structure.
 	 */
 	public T build(ParShapesMesh parShapesMesh);
 	

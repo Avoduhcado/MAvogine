@@ -10,10 +10,10 @@ import org.joml.Matrix4f;
 import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.render.data.font.Font;
-import com.avogine.render.data.gl.*;
+import com.avogine.render.font.FontCache;
+import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.font.Font;
 import com.avogine.render.shader.FontShader;
-import com.avogine.render.util.FontCache;
 import com.avogine.util.resource.ResourceConstants;
 
 /**
@@ -65,8 +65,9 @@ public class TextRender {
 		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
 		try {
 			textVao = VAO.gen().bind()
-					.addBuffer(VBO.gen().bind()
-							.bufferData(textVertices, GL_DYNAMIC_DRAW).enable(VertexAttrib.array(0).pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(4))));
+					.vertexBuffer(VBO.gen().bind()
+							.bufferData(textVertices, GL_DYNAMIC_DRAW).enable(VertexAttrib.array(0)
+									.pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(4))));
 		} finally {
 			MemoryUtil.memFree(textVertices);
 		}
@@ -136,7 +137,7 @@ public class TextRender {
 			
 			vertexData.flip();
 			
-			textVao.bind().vertexBufferObjects().get(0).bind().bufferSubData(vertexData);
+			textVao.bind().vertexBuffers().get(0).bind().bufferSubData(vertexData);
 		} finally {
 			MemoryUtil.memFree(vertexData);
 		}
