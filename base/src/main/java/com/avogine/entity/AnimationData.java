@@ -1,44 +1,47 @@
 package com.avogine.entity;
 
-import java.util.Arrays;
-
-import org.joml.Matrix4f;
-
 import com.avogine.render.model.animation.*;
-import com.avogine.render.util.assimp.AssimpModelLoader;
 
 /**
  *
  */
 public class AnimationData {
 
-	public static final Matrix4f[] DEFAULT_BONES_MATRICES = new Matrix4f[AssimpModelLoader.MAX_BONES];
-
-	static {
-		Matrix4f zeroMatrix = new Matrix4f().zero();
-		Arrays.fill(DEFAULT_BONES_MATRICES, zeroMatrix);
-	}
-
 	private Animation currentAnimation;
 	private int currentFrameIdx;
 
+	/**
+	 * @param currentAnimation
+	 */
 	public AnimationData(Animation currentAnimation) {
 		currentFrameIdx = 0;
 		this.currentAnimation = currentAnimation;
 	}
 
+	/**
+	 * @return the currently active {@link Animation}.
+	 */
 	public Animation getCurrentAnimation() {
 		return currentAnimation;
 	}
 
+	/**
+	 * @return the current {@link AnimatedFrame} of the the currently active {@link Animation}.
+	 */
 	public AnimatedFrame getCurrentFrame() {
 		return currentAnimation.frames().get(currentFrameIdx);
 	}
 
+	/**
+	 * @return the frame index of the current {@link AnimatedFrame}.
+	 */
 	public int getCurrentFrameIdx() {
 		return currentFrameIdx;
 	}
 
+	/**
+	 * Increment the current frame index by one, and loop back to the start if the end of the {@link AnimatedFrame} is reached.
+	 */
 	public void nextFrame() {
 		int nextFrame = currentFrameIdx + 1;
 		if (nextFrame > currentAnimation.frames().size() - 1) {
@@ -48,6 +51,9 @@ public class AnimationData {
 		}
 	}
 
+	/**
+	 * @param currentAnimation
+	 */
 	public void setCurrentAnimation(Animation currentAnimation) {
 		currentFrameIdx = 0;
 		this.currentAnimation = currentAnimation;

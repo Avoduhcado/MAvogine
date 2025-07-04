@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import org.lwjgl.assimp.Assimp;
 
 import com.avogine.render.model.Material;
-import com.avogine.render.opengl.image.util.TextureCache;
 import com.avogine.render.opengl.model.*;
 import com.avogine.render.opengl.model.mesh.*;
 import com.avogine.render.util.assimp.AssimpModelLoader;
@@ -27,12 +26,11 @@ public class ModelLoader extends AssimpModelLoader {
 	/**
 	 * @param id
 	 * @param modelPath
-	 * @param textureCache
 	 * @return an {@link AnimatedModel} loaded from the given modelPath.
 	 * @throws IllegalStateException if the model file could not be opened.
 	 */
-	public static AnimatedModel loadAnimatedModel(String id, String modelPath, TextureCache textureCache) {
-		ModelData modelData = loadModel(modelPath, textureCache, LOADER_FLAGS);
+	public static AnimatedModel loadAnimatedModel(String id, String modelPath) {
+		ModelData modelData = loadModel(modelPath, LOADER_FLAGS);
 		
 		Map<Material, List<AnimatedMesh>> materialMeshMap = modelData.materialMeshMap().entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(AnimatedMesh::new).toList()));
@@ -42,12 +40,11 @@ public class ModelLoader extends AssimpModelLoader {
 	/**
 	 * @param id 
 	 * @param modelPath
-	 * @param textureCache 
 	 * @return a {@link StaticModel} loaded from the given modelPath.
 	 * @throws IllegalStateException if the model file could not be opened.
 	 */
-	public static StaticModel loadModel(String id, String modelPath, TextureCache textureCache) {
-		ModelData modelData = loadModel(modelPath, textureCache, LOADER_FLAGS | Assimp.aiProcess_PreTransformVertices);
+	public static StaticModel loadModel(String id, String modelPath) {
+		ModelData modelData = loadModel(modelPath, LOADER_FLAGS | Assimp.aiProcess_PreTransformVertices);
 		
 		Map<Material, List<StaticMesh>> materialMeshMap = modelData.materialMeshMap().entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(StaticMesh::new).toList()));

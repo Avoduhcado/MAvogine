@@ -60,19 +60,35 @@ public record Texture(int id, int target) {
 		return this;
 	}
 	
+	/**
+	 *
+	 * @param pname
+	 * @param param
+	 */
 	public record Parameteri(int pname, int param) {
 		
+		/**
+		 * @param target
+		 */
 		public void set(int target) {
 			glTexParameteri(target, pname, param);
 		}
 		
 	}
 	
+	/**
+	 * @param parameter
+	 * @return
+	 */
 	public Texture tex(Parameteri parameter) {
 		parameter.set(target);
 		return this;
 	}
 	
+	/**
+	 * @param parameters
+	 * @return
+	 */
 	public Texture tex(Parameteri...parameters) {
 		for (var parameter : parameters) {
 			parameter.set(target);
@@ -127,6 +143,16 @@ public record Texture(int id, int target) {
 		return this;
 	}
 	
+	/**
+	 *
+	 * @param level
+	 * @param internalFormat
+	 * @param width
+	 * @param height
+	 * @param format
+	 * @param type
+	 * @param pixels
+	 */
 	public record Image2D(int level, int internalFormat, int width, int height, int format, int type, Buffer pixels) {
 		/**
 		 * @param imageData
@@ -149,8 +175,18 @@ public record Texture(int id, int target) {
 		}
 	}
 	
+	/**
+	 *
+	 * @param target
+	 * @param image2D
+	 */
 	public record Image2DTarget(int target, Image2D image2D) {
 		
+		/**
+		 * @param target
+		 * @param image2D
+		 * @return
+		 */
 		public static Image2DTarget of(int target, Image2D image2D) {
 			return new Image2DTarget(target, image2D);
 		}
@@ -164,11 +200,19 @@ public record Texture(int id, int target) {
 		};
 	}
 	
+	/**
+	 * @param image2D
+	 * @return
+	 */
 	public Texture tex(Image2D image2D) {
 		image2D.specify(target);
 		return this;
 	}
 	
+	/**
+	 * @param image2dTargets
+	 * @return
+	 */
 	public Texture tex(Image2DTarget...image2dTargets) {
 		for (var image2DTarget : image2dTargets) {
 			if (image2DTarget instanceof Image2DTarget(var target, var image2D)) {

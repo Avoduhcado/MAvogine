@@ -16,7 +16,6 @@ import com.avogine.render.model.Material;
 import com.avogine.render.model.animation.*;
 import com.avogine.render.model.mesh.MeshData;
 import com.avogine.render.model.mesh.data.VertexBuffers;
-import com.avogine.render.opengl.image.util.TextureCache;
 import com.avogine.util.ResourceUtils;
 
 /**
@@ -49,7 +48,6 @@ public class AssimpModelLoader {
 	/**
 	 * @param id 
 	 * @param modelPath
-	 * @param textureCache 
 	 * @param flags
 	 * @return {@link ModelData} containing the parsed model file data.
 	 * @throws IllegalStateException if the model file could not be opened.
@@ -57,7 +55,7 @@ public class AssimpModelLoader {
 	@SuppressWarnings({
 		"java:S2095" // The actual AIFileIO instance holds very little of its own memory which should be fine to be GC'd and its AIFile proc's are being manually freed which provide the bulk of the memory footprint.
 	})
-	protected static ModelData loadModel(String modelPath, TextureCache textureCache, int flags) {
+	protected static ModelData loadModel(String modelPath, int flags) {
 		AIFileIO fileIo = AIFileIO.create()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					String fileNameUtf8 = memUTF8(fileName);
@@ -107,7 +105,7 @@ public class AssimpModelLoader {
 		SequencedMap<Material, List<MeshData>> materials = new LinkedHashMap<>();
 		for (int i = 0; i < numMaterials; i++) {
 			AIMaterial aiMaterial = AIMaterial.create(materialsBuffer.get(i));
-			materials.putLast(processMaterial(aiMaterial, modelDirectory, textureCache), new ArrayList<>());
+			materials.putLast(processMaterial(aiMaterial, modelDirectory), new ArrayList<>());
 		}
 		
 		int numMeshes = aiScene.mNumMeshes();
@@ -163,7 +161,7 @@ public class AssimpModelLoader {
 	/**
 	 * <a href="https://github.com/Avoduhcado/MAvogine/issues/41">PBR materials #41</a>
 	 */
-	protected static Material processMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
+	protected static Material processMaterial(AIMaterial aiMaterial, String modelDirectory) {
 		// TODO#41 Use a real default
 		Material material = new Material();
 		try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -260,18 +258,11 @@ public class AssimpModelLoader {
 			int id = bones.size();
 			Bone bone = new Bone(id, aiBone.mName().dataString(), toMatrix(aiBone.mOffsetMatrix()));
 			bones.add(bone);
-			int numWeights = aiBone.mNumWeights();
 			AIVertexWeight.Buffer aiWeights = aiBone.mWeights();
-			for (int j = 0; j < numWeights; j++) {
-				AIVertexWeight aiWeight = aiWeights.get(j);
+			aiWeights.forEach(aiWeight -> {
 				VertexWeight weight = new VertexWeight(bone.boneId(), aiWeight.mVertexId(), aiWeight.mWeight());
-				List<VertexWeight> vertexWeights = weightMap.get(weight.vertexId());
-				if (vertexWeights == null) {
-					vertexWeights = new ArrayList<>();
-					weightMap.put(weight.vertexId(), vertexWeights);
-				}
-				vertexWeights.add(weight);
-			}
+				weightMap.computeIfAbsent(weight.vertexId(), v -> new ArrayList<>()).add(weight);
+			});
 		}
 		
 		int numVertices = aiMesh.mNumVertices();

@@ -43,7 +43,7 @@ public class ModelCache implements EntitySystemAddon {
 	 * @return
 	 */
 	public StaticModel getStaticModel(String modelFile, String texturePath) {
-		return (StaticModel) modelMap.computeIfAbsent(modelFile, v -> ModelLoader.loadModel(modelFile, texturePath, textureCache));
+		return (StaticModel) modelMap.computeIfAbsent(modelFile, v -> ModelLoader.loadModel(modelFile, texturePath));
 	}
 	
 	/**
@@ -55,6 +55,10 @@ public class ModelCache implements EntitySystemAddon {
 		modelMap.put(modelName, model);
 	}
 	
+	/**
+	 * @param texturePath
+	 * @return
+	 */
 	public Texture getTexture(String texturePath) {
 		return textureCache.getTexture(texturePath);
 	}
