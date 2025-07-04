@@ -3,7 +3,7 @@ package com.avogine.ecs.components;
 import java.util.Arrays;
 
 import com.avogine.ecs.EntityComponent;
-import com.avogine.render.data.mesh.StaticMesh;
+import com.avogine.render.opengl.model.mesh.StaticMesh;
 
 /**
  * @param meshIndices an array of {@link StaticMesh} IDs used in rendering this component.

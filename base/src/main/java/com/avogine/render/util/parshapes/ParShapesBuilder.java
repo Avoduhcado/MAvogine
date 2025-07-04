@@ -1,21 +1,11 @@
 package com.avogine.render.util.parshapes;
 
-import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.util.par.ParShapes.*;
 
-import java.nio.FloatBuffer;
-
-import org.joml.Vector3f;
-import org.lwjgl.system.*;
 import org.lwjgl.util.par.*;
 
-import com.avogine.render.data.mesh.StaticMesh;
-import com.avogine.render.data.simple.*;
-import com.avogine.render.data.vertices.array.*;
-import com.avogine.render.data.vertices.vertex.*;
-
 /**
- * Helper utility for constructing parametric shapes with the {@link ParShapes} library and converting them into usable {@link StaticMesh}s.
+ * Helper utility for constructing parametric shapes with the {@link ParShapes} library.
  */
 public class ParShapesBuilder {
 
@@ -129,7 +119,7 @@ public class ParShapesBuilder {
 	 * Rotate the mesh around a given axis.
 	 * <p>
 	 * <p>
-	 * Use this to bake a rotation into the resulting {@link StaticMesh}. A particular use case would be for 2D
+	 * Use this to bake a rotation into the resulting mesh. A particular use case would be for 2D
 	 * elements being painted onto a plane as planes generated from ParShapes seem to have UV coordinates starting in the bottom left
 	 * whereas a typical 2D orthographic projection matrix will likely have 0,0 position in the top left. So simply rotating 180 degrees
 	 * around the X axis should result in a properly oriented plane.
@@ -168,69 +158,6 @@ public class ParShapesBuilder {
 		par_shapes_compute_normals(parMesh);
 		
 		return this;
-	}
-	
-	/**
-	 * Construct a new {@link SimpleMesh} from the internal {@code parMesh} with all transformations applied.
-	 * @return a new {@code SimpleMesh}
-	 */
-	public SimpleMesh build() {
-		int vertexCount = parMesh.npoints();
-		int vert3 = vertexCount * 3;
-		int vert2 = vertexCount * 2;
-		
-		try (var position = new PositionVertex(memAllocFloat(vert3).put(parMesh.points(vert3)).flip());
-				var shading = new ShadingVertex(
-						(!parMesh.isNull(ParShapesMesh.NORMALS) ? memAllocFloat(vert3).put(parMesh.normals(vert3)).flip() : memCallocFloat(vert3)),
-						memCallocFloat(vert3),
-						memCallocFloat(vert3)
-						);
-				var textureCoordinate = new TextureCoordinateVertex((!parMesh.isNull(ParShapesMesh.TCOORDS) ? memAllocFloat(vert2).put(parMesh.tcoords(vert2)).flip() : memCallocFloat(vert2)));
-				var element = new ElementVertex(memAllocInt(parMesh.ntriangles() * 3).put(parMesh.triangles(parMesh.ntriangles() * 3)).flip());
-				MemoryStack stack = MemoryStack.stackPush();) {
-			var vertexData = new SimpleVertexArray(position, shading, textureCoordinate, element);
-
-			FloatBuffer aabb = stack.mallocFloat(6);
-			par_shapes_compute_aabb(parMesh, aabb);
-			var aabbMin = new Vector3f(aabb.get(), aabb.get(), aabb.get());
-			var aabbMax = new Vector3f(aabb.get(), aabb.get(), aabb.get());
-
-			return new SimpleMesh(vertexData, aabbMin, aabbMax);
-		} finally {
-			par_shapes_free_mesh(parMesh);
-		}
-	}
-	
-	/**
-	 * Construct a new {@link SimpleInstanceMesh} from the internal {@code parMesh} with all transformations applied.
-	 * @param instanceCount the total number of instances to allocate.
-	 * @return a new {@code SimpleInstanceMesh}
-	 */
-	public SimpleInstanceMesh build(int instanceCount) {
-		int vertexCount = parMesh.npoints();
-		int vert3 = vertexCount * 3;
-		int vert2 = vertexCount * 2;
-		try (var position = new PositionVertex(memAllocFloat(vert3).put(parMesh.points(vert3)).flip());
-				var shading = new ShadingVertex(
-						(!parMesh.isNull(ParShapesMesh.NORMALS) ? memAllocFloat(vert3).put(parMesh.normals(vert3)).flip() : memCallocFloat(vert3)),
-						memCallocFloat(vert3),
-						memCallocFloat(vert3)
-						);
-				var textureCoordinate = new TextureCoordinateVertex((!parMesh.isNull(ParShapesMesh.TCOORDS) ? memAllocFloat(vert2).put(parMesh.tcoords(vert2)).flip() : memCallocFloat(vert2)));
-				var element = new ElementVertex(memAllocInt(parMesh.ntriangles() * 3).put(parMesh.triangles(parMesh.ntriangles() * 3)).flip());
-				var instanceTransform = new InstanceTransformVertex(MemoryUtil.memAllocFloat(instanceCount * 16), MemoryUtil.memAllocFloat(instanceCount * 16));
-				MemoryStack stack = MemoryStack.stackPush();) {
-			var vertexData = new SimpleInstanceVertexArray(new SimpleVertexArray(position, shading, textureCoordinate, element), instanceTransform);
-			
-			FloatBuffer aabb = stack.mallocFloat(6);
-			par_shapes_compute_aabb(parMesh, aabb);
-			var aabbMin = new Vector3f(aabb.get(), aabb.get(), aabb.get());
-			var aabbMax = new Vector3f(aabb.get(), aabb.get(), aabb.get());
-			
-			return new SimpleInstanceMesh(vertexData, aabbMax, aabbMin, instanceCount);
-		} finally {
-			par_shapes_free_mesh(parMesh);
-		}
 	}
 	
 	/**

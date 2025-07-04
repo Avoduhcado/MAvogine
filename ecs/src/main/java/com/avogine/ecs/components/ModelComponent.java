@@ -1,7 +1,7 @@
 package com.avogine.ecs.components;
 
 import com.avogine.ecs.EntityComponent;
-import com.avogine.render.data.model.Model;
+import com.avogine.render.opengl.model.Model;
 
 /**
  * TODO This should likely use a hash or an ID as its key value for retrieving from the cache, the cache can handle reloading saved models.

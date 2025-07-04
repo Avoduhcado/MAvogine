@@ -1,6 +1,6 @@
 package com.avogine.render.shader.uniform;
 
-import com.avogine.render.data.Material;
+import com.avogine.render.model.Material;
 
 /**
  *
