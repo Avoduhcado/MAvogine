@@ -1,10 +1,9 @@
-package com.avogine.render.model.util;
+package com.avogine.render.util.assimp;
 
 import static org.lwjgl.system.MemoryUtil.*;
 
 import java.nio.*;
 import java.util.*;
-import java.util.function.Consumer;
 
 import org.joml.*;
 import org.joml.Math;
@@ -13,11 +12,10 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.*;
 
-import com.avogine.render.model.MaterialData;
+import com.avogine.render.model.Material;
 import com.avogine.render.model.animation.*;
+import com.avogine.render.model.mesh.MeshData;
 import com.avogine.render.model.mesh.data.VertexBuffers;
-import com.avogine.render.opengl.model.Material;
-import com.avogine.render.opengl.model.mesh.data.MeshData;
 import com.avogine.util.ResourceUtils;
 
 /**
@@ -33,7 +31,6 @@ public class AssimpModelLoader {
 	 * Max number of bones a single mesh can support.
 	 */
 	public static final int MAX_BONES = 150;
-	
 	private static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
 	
 	private record AnimMeshData(FloatBuffer weights, IntBuffer boneIds) {}
@@ -48,10 +45,17 @@ public class AssimpModelLoader {
 		
 	}
 	
+	/**
+	 * @param id 
+	 * @param modelPath
+	 * @param flags
+	 * @return {@link ModelData} containing the parsed model file data.
+	 * @throws IllegalStateException if the model file could not be opened.
+	 */
 	@SuppressWarnings({
 		"java:S2095" // The actual AIFileIO instance holds very little of its own memory which should be fine to be GC'd and its AIFile proc's are being manually freed which provide the bulk of the memory footprint.
 	})
-	protected static ModelData loadModel(String modelPath, int flags, Consumer<String> textureProcessor) {
+	protected static ModelData loadModel(String modelPath, int flags) {
 		AIFileIO fileIo = AIFileIO.create()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					String fileNameUtf8 = memUTF8(fileName);
@@ -99,11 +103,9 @@ public class AssimpModelLoader {
 		int numMaterials = aiScene.mNumMaterials();
 		PointerBuffer materialsBuffer = aiScene.mMaterials();
 		SequencedMap<Material, List<MeshData>> materials = new LinkedHashMap<>();
-		List<MaterialData> m = new ArrayList<>();
 		for (int i = 0; i < numMaterials; i++) {
 			AIMaterial aiMaterial = AIMaterial.create(materialsBuffer.get(i));
-			m.add(processMaterial(aiMaterial, modelDirectory));
-			materials.putLast(processMaterial(aiMaterial, modelDirectory, textureProcessor), new ArrayList<>());
+			materials.putLast(processMaterial(aiMaterial, modelDirectory), new ArrayList<>());
 		}
 		
 		int numMeshes = aiScene.mNumMeshes();
@@ -114,7 +116,7 @@ public class AssimpModelLoader {
 			AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
 			MeshData mesh = processMesh(aiMesh, bones);
 			int materialIndex = aiMesh.mMaterialIndex();
-			if (materialIndex >= 0 && materialIndex < m.size()) {
+			if (materialIndex >= 0 && materialIndex < materials.size()) {
 				materials.sequencedValues().stream()
 				.skip(materialIndex)
 				.findFirst()
@@ -156,106 +158,49 @@ public class AssimpModelLoader {
 		return node;
 	}
 	
-	private static MaterialData processMaterial(AIMaterial aiMaterial, String modelDirectory) {
-		AIColor4D color = AIColor4D.create();
-		Vector4f diffuseColor = processMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_DIFFUSE, color);
-		Vector4f ambientColor = processMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_AMBIENT, color);
-		Vector4f specularColor = processMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_SPECULAR, color);
-		
-		float reflectance = 0.0f;
-		float[] shininessFactor = new float[] { 0.0f };
-		int[] pMax = new int[] { 1 };
-		int result = Assimp.aiGetMaterialFloatArray(aiMaterial, Assimp.AI_MATKEY_SHININESS_STRENGTH, Assimp.aiTextureType_NONE, 0, shininessFactor, pMax);
-		if (result != Assimp.aiReturn_SUCCESS) {
-			reflectance = shininessFactor[0];
-		}
-		
-		AIString texturePath = AIString.create();
-		String diffuseTexturePath = processMaterialTexture(aiMaterial, Assimp.aiTextureType_DIFFUSE, texturePath, modelDirectory);
-		String ambientTexturePath = processMaterialTexture(aiMaterial, Assimp.aiTextureType_AMBIENT, texturePath, modelDirectory);
-		String specularTexturePath = processMaterialTexture(aiMaterial, Assimp.aiTextureType_SPECULAR, texturePath, modelDirectory);
-		String normalsTexturePath = processMaterialTexture(aiMaterial, Assimp.aiTextureType_NORMALS, texturePath, modelDirectory);
-		
-		return new MaterialData(diffuseColor, ambientColor, specularColor, reflectance, diffuseTexturePath, ambientTexturePath, specularTexturePath, normalsTexturePath);
-	}
-	
-	private static Vector4f processMaterialColor(AIMaterial aiMaterial, String materialKeyColor, AIColor4D color) {
-		int result = Assimp.aiGetMaterialColor(aiMaterial, materialKeyColor, Assimp.aiTextureType_NONE, 0, color);
-		if (result == Assimp.aiReturn_SUCCESS) {
-			return new Vector4f(color.r(), color.g(), color.b(), color.a());
-		}
-		return MaterialData.DEFAULT_COLOR;
-	}
-	
-	private static String processMaterialTexture(AIMaterial aiMaterial, int textureType, AIString texturePath, String modelDirectory) {
-		Assimp.aiGetMaterialTexture(aiMaterial, textureType, 0, texturePath, (IntBuffer) null, null, null, null, null, null);
-		String filePath = texturePath.dataString();
-		if (filePath != null && !filePath.isBlank()) {
-			return modelDirectory + filePath;
-		}
-		return "";
-	}
-	
-	private static Material processMaterial(AIMaterial aiMaterial, String modelDirectory, Consumer<String> textureProcessor) {
+	/**
+	 * <a href="https://github.com/Avoduhcado/MAvogine/issues/41">PBR materials #41</a>
+	 */
+	protected static Material processMaterial(AIMaterial aiMaterial, String modelDirectory) {
+		// TODO#41 Use a real default
 		Material material = new Material();
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			AIColor4D color = AIColor4D.create();
-
-			int result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_AMBIENT, Assimp.aiTextureType_NONE, 0, color);
-			if (result == Assimp.aiReturn_SUCCESS) {
-				material.setAmbientColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
-			}
-			
-			result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_DIFFUSE, Assimp.aiTextureType_NONE, 0, color);
+	
+			int result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_DIFFUSE, Assimp.aiTextureType_NONE, 0, color);
 			if (result == Assimp.aiReturn_SUCCESS) {
 				material.setDiffuseColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
+			}
+	
+			result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_AMBIENT, Assimp.aiTextureType_NONE, 0, color);
+			if (result == Assimp.aiReturn_SUCCESS) {
+				material.setAmbientColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
 			}
 			
 			result = Assimp.aiGetMaterialColor(aiMaterial, Assimp.AI_MATKEY_COLOR_SPECULAR, Assimp.aiTextureType_NONE, 0, color);
 			if (result == Assimp.aiReturn_SUCCESS) {
 				material.setSpecularColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
 			}
+
+			// TODO#41 Add reflectance to Material
+//			float reflectance = 0.0f;
+//			float[] shininessFactor = new float[] { 0.0f };
+//			int[] pMax = new int[] { 1 };
+//			result = Assimp.aiGetMaterialFloatArray(aiMaterial, Assimp.AI_MATKEY_SHININESS_STRENGTH, Assimp.aiTextureType_NONE, 0, shininessFactor, pMax);
+//			if (result != Assimp.aiReturn_SUCCESS) {
+//				reflectance = shininessFactor[0];
+//			}
+//			material.setReflectance(reflectance);
 			
-			float reflectance = 0.0f;
-			float[] shininessFactor = new float[] { 0.0f };
-			int[] pMax = new int[] { 1 };
-			result = Assimp.aiGetMaterialFloatArray(aiMaterial, Assimp.AI_MATKEY_SHININESS_STRENGTH, Assimp.aiTextureType_NONE, 0, shininessFactor, pMax);
-			if (result != Assimp.aiReturn_SUCCESS) {
-				reflectance = shininessFactor[0];
-			}
-			material.setReflectance(reflectance);
-			
-			AIString aiAmbientTexturePath = AIString.calloc(stack);
-			Assimp.aiGetMaterialTexture(aiMaterial, Assimp.aiTextureType_AMBIENT, 0, aiAmbientTexturePath, (IntBuffer) null, null, null, null, null, null);
-			String texturePath = aiAmbientTexturePath.dataString();
+			AIString aiTexturePath = AIString.calloc(stack);
+			Assimp.aiGetMaterialTexture(aiMaterial, Assimp.aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null, null, null, null, null, null);
+			String texturePath = aiTexturePath.dataString();
 			if (texturePath != null && !texturePath.isBlank()) {
-				material.setAmbientTexturePath(modelDirectory + texturePath);
-				textureProcessor.accept(material.getAmbientTexturePath());
+				material.setDiffuseTexture(modelDirectory + texturePath);
+				material.setDiffuseColor(Material.DEFAULT_COLOR);
 			}
 			
-			AIString aiDiffuseTexturePath = AIString.calloc(stack);
-			Assimp.aiGetMaterialTexture(aiMaterial, Assimp.aiTextureType_DIFFUSE, 0, aiDiffuseTexturePath, (IntBuffer) null, null, null, null, null, null);
-			texturePath = aiDiffuseTexturePath.dataString();
-			if (texturePath != null && !texturePath.isBlank()) {
-				material.setDiffuseTexturePath(modelDirectory + texturePath);
-				textureProcessor.accept(material.getDiffuseTexturePath());
-			}
-			
-			AIString aiSpecularTexturePath = AIString.calloc(stack);
-			Assimp.aiGetMaterialTexture(aiMaterial, Assimp.aiTextureType_SPECULAR, 0, aiSpecularTexturePath, (IntBuffer) null, null, null, null, null, null);
-			texturePath = aiSpecularTexturePath.dataString();
-			if (texturePath != null && !texturePath.isBlank()) {
-				material.setSpecularTexturePath(modelDirectory + texturePath);
-				textureProcessor.accept(material.getSpecularTexturePath());
-			}
-			
-			AIString aiNormalMapPath = AIString.calloc(stack);
-			Assimp.aiGetMaterialTexture(aiMaterial, Assimp.aiTextureType_NORMALS, 0, aiNormalMapPath, (IntBuffer) null, null, null, null, null, null);
-			texturePath = aiNormalMapPath.dataString();
-			if (texturePath != null && !texturePath.isBlank()) {
-				material.setNormalsTexturePath(modelDirectory + texturePath);
-				textureProcessor.accept(material.getNormalsTexturePath());
-			}
+			// TODO#41 Add normal maps and potentially ambient/specular mapping
 			
 			return material;
 		}

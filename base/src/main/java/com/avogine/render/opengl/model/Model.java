@@ -2,68 +2,42 @@ package com.avogine.render.opengl.model;
 
 import java.util.*;
 
-import org.joml.primitives.AABBf;
-
-import com.avogine.render.model.animation.Animation;
-import com.avogine.render.model.mesh.Boundable;
+import com.avogine.render.model.Material;
+import com.avogine.render.model.mesh.MeshData;
+import com.avogine.render.opengl.model.mesh.Mesh;
 
 /**
- * 
+ * @param <T> 
  */
-public class Model {
+public class Model<T extends Mesh<? extends MeshData>> {
 
-	private final String id;
-	private final List<Material> materials;
+	protected final String id;
+	protected final Map<Material, List<T>> materialMeshMap;
+	
 
-	private final List<Animation> animations;
-	
-	private final AABBf aabb;
-	
 	/**
 	 * @param id 
-	 * @param materials 
-	 * @param animations 
+	 * @param materialMeshMap 
 	 */
-	public Model(String id, List<Material> materials, List<Animation> animations) {
+	public Model(String id, Map<Material, List<T>> materialMeshMap) {
 		this.id = id;
-		this.materials = materials;
-		this.animations = animations;
-		aabb = materials.stream().flatMap(material -> material.getMeshes().stream())
-				.map(Boundable::getAABB)
-				.reduce(AABBf::union)
-				.orElseGet(AABBf::new);
+		this.materialMeshMap = materialMeshMap;
 	}
 	
 	/**
 	 * @param id
-	 * @param material
-	 * @param animations 
-	 */
-	public Model(String id, Material material, List<Animation> animations) {
-		this(id, List.of(material), animations);
-	}
-	
-	/**
-	 * @param id
-	 * @param materials
-	 */
-	public Model(String id, List<Material> materials) {
-		this(id, materials, new ArrayList<>());
-	}
-	
-	/**
-	 * @param id
+	 * @param mesh
 	 * @param material
 	 */
-	public Model(String id, Material material) {
-		this(id, List.of(material), new ArrayList<>());
+	public Model(String id, T mesh, Material material) {
+		this(id, Map.of(material, List.of(mesh)));
 	}
 	
 	/**
 	 * Free all of the meshes contained in this model.
 	 */
 	public void cleanup() {
-		materials.forEach(Material::cleanup);
+		materialMeshMap.values().forEach(meshList -> meshList.forEach(Mesh::cleanup));
 	}
 
 	/**
@@ -74,23 +48,26 @@ public class Model {
 	}
 	
 	/**
+	 * @return the materialMeshMap
+	 */
+	public Map<Material, List<T>> getMaterialMeshMap() {
+		return materialMeshMap;
+	}
+	
+	/**
+	 * @return the meshes
+	 */
+	public List<T> getMeshes() {
+		return materialMeshMap.values().stream()
+				.flatMap(List::stream)
+				.distinct()
+				.toList();
+	}
+	
+	/**
 	 * @return the materials
 	 */
 	public List<Material> getMaterials() {
-		return materials;
-	}
-	
-	/**
-	 * @return the animations
-	 */
-	public List<Animation> getAnimations() {
-		return animations;
-	}
-	
-	/**
-	 * @return the aabb
-	 */
-	public AABBf getAabb() {
-		return aabb;
+		return materialMeshMap.keySet().stream().toList();
 	}
 }

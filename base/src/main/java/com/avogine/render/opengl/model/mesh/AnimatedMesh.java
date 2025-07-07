@@ -1,13 +1,12 @@
 package com.avogine.render.opengl.model.mesh;
 
-import com.avogine.render.model.mesh.data.VertexBuffers;
+import com.avogine.render.model.mesh.MeshData;
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.model.mesh.data.MeshData;
 
 /**
  * 
  */
-public class AnimatedMesh extends Mesh {
+public class AnimatedMesh extends StaticMesh {
 
 	/**
 	 * @param meshData 
@@ -15,10 +14,10 @@ public class AnimatedMesh extends Mesh {
 	public AnimatedMesh(MeshData meshData) {
 		super(meshData);
 	}
-	
+
 	@Override
-	protected int generateVertexArray(MeshData vertexData) {
-		try (VertexBuffers vertexBuffers = vertexData.vertexBuffers()) {
+	public VAO buildVertexArray(MeshData meshData) {
+		try (var vertexBuffers = meshData.getVertexBuffers()) {
 			var vertexAttrib3f = VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(3);
 			var vertexAttrib4f = VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(4);
 			return VAO.gen().bind()
@@ -44,8 +43,7 @@ public class AnimatedMesh extends Mesh {
 							.bufferData(vertexBuffers.boneIds()).enable(VertexAttrib.array(6)
 									.pointer(vertexAttrib4f)))
 					.vertexBuffer(VBO.genEBO().bind()
-							.bufferData(vertexBuffers.indices()))
-					.id();
+							.bufferData(vertexBuffers.indices()));
 		} finally {
 			VAO.unbind();
 		}

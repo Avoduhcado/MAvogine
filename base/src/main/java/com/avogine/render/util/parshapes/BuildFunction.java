@@ -1,4 +1,4 @@
-package com.avogine.render.model.util;
+package com.avogine.render.util.parshapes;
 
 import org.lwjgl.util.par.ParShapesMesh;
 
