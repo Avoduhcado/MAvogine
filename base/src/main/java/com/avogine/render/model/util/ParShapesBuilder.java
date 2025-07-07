@@ -1,4 +1,4 @@
-package com.avogine.render.util.parshapes;
+package com.avogine.render.model.util;
 
 import static org.lwjgl.util.par.ParShapes.*;
 

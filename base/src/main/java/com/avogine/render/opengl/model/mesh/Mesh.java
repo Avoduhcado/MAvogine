@@ -1,53 +1,67 @@
 package com.avogine.render.opengl.model.mesh;
 
-import com.avogine.render.model.mesh.MeshData;
-import com.avogine.render.opengl.VAO;
-import com.avogine.render.opengl.model.mesh.data.VertexArrayBuilder;
+import static org.lwjgl.opengl.GL11.*;
+
+import org.joml.primitives.AABBf;
+
+import com.avogine.render.model.mesh.Boundable;
+import com.avogine.render.model.mesh.data.VertexBuffers;
+import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.model.mesh.data.MeshData;
 
 /**
- * @param <T> 
+ *  
  */
-public abstract class Mesh<T extends MeshData> implements VertexArrayBuilder<T> {
+public class Mesh extends VertexArrayObject<MeshData> implements Boundable {
+	
+	private final AABBf aabb;
+	
+	/**
+	 * @param meshData
+	 */
+	public Mesh(MeshData meshData) {
+		super(meshData);
+		aabb = meshData.aabb();
+	}
 
-	protected int vertexCount;
-	
-	protected final VAO vao;
-	
-	protected Mesh(T meshData) {
-		this.vertexCount = meshData.getVertexCount();
-		this.vao = buildVertexArray(meshData);
+	@Override
+	protected int generateVertexArray(MeshData vertexData) {
+		try (VertexBuffers vertexBuffers = vertexData.vertexBuffers()) {
+			var vertexAttrib3f = VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(3);
+			int vaoID = VAO.gen().bind().id();
+			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.positions())
+							.enable(VertexAttrib.array(0)
+									.pointer(vertexAttrib3f)).id());
+			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.normals())
+					.enable(VertexAttrib.array(1)
+							.pointer(vertexAttrib3f)).id());
+			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.tangents())
+					.enable(VertexAttrib.array(2)
+							.pointer(vertexAttrib3f)).id());
+			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.bitangents())
+					.enable(VertexAttrib.array(3)
+							.pointer(vertexAttrib3f)).id());
+			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.textureCoordinates())
+					.enable(VertexAttrib.array(4)
+							.pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(2))).id());
+			getVertexBufferObjects().add(VBO.genEBO().bind().bufferData(vertexBuffers.indices()).id());
+			
+			return vaoID;
+		} finally {
+			VAO.unbind();
+		}
+	}
+
+	/**
+	 * Render this mesh.
+	 */
+	public void draw() {
+		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
+	}
+
+	@Override
+	public AABBf getAABB() {
+		return aabb;
 	}
 	
-	/**
-	 * Free this Mesh's {@link VAO}.
-	 */
-	public void cleanup() {
-		vao.cleanup();
-	}
-	
-	/**
-	 * Render the mesh.
-	 */
-	public abstract void draw();
-	
-	/**
-	 * @return the {@link VAO} this mesh is bound to.
-	 */
-	public VAO getVao() {
-		return vao;
-	}
-	
-	/**
-	 * @return the address this mesh is bound to in GPU memory.
-	 */
-	public int getVaoId() {
-		return vao.id();
-	}
-	
-	/**
-	 * @return the number of vertices that make up this {@link Mesh}.
-	 */
-	public int getVertexCount() {
-		return vertexCount;
-	}
 }

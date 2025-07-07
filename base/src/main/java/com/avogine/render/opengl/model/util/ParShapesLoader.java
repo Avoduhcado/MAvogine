@@ -10,13 +10,13 @@ import org.joml.primitives.AABBf;
 import org.lwjgl.system.*;
 import org.lwjgl.util.par.ParShapesMesh;
 
-import com.avogine.render.model.mesh.*;
 import com.avogine.render.model.mesh.data.*;
+import com.avogine.render.model.util.*;
 import com.avogine.render.opengl.model.mesh.*;
-import com.avogine.render.util.parshapes.*;
+import com.avogine.render.opengl.model.mesh.data.MeshData;
 
 /**
- * Utility class for immediate {@link StaticMesh} creation via {@link ParShapesBuilder}.
+ * Utility class for immediate {@link Mesh} creation via {@link ParShapesBuilder}.
  *
  */
 public class ParShapesLoader {
@@ -26,7 +26,7 @@ public class ParShapesLoader {
 	/**
 	 * 
 	 */
-	public static final BuildFunction<StaticMesh> STATIC_MESH_BUILDER = parMesh -> {
+	public static final BuildFunction<Mesh> STATIC_MESH_BUILDER = parMesh -> {
 		int vertexCount = parMesh.npoints();
 		int vert3D = vertexCount * 3;
 		int vert2D = vertexCount * 2;
@@ -41,7 +41,7 @@ public class ParShapesLoader {
 			FloatBuffer aabb = stack.mallocFloat(6);
 			par_shapes_compute_aabb(parMesh, aabb);
 
-			return new StaticMesh(new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get())));
+			return new Mesh(new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get())));
 		} finally {
 			par_shapes_free_mesh(parMesh);
 		}
@@ -50,13 +50,13 @@ public class ParShapesLoader {
 	private ParShapesLoader() {}
 
 	/**
-	 * Generate a new cube {@link StaticMesh}.
+	 * Generate a new cube {@link Mesh}.
 	 * <p>
 	 * This will center the cube on [0, 0, 0].
 	 * @param scale size of the cube.
-	 * @return a cube {@code StaticMesh}
+	 * @return a cube {@code Mesh}
 	 */
-	public static StaticMesh loadCube(float scale) {
+	public static Mesh loadCube(float scale) {
 		return builder
 				.createCube()
 				.scale(scale, scale, scale)
@@ -65,11 +65,11 @@ public class ParShapesLoader {
 	}
 	
 	/**
-	 * Generate a plane {@link StaticMesh}.
+	 * Generate a plane {@link Mesh}.
 	 * @param scale size of the plane.
-	 * @return a plane {@code StaticMesh}.
+	 * @return a plane {@code Mesh}.
 	 */
-	public static StaticMesh loadPlane(float scale) {
+	public static Mesh loadPlane(float scale) {
 		return builder.createPlane(100, 100)
 				.scale(scale, 1, scale)
 				.translate(-scale / 2, 0, -scale / 2)
@@ -77,11 +77,11 @@ public class ParShapesLoader {
 	}
 	
 	/**
-	 * Generate a sphere {@link StaticMesh}.
+	 * Generate a sphere {@link Mesh}.
 	 * @param radius the radius of the sphere.
-	 * @return a sphere {@link StaticMesh}.
+	 * @return a sphere {@link Mesh}.
 	 */
-	public static StaticMesh loadSphere(float radius) {
+	public static Mesh loadSphere(float radius) {
 		float diameter = radius * 2;
 		return builder.createSphere(16, 16)
 				.scale(diameter, diameter, diameter)
@@ -90,40 +90,40 @@ public class ParShapesLoader {
 	}
 	
 	/**
-	 * Generate an L-System {@link StaticMesh}.
+	 * Generate an L-System {@link Mesh}.
 	 * @param program instructions defining the L-System to create.
-	 * @return an L-System {@link StaticMesh}.
+	 * @return an L-System {@link Mesh}.
 	 */
-	public static StaticMesh loadLSystem(String program) {
+	public static Mesh loadLSystem(String program) {
 		return builder.createLSystem(program, 5, 60)
 				.build(STATIC_MESH_BUILDER);
 	}
 	
 	/**
-	 * Generate a new custom {@link StaticMesh}.
+	 * Generate a new custom {@link Mesh}.
 	 * @param builder the {@link ParShapesBuilder} defining the mesh to create with all transformations.
-	 * @return a custom {@link StaticMesh}.
+	 * @return a custom {@link Mesh}.
 	 */
-	public static StaticMesh loadBuilder(ParShapesBuilder builder) {
+	public static Mesh loadBuilder(ParShapesBuilder builder) {
 		return builder.build(STATIC_MESH_BUILDER);
 	}
 	
 	/**
-	 * Generate a new custom {@link StaticMesh}.
+	 * Generate a new custom {@link Mesh}.
 	 * @param buildFunction a Function to construct a mesh from.
-	 * @return a custom {@link StaticMesh}.
+	 * @return a custom {@link Mesh}.
 	 */
-	public static StaticMesh loadFromBuilder(Function<ParShapesBuilder, StaticMesh> buildFunction) {
+	public static Mesh loadFromBuilder(Function<ParShapesBuilder, Mesh> buildFunction) {
 		return buildFunction.apply(builder);
 	}
 	
 	/**
-	 * Generate a new {@link StaticInstancedMesh}.
+	 * Generate a new {@link InstancedMesh}.
 	 * @param builder the {@link ParShapesBuilder} defining the mesh to create with all transformations.
 	 * @param instanceCount the total number of instances to allocate.
-	 * @return a new {@code StaticInstancedMesh}
+	 * @return a new {@code InstancedMesh}
 	 */
-	public static StaticInstancedMesh loadInstancedBuilder(ParShapesBuilder builder, int instanceCount) {
+	public static InstancedMesh loadInstancedBuilder(ParShapesBuilder builder, int instanceCount) {
 		return builder.build(parMesh -> {
 			int vertexCount = parMesh.npoints();
 			int vert3D = vertexCount * 3;
@@ -140,7 +140,7 @@ public class ParShapesLoader {
 				FloatBuffer aabb = stack.mallocFloat(6);
 				par_shapes_compute_aabb(parMesh, aabb);
 
-				return new StaticInstancedMesh(new InstancedMeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()), instancedBuffers), instanceCount);
+				return new InstancedMesh(new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()), 1, instancedBuffers), instanceCount);
 			} finally {
 				par_shapes_free_mesh(parMesh);
 			}
