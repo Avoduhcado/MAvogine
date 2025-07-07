@@ -7,6 +7,7 @@ import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 import org.lwjgl.opengl.GL20;
 
 /**
+ * TODO Nest inside of VBO
  * @param index 
  */
 public record VertexAttrib(int index) {
