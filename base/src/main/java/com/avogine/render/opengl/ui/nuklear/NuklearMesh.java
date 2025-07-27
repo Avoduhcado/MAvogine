@@ -66,12 +66,15 @@ public class NuklearMesh {
 
 	private void setupMesh() {
 		// buffer setup
-		vao = VAO.gen().bind()
-				.vertexBuffer(VBO.gen().bind()
-						.enable(VertexAttrib.array(0).pointer(new VertexAttrib.Pointer(2, GL_FLOAT, false, 20, 0)))
-						.enable(VertexAttrib.array(1).pointer(new VertexAttrib.Pointer(2, GL_FLOAT, false, 20, 8)))
-						.enable(VertexAttrib.array(2).pointer(new VertexAttrib.Pointer(4, GL_UNSIGNED_BYTE, true, 20, 16))))
-				.vertexBuffer(VBO.genEBO().bind());
+		vao = VAO.gen(
+				() -> {
+					var vbo = VBO.gen().bind();
+					VertexAttrib.array(0).pointer(new VertexAttrib.Pointer(2, GL_FLOAT, false, 20, 0)).enable();
+					VertexAttrib.array(1).pointer(new VertexAttrib.Pointer(2, GL_FLOAT, false, 20, 8)).enable();
+					VertexAttrib.array(2).pointer(new VertexAttrib.Pointer(4, GL_UNSIGNED_BYTE, true, 20, 16)).enable();
+					return vbo;
+				},
+				() -> VBO.genEBO().bind());
 		
 		VAO.unbind();
 	}

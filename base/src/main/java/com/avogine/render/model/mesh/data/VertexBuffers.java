@@ -4,7 +4,6 @@ import static org.lwjgl.system.MemoryUtil.memFree;
 
 import java.nio.*;
 
-
 /**
  * @param positions 
  * @param normals 
@@ -26,7 +25,7 @@ public record VertexBuffers(
 		FloatBuffer weights,
 		IntBuffer boneIds,
 		IntBuffer indices) implements AutoCloseable {
-
+	
 	/**
 	 * @param positions
 	 * @param normals

@@ -6,11 +6,6 @@ import java.nio.FloatBuffer;
  * @param positions 
  * @param maxInstances 
  */
-public record ParticleMeshData(FloatBuffer positions, int maxInstances) implements VertexData {
-
-	@Override
-	public int getVertexCount() {
-		return positions.limit() / 3;
-	}
+public record ParticleMeshData(FloatBuffer positions, int maxInstances) {
 
 }

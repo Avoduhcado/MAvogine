@@ -1,13 +1,12 @@
 package com.avogine.render.opengl;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
-import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
+import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 import org.lwjgl.opengl.GL20;
 
 /**
- * TODO Nest inside of VBO
  * @param index 
  */
 public record VertexAttrib(int index) {
@@ -18,6 +17,13 @@ public record VertexAttrib(int index) {
 	 */
 	public static VertexAttrib array(int index) {
 		return new VertexAttrib(index);
+	}
+	
+	/**
+	 * 
+	 */
+	public void enable() {
+		glEnableVertexAttribArray(index);
 	}
 	
 	/**

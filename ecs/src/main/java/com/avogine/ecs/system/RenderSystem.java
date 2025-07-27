@@ -66,7 +66,7 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 			modelCache.getTexture(material.getDiffuseTexturePath()).bind();
 			
 			material.getMeshes().forEach(mesh -> {
-				mesh.bind();
+				mesh.getVAO().bind();
 				
 				model.identity().translationRotateScale(
 						entity.transform.position().x, entity.transform.position().y, entity.transform.position().z,

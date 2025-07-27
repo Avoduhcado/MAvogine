@@ -1,7 +1,6 @@
 package com.avogine.render.opengl;
 
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 
 import java.nio.*;
 
@@ -12,6 +11,7 @@ import org.lwjgl.opengl.GL15;
  * @param target 
  */
 public record VBO(int id, int target) {
+	
 	/**
 	 * @param target 
 	 * @return a new Vertex Buffer Object wrapper generated with {@link GL15#glGenBuffers()} with a specific buffer target.
@@ -130,14 +130,4 @@ public record VBO(int id, int target) {
 	public <T extends Buffer> VBO bufferSubData(T data) {
 		return bufferSubData(0, data);
 	}
-	
-	/**
-	 * @param vertexAttrib
-	 * @return this
-	 */
-	public VBO enable(VertexAttrib vertexAttrib) {
-		glEnableVertexAttribArray(vertexAttrib.index());
-		return this;
-	}
-	
 }

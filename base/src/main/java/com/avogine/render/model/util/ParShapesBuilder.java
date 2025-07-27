@@ -169,4 +169,14 @@ public class ParShapesBuilder {
 		return builder.build(parMesh);
 	}
 	
+	/**
+	 * @param <T>
+	 * @param builder
+	 * @param instanceCount
+	 * @return the result of {@code builder}
+	 */
+	public <T> T build(InstancedBuildFunction<T> builder, int instanceCount) {
+		return builder.build(parMesh, instanceCount);
+	}
+	
 }

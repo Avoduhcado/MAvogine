@@ -14,17 +14,19 @@ import com.avogine.util.ResourceUtils;
 /**
  *
  */
-public class AssimpFileReader {
+public class AssimpFileUtils {
 
+	private AssimpFileUtils() {}
+	
 	/**
 	 * @param modelPath
 	 * @param flags
-	 * @return
+	 * @return an {@link AIScene} read from the given modelPath, loaded into memory.
 	 */
 	@SuppressWarnings({
 		"java:S2095" // The actual AIFileIO instance holds very little of its own memory which should be fine to be GC'd and its AIFile proc's are being manually freed which provide the bulk of the memory footprint.
 	})
-	public AIScene loadFromMemory(String modelPath, int flags) {
+	public static AIScene readSceneFromMemory(String modelPath, int flags) {
 		AIFileIO fileIo = AIFileIO.create()
 				.OpenProc((pFileIO, fileName, openMode) -> {
 					String fileNameUtf8 = memUTF8(fileName);
@@ -72,9 +74,9 @@ public class AssimpFileReader {
 	
 	/**
 	 * @param aiScene
-	 * @return
+	 * @return a list of {@link AIMaterial} data read from the given scene.
 	 */
-	public List<AIMaterial> readMaterials(AIScene aiScene) {
+	public static List<AIMaterial> readMaterials(AIScene aiScene) {
 		int numMaterials = aiScene.mNumMaterials();
 		PointerBuffer materialsBuffer = aiScene.mMaterials();
 		List<AIMaterial> aiMaterials = new ArrayList<>(numMaterials);
@@ -87,9 +89,9 @@ public class AssimpFileReader {
 	
 	/**
 	 * @param aiScene
-	 * @return
+	 * @return a list of {@link AIMesh} data read from the given scene.
 	 */
-	public List<AIMesh> readMeshes(AIScene aiScene) {
+	public static List<AIMesh> readMeshes(AIScene aiScene) {
 		int numMeshes = aiScene.mNumMeshes();
 		PointerBuffer meshesBuffer = aiScene.mMeshes();
 		List<AIMesh> aiMeshes = new ArrayList<>(numMeshes);
@@ -102,9 +104,9 @@ public class AssimpFileReader {
 	
 	/**
 	 * @param aiScene
-	 * @return
+	 * @return a list of {@link AIAnimation} data read from the given scene.
 	 */
-	public List<AIAnimation> readAnimations(AIScene aiScene) {
+	public static List<AIAnimation> readAnimations(AIScene aiScene) {
 		int numAnimations = aiScene.mNumAnimations();
 		PointerBuffer animationsBuffer = aiScene.mAnimations();
 		List<AIAnimation> aiAnimations = new ArrayList<>();

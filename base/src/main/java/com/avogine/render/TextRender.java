@@ -64,10 +64,11 @@ public class TextRender {
 		int textBufferCapacity = TEXT_LENGTH_LIMIT * 4 * 6;
 		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
 		try {
-			textVao = VAO.gen().bind()
-					.vertexBuffer(VBO.gen().bind()
-							.bufferData(textVertices, GL_DYNAMIC_DRAW).enable(VertexAttrib.array(0)
-									.pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(4))));
+			textVao = VAO.gen(() -> {
+				var vbo = VBO.gen().bind().bufferData(textVertices, GL_DYNAMIC_DRAW);
+				VertexAttrib.array(0).pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(4)).enable();
+				return vbo;
+			});
 		} finally {
 			MemoryUtil.memFree(textVertices);
 		}

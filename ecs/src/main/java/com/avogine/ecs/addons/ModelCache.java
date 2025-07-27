@@ -7,7 +7,7 @@ import com.avogine.ecs.*;
 import com.avogine.render.opengl.Texture;
 import com.avogine.render.opengl.image.util.TextureCache;
 import com.avogine.render.opengl.model.Model;
-import com.avogine.render.opengl.model.util.AvoModelLoader;
+import com.avogine.render.opengl.model.util.ModelLoader;
 
 /**
  * 
@@ -42,7 +42,7 @@ public class ModelCache implements EntitySystemAddon {
 	 * @return
 	 */
 	public Model getStaticModel(String modelFile, String texturePath) {
-		return modelMap.computeIfAbsent(modelFile, v -> new AvoModelLoader().loadModel(modelFile, texturePath, textureCache, false));
+		return modelMap.computeIfAbsent(modelFile, v -> ModelLoader.loadModel(modelFile, texturePath, textureCache, false));
 	}
 	
 	/**

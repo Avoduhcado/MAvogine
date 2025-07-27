@@ -13,7 +13,7 @@ import org.lwjgl.util.par.ParShapesMesh;
 import com.avogine.render.model.mesh.data.*;
 import com.avogine.render.model.util.*;
 import com.avogine.render.opengl.model.mesh.*;
-import com.avogine.render.opengl.model.mesh.data.MeshData;
+import com.avogine.render.opengl.model.mesh.data.*;
 
 /**
  * Utility class for immediate {@link Mesh} creation via {@link ParShapesBuilder}.
@@ -140,7 +140,7 @@ public class ParShapesLoader {
 				FloatBuffer aabb = stack.mallocFloat(6);
 				par_shapes_compute_aabb(parMesh, aabb);
 
-				return new InstancedMesh(new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()), 1, instancedBuffers), instanceCount);
+				return new InstancedMesh(new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()), 1), new InstancedData(instancedBuffers, instanceCount));
 			} finally {
 				par_shapes_free_mesh(parMesh);
 			}

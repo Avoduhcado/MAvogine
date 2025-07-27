@@ -15,7 +15,7 @@ import org.lwjgl.assimp.*;
 import com.avogine.render.model.MaterialData;
 import com.avogine.render.model.animation.*;
 import com.avogine.render.model.mesh.data.VertexBuffers;
-import com.avogine.render.model.util.AssimpFileReader;
+import com.avogine.render.model.util.AssimpFileUtils;
 import com.avogine.render.opengl.image.util.TextureCache;
 import com.avogine.render.opengl.model.*;
 import com.avogine.render.opengl.model.mesh.*;
@@ -24,7 +24,7 @@ import com.avogine.render.opengl.model.mesh.data.MeshData;
 /**
  *
  */
-public class AvoModelLoader {
+public class ModelLoader {
 	/**
 	 * Max number of bone weights that can be applied to a single vertex.
 	 */
@@ -42,15 +42,8 @@ public class AvoModelLoader {
 	private record Bone(int boneId, String boneName, Matrix4f offsetMatrix) {}
 
 	private record VertexWeight(int boneId, int vertexId, float weight) {}
-
-	private final AssimpFileReader fileReader;
 	
-	/**
-	 * 
-	 */
-	public AvoModelLoader() {
-		fileReader = new AssimpFileReader();
-	}
+	private ModelLoader() {}
 	
 	/**
 	 * TODO convert modelPath to modelName, source modelName from a resource property that points to the file location and pass _that_ file location to the reader
@@ -60,18 +53,18 @@ public class AvoModelLoader {
 	 * @param animated 
 	 * @return
 	 */
-	public Model loadModel(String id, String modelPath, TextureCache textureCache, boolean animated) {
-		AIScene aiScene = fileReader.loadFromMemory(modelPath, aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
+	public static Model loadModel(String id, String modelPath, TextureCache textureCache, boolean animated) {
+		AIScene aiScene = AssimpFileUtils.readSceneFromMemory(modelPath, aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
 				aiProcess_Triangulate | aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights |
 				aiProcess_GenBoundingBoxes | (animated ? 0 : aiProcess_PreTransformVertices));
 		
-		List<AIMaterial> aiMaterials = fileReader.readMaterials(aiScene);
+		List<AIMaterial> aiMaterials = AssimpFileUtils.readMaterials(aiScene);
 		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
 		List<Material> materials = aiMaterials.stream()
 				.map(aiMaterial -> processMaterial(aiMaterial, modelDirectory, textureCache))
 				.toList();
 		
-		List<AIMesh> aiMeshes = fileReader.readMeshes(aiScene);
+		List<AIMesh> aiMeshes = AssimpFileUtils.readMeshes(aiScene);
 		List<Bone> bones = new ArrayList<>();
 		Material defaultMaterial = new Material();
 		for (AIMesh aiMesh : aiMeshes) {
@@ -88,7 +81,7 @@ public class AvoModelLoader {
 			materials.add(defaultMaterial);
 		}
 		
-		List<AIAnimation> aiAnimations = fileReader.readAnimations(aiScene);
+		List<AIAnimation> aiAnimations = AssimpFileUtils.readAnimations(aiScene);
 		List<Animation> animations = new ArrayList<>();
 		if (!aiAnimations.isEmpty()) {
 			Node rootNode = buildNodesTree(aiScene.mRootNode(), null);
@@ -101,7 +94,7 @@ public class AvoModelLoader {
 		return new Model(id, materials, animations);
 	}
 	
-	private Material processMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
+	private static Material processMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
 		AIColor4D color = AIColor4D.create();
 		Vector4f diffuseColor = processMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, color);
 		Vector4f ambientColor = processMaterialColor(aiMaterial, AI_MATKEY_COLOR_AMBIENT, color);
@@ -124,7 +117,7 @@ public class AvoModelLoader {
 		return new Material(diffuseColor, ambientColor, specularColor, reflectance, diffuseTexturePath, ambientTexturePath, specularTexturePath, normalsTexturePath);
 	}
 	
-	private Vector4f processMaterialColor(AIMaterial aiMaterial, String materialKeyColor, AIColor4D color) {
+	private static Vector4f processMaterialColor(AIMaterial aiMaterial, String materialKeyColor, AIColor4D color) {
 		int result = aiGetMaterialColor(aiMaterial, materialKeyColor, aiTextureType_NONE, 0, color);
 		if (result == aiReturn_SUCCESS) {
 			return new Vector4f(color.r(), color.g(), color.b(), color.a());
@@ -132,7 +125,7 @@ public class AvoModelLoader {
 		return MaterialData.DEFAULT_COLOR;
 	}
 	
-	private String processMaterialTexture(AIMaterial aiMaterial, int textureType, AIString texturePath, String modelDirectory, TextureCache textureCache) {
+	private static String processMaterialTexture(AIMaterial aiMaterial, int textureType, AIString texturePath, String modelDirectory, TextureCache textureCache) {
 		aiGetMaterialTexture(aiMaterial, textureType, 0, texturePath, (IntBuffer) null, null, null, null, null, null);
 		String filePath = texturePath.dataString();
 		if (filePath != null && !filePath.isBlank()) {
@@ -142,7 +135,7 @@ public class AvoModelLoader {
 		return null;
 	}
 	
-	private MeshData processMesh(AIMesh aiMesh, List<Bone> bones) {
+	private static MeshData processMesh(AIMesh aiMesh, List<Bone> bones) {
 		FloatBuffer positions = processVertices(aiMesh);
 		FloatBuffer normals = processNormals(aiMesh);
 		FloatBuffer tangents = processTangents(aiMesh);
@@ -158,14 +151,14 @@ public class AvoModelLoader {
 		return new MeshData(new VertexBuffers(positions, normals, tangents, bitangents, textureCoordinates, animMeshData.weights(), animMeshData.boneIds(), indices), aabb, materialIndex);
 	}
 	
-	private FloatBuffer processVertices(AIMesh aiMesh) {
+	private static FloatBuffer processVertices(AIMesh aiMesh) {
 		AIVector3D.Buffer buffer = aiMesh.mVertices();
 		FloatBuffer data = memAllocFloat(buffer.remaining() * 3);
 		buffer.stream().forEach(vertex -> data.put(vertex.x()).put(vertex.y()).put(vertex.z()));
 		return data.flip();
 	}
 	
-	private FloatBuffer processNormals(AIMesh aiMesh) {
+	private static FloatBuffer processNormals(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MNORMALS)) {
 			return memCallocFloat(aiMesh.mNumVertices() * 3);
 		}
@@ -176,7 +169,7 @@ public class AvoModelLoader {
 		return data.flip();
 	}
 	
-	private FloatBuffer processTangents(AIMesh aiMesh) {
+	private static FloatBuffer processTangents(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MTANGENTS)) {
 			return memCallocFloat(aiMesh.mNumVertices() * 3);
 		}
@@ -187,7 +180,7 @@ public class AvoModelLoader {
 		return data.flip();
 	}
 	
-	private FloatBuffer processBitangents(AIMesh aiMesh) {
+	private static FloatBuffer processBitangents(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MBITANGENTS)) {
 			return memCallocFloat(aiMesh.mNumVertices() * 3);
 		}
@@ -198,7 +191,7 @@ public class AvoModelLoader {
 		return data.flip();
 	}
 	
-	private FloatBuffer processTextureCoordinates(AIMesh aiMesh) {
+	private static FloatBuffer processTextureCoordinates(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MTEXTURECOORDS)) {
 			return memCallocFloat(aiMesh.mNumVertices() * 2);
 		}
@@ -209,7 +202,7 @@ public class AvoModelLoader {
 		return data.flip();
 	}
 	
-	private AnimMeshData processBones(AIMesh aiMesh, List<Bone> bones) {
+	private static AnimMeshData processBones(AIMesh aiMesh, List<Bone> bones) {
 		if (aiMesh.isNull(AIMesh.MBONES)) {
 			return new AnimMeshData(memCallocFloat(aiMesh.mNumVertices() * MAX_WEIGHTS), memCallocInt(aiMesh.mNumVertices() * MAX_WEIGHTS));
 		}
@@ -250,7 +243,7 @@ public class AvoModelLoader {
 		return new AnimMeshData(weights.flip(), boneIds.flip());
 	}
 	
-	private IntBuffer processIndices(AIMesh aiMesh) {
+	private static IntBuffer processIndices(AIMesh aiMesh) {
 		int numFaces = aiMesh.mNumFaces();
 		IntBuffer indices = memAllocInt(numFaces * 3);
 		AIFace.Buffer aiFaces = aiMesh.mFaces();
@@ -262,14 +255,14 @@ public class AvoModelLoader {
 		return indices.flip();
 	}
 	
-	private AABBf processAABB(AIMesh aiMesh) {
+	private static AABBf processAABB(AIMesh aiMesh) {
 		AIAABB aiaabb = aiMesh.mAABB();
 		AIVector3D aiMin = aiaabb.mMin();
 		AIVector3D aiMax = aiaabb.mMax();
 		return new AABBf(aiMin.x(), aiMin.y(), aiMin.z(), aiMax.x(), aiMax.y(), aiMax.z());
 	}
 	
-	private Matrix4f toMatrix(AIMatrix4x4 aiMatrix4x4) {
+	private static Matrix4f toMatrix(AIMatrix4x4 aiMatrix4x4) {
 		Matrix4f result = new Matrix4f();
 		result.m00(aiMatrix4x4.a1());
 		result.m10(aiMatrix4x4.a2());
@@ -291,7 +284,7 @@ public class AvoModelLoader {
 		return result;
 	}
 	
-	private Node buildNodesTree(AINode aiNode, Node parentNode) {
+	private static Node buildNodesTree(AINode aiNode, Node parentNode) {
 		String nodeName = aiNode.mName().dataString();
 		Node node = new Node(nodeName, parentNode, toMatrix(aiNode.mTransformation()));
 		
@@ -306,7 +299,7 @@ public class AvoModelLoader {
 		return node;
 	}
 	
-	private List<Animation> processAnimations(AIScene aiScene, List<Bone> bones, Node rootNode, Matrix4f globalInverseTransformation) {
+	private static List<Animation> processAnimations(AIScene aiScene, List<Bone> bones, Node rootNode, Matrix4f globalInverseTransformation) {
 		List<Animation> animations = new ArrayList<>();
 		
 		// Process all animations
@@ -332,7 +325,7 @@ public class AvoModelLoader {
 		return animations;
 	}
 	
-	private int calcAnimationMaxFrames(AIAnimation aiAnimation) {
+	private static int calcAnimationMaxFrames(AIAnimation aiAnimation) {
 		int maxFrames = 0;
 		int numNodeAnims = aiAnimation.mNumChannels();
 		PointerBuffer aiChannels = aiAnimation.mChannels();
@@ -345,7 +338,7 @@ public class AvoModelLoader {
 		return maxFrames;
 	}
 	
-	private void buildFrameMatrices(AIAnimation aiAnimation, List<Bone> bones, AnimatedFrame animatedFrame, int frame, Node node, Matrix4f parentTransformation, Matrix4f globalInverseTransformation) {
+	private static void buildFrameMatrices(AIAnimation aiAnimation, List<Bone> bones, AnimatedFrame animatedFrame, int frame, Node node, Matrix4f parentTransformation, Matrix4f globalInverseTransformation) {
 		String nodeName = node.getName();
 		AINodeAnim aiNodeAnim = findAINodeAnim(aiAnimation, nodeName);
 		Matrix4f nodeTransformation = node.getNodeTransformation();
@@ -366,7 +359,7 @@ public class AvoModelLoader {
 		}
 	}
 	
-	private AINodeAnim findAINodeAnim(AIAnimation aiAnimation, String nodeName) {
+	private static AINodeAnim findAINodeAnim(AIAnimation aiAnimation, String nodeName) {
 		AINodeAnim result = null;
 		int numAnimNodes = aiAnimation.mNumChannels();
 		PointerBuffer aiChannels = aiAnimation.mChannels();
@@ -380,7 +373,7 @@ public class AvoModelLoader {
 		return result;
 	}
 	
-	private Matrix4f buildNodeTransformationMatrix(AINodeAnim aiNodeAnim, int frame) {
+	private static Matrix4f buildNodeTransformationMatrix(AINodeAnim aiNodeAnim, int frame) {
 		AIVectorKey.Buffer positionKeys = aiNodeAnim.mPositionKeys();
 		AIVectorKey.Buffer scalingKeys = aiNodeAnim.mScalingKeys();
 		AIQuatKey.Buffer rotationKeys = aiNodeAnim.mRotationKeys();

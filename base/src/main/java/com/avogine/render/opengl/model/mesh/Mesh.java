@@ -7,54 +7,62 @@ import org.joml.primitives.AABBf;
 import com.avogine.render.model.mesh.Boundable;
 import com.avogine.render.model.mesh.data.VertexBuffers;
 import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.VAO.VBOBuilder;
 import com.avogine.render.opengl.model.mesh.data.MeshData;
 
 /**
- *  
+ * 
  */
-public class Mesh extends VertexArrayObject<MeshData> implements Boundable {
+public class Mesh implements Renderable, Boundable {
 	
 	private final AABBf aabb;
+	private int vertexCount;
+	private VAO vao;
+
+	protected Mesh(AABBf aabb, int vertexCount, VAO vao) {
+		this.aabb = aabb;
+		this.vertexCount = vertexCount;
+		this.vao = vao;
+	}
 	
 	/**
 	 * @param meshData
 	 */
 	public Mesh(MeshData meshData) {
-		super(meshData);
-		aabb = meshData.aabb();
+		this(meshData.aabb(), meshData.getVertexCount(), initVAO(meshData));
 	}
+	
+	private static VAO initVAO(MeshData meshData) {
+		try (VertexBuffers vertexBuffers = meshData.vertexBuffers()) {
+			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var w, var b, var indices)) {
+				var vertexAttrib3f = VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(3);
 
-	@Override
-	protected int generateVertexArray(MeshData vertexData) {
-		try (VertexBuffers vertexBuffers = vertexData.vertexBuffers()) {
-			var vertexAttrib3f = VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(3);
-			int vaoID = VAO.gen().bind().id();
-			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.positions())
-							.enable(VertexAttrib.array(0)
-									.pointer(vertexAttrib3f)).id());
-			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.normals())
-					.enable(VertexAttrib.array(1)
-							.pointer(vertexAttrib3f)).id());
-			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.tangents())
-					.enable(VertexAttrib.array(2)
-							.pointer(vertexAttrib3f)).id());
-			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.bitangents())
-					.enable(VertexAttrib.array(3)
-							.pointer(vertexAttrib3f)).id());
-			getVertexBufferObjects().add(VBO.gen().bind().bufferData(vertexBuffers.textureCoordinates())
-					.enable(VertexAttrib.array(4)
-							.pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(2))).id());
-			getVertexBufferObjects().add(VBO.genEBO().bind().bufferData(vertexBuffers.indices()).id());
-			
-			return vaoID;
+				return VAO.gen(
+						new VBOBuilder<>(positions, 0, vertexAttrib3f), 
+						new VBOBuilder<>(normals, 1, vertexAttrib3f),
+						new VBOBuilder<>(tangents, 2, vertexAttrib3f),
+						new VBOBuilder<>(bitangents, 3, vertexAttrib3f),
+						new VBOBuilder<>(textureCoordinates, 4, VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(2)),
+						() -> VBO.genEBO().bind().bufferData(indices));
+			} else {
+				throw new IllegalArgumentException("Record deconstruction failed.");
+			}
 		} finally {
 			VAO.unbind();
 		}
 	}
-
-	/**
-	 * Render this mesh.
-	 */
+	
+	@Override
+	public void cleanup() {
+		vao.cleanup();
+	}
+	
+	@Override
+	public void bind() {
+		vao.bind();
+	}
+	
+	@Override
 	public void draw() {
 		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
 	}
@@ -62,6 +70,22 @@ public class Mesh extends VertexArrayObject<MeshData> implements Boundable {
 	@Override
 	public AABBf getAABB() {
 		return aabb;
+	}
+
+	/**
+	 * @return the vertexCount
+	 */
+	@Override
+	public int getVertexCount() {
+		return vertexCount;
+	}
+	
+	/**
+	 * @return the vao
+	 */
+	@Override
+	public VAO getVAO() {
+		return vao;
 	}
 	
 }
