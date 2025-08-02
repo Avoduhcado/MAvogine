@@ -67,7 +67,7 @@ public class ParShapesLoader {
 	/**
 	 * Generate a plane {@link Mesh}.
 	 * @param scale size of the plane.
-	 * @return a plane {@code Mesh2}.
+	 * @return a plane {@code Mesh}.
 	 */
 	public static Mesh loadPlane(float scale) {
 		return builder.createPlane(100, 100)
@@ -121,7 +121,7 @@ public class ParShapesLoader {
 	 * Generate a new {@link InstancedMesh}.
 	 * @param builder the {@link ParShapesBuilder} defining the mesh to create with all transformations.
 	 * @param instanceCount the total number of instances to allocate.
-	 * @return a new {@code InstancedMesh2}
+	 * @return a new {@code InstancedMesh}
 	 */
 	public static InstancedMesh loadInstancedBuilder(ParShapesBuilder builder, int instanceCount) {
 		return builder.build(parMesh -> {
