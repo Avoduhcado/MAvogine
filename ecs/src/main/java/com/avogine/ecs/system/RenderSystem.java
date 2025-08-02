@@ -13,7 +13,7 @@ import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
 import com.avogine.render.opengl.VertexArrayObject;
-import com.avogine.render.shader.BasicShader;
+import com.avogine.render.opengl.shader.BasicShader;
 
 /**
  *

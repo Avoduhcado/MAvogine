@@ -9,8 +9,8 @@ import org.lwjgl.opengl.*;
 
 import com.avogine.game.ui.NuklearGUI;
 import com.avogine.io.Window;
+import com.avogine.render.opengl.shader.NuklearShader;
 import com.avogine.render.opengl.ui.nuklear.NuklearMesh;
-import com.avogine.render.shader.NuklearShader;
 
 /**
  *

@@ -12,9 +12,9 @@ import com.avogine.logging.AvoLog;
 import com.avogine.render.font.FontCache;
 import com.avogine.render.opengl.VertexArrayObject;
 import com.avogine.render.opengl.font.Font;
+import com.avogine.render.opengl.shader.FontShader;
 import com.avogine.render.opengl.ui.data.BufferVertexArrayData;
 import com.avogine.render.opengl.ui.text.TextMesh;
-import com.avogine.render.shader.FontShader;
 import com.avogine.util.resource.ResourceConstants;
 
 /**
