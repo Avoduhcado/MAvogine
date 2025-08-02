@@ -1,4 +1,4 @@
-package com.avogine.render;
+package com.avogine.render.opengl.ui;
 
 import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL13.glActiveTexture;

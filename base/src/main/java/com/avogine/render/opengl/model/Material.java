@@ -5,6 +5,7 @@ import java.util.*;
 import org.joml.Vector4f;
 
 import com.avogine.render.model.MaterialData;
+import com.avogine.render.model.mesh.Boundable;
 import com.avogine.render.opengl.model.mesh.*;
 
 /**
@@ -23,7 +24,7 @@ public class Material {
 	
 	private String normalsTexturePath;
 	
-	private List<Mesh> meshes;
+	private List<MaterialMesh<?>> meshes;
 
 	/**
 	 * @param diffuseColor
@@ -38,7 +39,7 @@ public class Material {
 	 */
 	public Material(Vector4f diffuseColor, Vector4f ambientColor, Vector4f specularColor, float reflectance,
 			String diffuseTexturePath, String ambientTexturePath, String specularTexturePath, String normalsTexturePath,
-			List<Mesh> meshes) {
+			List<MaterialMesh<?>> meshes) {
 		this.diffuseColor = diffuseColor;
 		this.ambientColor = ambientColor;
 		this.specularColor = specularColor;
@@ -95,10 +96,10 @@ public class Material {
 	}
 	
 	/**
-	 * Free all {@link Mesh} data.
+	 * Free all {@link MaterialMesh} data.
 	 */
 	public void cleanup() {
-		meshes.forEach(Mesh::cleanup);
+		meshes.forEach(MaterialMesh::cleanup);
 		meshes.clear();
 	}
 	
@@ -215,37 +216,76 @@ public class Material {
 	}
 	
 	/**
+	 * Retrieve all {@link MaterialMesh}es contained in this material.
+	 * </br>
+	 * This method should only be used for debugging purposes. Intended usage is through
+	 * the typed retrieval methods, i.e. {@link Material#getStaticMeshes()}, {@link Material#getAnimatedMeshes()}.
+	 * @return the meshes
+	 */
+	public List<MaterialMesh<?>> getMeshes() {
+		return meshes;
+	}
+	
+	/**
 	 * @return
 	 */
-	public List<Mesh> getStaticMeshes() {
+	public List<Mesh2> getStaticMeshes() {
 		return meshes.stream()
-				.filter(Mesh.class::isInstance)
-				.map(Mesh.class::cast)
+				.filter(Mesh2.class::isInstance)
+				.map(Mesh2.class::cast)
 				.toList();
 	}
 	
 	/**
 	 * @return
 	 */
-	public List<AnimatedMesh> getAnimatedMeshes() {
+	public List<AnimatedMesh2> getAnimatedMeshes() {
 		return meshes.stream()
-				.filter(AnimatedMesh.class::isInstance)
-				.map(AnimatedMesh.class::cast)
+				.filter(AnimatedMesh2.class::isInstance)
+				.map(AnimatedMesh2.class::cast)
 				.toList();
 	}
-
+	
 	/**
-	 * @return the meshes
+	 * @return
 	 */
-	public List<Mesh> getMeshes() {
-		return meshes;
+	public List<InstancedMesh2> getInstancedMeshes() {
+		return meshes.stream()
+				.filter(InstancedMesh2.class::isInstance)
+				.map(InstancedMesh2.class::cast)
+				.toList();
+	}
+	
+	/**
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends MaterialMesh<?> & Boundable> List<T> getBoundableMeshes() {
+		return meshes.stream()
+				.filter(mesh -> mesh instanceof MaterialMesh && mesh instanceof Boundable)
+				.map(mesh -> (T) mesh)
+				.toList();
+	}
+	
+	/**
+	 * @param mesh
+	 */
+	public void addMesh(MaterialMesh<?> mesh) {
+		meshes.add(mesh);
 	}
 	
 	/**
 	 * @param meshes the meshes to set
 	 */
-	public void setMeshes(List<Mesh> meshes) {
+	public void setMeshes(List<MaterialMesh<?>> meshes) {
 		this.meshes = meshes;
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean isMeshesEmpty() {
+		return meshes.isEmpty();
 	}
 	
 }

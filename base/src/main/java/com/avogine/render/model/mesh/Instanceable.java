@@ -10,9 +10,19 @@ public interface Instanceable {
 	/**
 	 * @param <T>
 	 * @param vboIndex
-	 * @param buffer
+	 * @param offset
+	 * @param data
 	 */
-	public <T extends Buffer> void updateInstanceBuffer(int vboIndex, T buffer);
+	public <T extends Buffer> void updateInstanceBuffer(int vboIndex, long offset, T data);
+	
+	/**
+	 * @param <T>
+	 * @param vboIndex
+	 * @param data
+	 */
+	public default <T extends Buffer> void updateInstanceBuffer(int vboIndex, T data) {
+		updateInstanceBuffer(vboIndex, 0, data);
+	}
 
 	/**
 	 * @return the maximum number of instances to support for rendering.

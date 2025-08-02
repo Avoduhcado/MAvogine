@@ -12,7 +12,7 @@ import com.avogine.ecs.components.*;
 import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
-import com.avogine.render.opengl.VAO;
+import com.avogine.render.opengl.VertexArrayObject;
 import com.avogine.render.shader.BasicShader;
 
 /**
@@ -65,8 +65,8 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 			glActiveTexture(GL_TEXTURE0);
 			modelCache.getTexture(material.getDiffuseTexturePath()).bind();
 			
-			material.getMeshes().forEach(mesh -> {
-				mesh.getVAO().bind();
+			material.getBoundableMeshes().forEach(mesh -> {
+				mesh.bind();
 				
 				model.identity().translationRotateScale(
 						entity.transform.position().x, entity.transform.position().y, entity.transform.position().z,
@@ -78,7 +78,7 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 			});
 		});
 		
-		VAO.unbind();
+		VertexArrayObject.unbind();
 	}
 	
 	@Override

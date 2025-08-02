@@ -3,10 +3,10 @@ package com.avogine.ecs.components;
 import java.util.Arrays;
 
 import com.avogine.ecs.EntityComponent;
-import com.avogine.render.opengl.model.mesh.Mesh;
+import com.avogine.render.opengl.model.mesh.Mesh2;
 
 /**
- * @param meshIndices an array of {@link Mesh} IDs used in rendering this component.
+ * @param meshIndices an array of {@link Mesh2} IDs used in rendering this component.
  */
 public record MeshComponent(int[] meshIndices) implements EntityComponent {
 	

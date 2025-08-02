@@ -28,7 +28,7 @@ public class Model {
 		this.id = id;
 		this.materials = materials;
 		this.animations = animations;
-		aabb = materials.stream().flatMap(material -> material.getMeshes().stream())
+		aabb = materials.stream().flatMap(material -> material.getBoundableMeshes().stream())
 				.map(Boundable::getAABB)
 				.reduce(AABBf::union)
 				.orElseGet(AABBf::new);

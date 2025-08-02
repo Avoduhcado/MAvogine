@@ -1,8 +1,7 @@
-package com.avogine.render;
+package com.avogine.render.opengl.ui;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
 
 import java.nio.FloatBuffer;
 
@@ -11,8 +10,10 @@ import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.font.FontCache;
-import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.VertexArrayObject;
 import com.avogine.render.opengl.font.Font;
+import com.avogine.render.opengl.ui.data.BufferVertexArrayData;
+import com.avogine.render.opengl.ui.text.TextMesh;
 import com.avogine.render.shader.FontShader;
 import com.avogine.util.resource.ResourceConstants;
 
@@ -36,7 +37,7 @@ public class TextRender {
 	
 	private boolean retainResolution;
 	
-	private VAO textVao;
+	private TextMesh mesh;
 	
 	private Font defaultFont;
 
@@ -63,15 +64,7 @@ public class TextRender {
 		
 		int textBufferCapacity = TEXT_LENGTH_LIMIT * 4 * 6;
 		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
-		try {
-			textVao = VAO.gen(() -> {
-				var vbo = VBO.gen().bind().bufferData(textVertices, GL_DYNAMIC_DRAW);
-				VertexAttrib.array(0).pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(4)).enable();
-				return vbo;
-			});
-		} finally {
-			MemoryUtil.memFree(textVertices);
-		}
+		mesh = new TextMesh(new BufferVertexArrayData<>(textVertices));
 		
 		defaultFont = fontCache.getFont(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
 	}
@@ -83,8 +76,8 @@ public class TextRender {
 		if (fontShader != null) {
 			fontShader.cleanup();
 		}
-		if (textVao != null) {
-			textVao.cleanup();
+		if (mesh != null) {
+			mesh.cleanup();
 		}
 	}
 	
@@ -138,14 +131,15 @@ public class TextRender {
 			
 			vertexData.flip();
 			
-			textVao.bind().vertexBuffers().get(0).bind().bufferSubData(vertexData);
+			mesh.bind();
+			mesh.updateText(vertexData);
 		} finally {
 			MemoryUtil.memFree(vertexData);
 		}
 		
-		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+		mesh.draw();
 		
-		VAO.unbind();
+		VertexArrayObject.unbind();
 		
 		fontShader.unbind();
 		
@@ -208,5 +202,5 @@ public class TextRender {
 	public void setRetainResolution(boolean retainResolution) {
 		this.retainResolution = retainResolution;
 	}
-	
+
 }
