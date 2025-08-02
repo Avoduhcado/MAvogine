@@ -11,14 +11,14 @@ import com.avogine.render.opengl.model.mesh.data.MeshData;
 /**
  *
  */
-public final class AnimatedMesh2 extends MaterialMesh<MeshData> implements Boundable {
+public final class AnimatedMesh extends MaterialMesh<MeshData> implements Boundable {
 
 	private final AABBf aabb;
 	
 	/**
 	 * @param vertexData
 	 */
-	public AnimatedMesh2(MeshData vertexData) {
+	public AnimatedMesh(MeshData vertexData) {
 		super(vertexData);
 		aabb = vertexData.aabb();
 	}

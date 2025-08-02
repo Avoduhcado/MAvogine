@@ -70,7 +70,7 @@ public class ModelLoader {
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
 			MeshData meshData = processMesh(aiMesh, bones);
-			var mesh = animated ? new AnimatedMesh2(meshData) : new Mesh2(meshData);
+			var mesh = animated ? new AnimatedMesh(meshData) : new Mesh(meshData);
 			if (materialIndex >= 0 && materialIndex < materials.size()) {
 				materials.get(materialIndex).addMesh(mesh);
 			} else {

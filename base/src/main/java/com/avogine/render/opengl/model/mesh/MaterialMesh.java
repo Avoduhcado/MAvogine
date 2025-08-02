@@ -6,7 +6,7 @@ import com.avogine.render.opengl.VertexArrayObject;
 /**
  * 
  */
-public abstract sealed class MaterialMesh<T extends VertexArrayData> extends VertexArrayObject<T> permits Mesh2, InstancedMesh2, AnimatedMesh2 {
+public abstract sealed class MaterialMesh<T extends VertexArrayData> extends VertexArrayObject<T> permits Mesh, InstancedMesh, AnimatedMesh {
 
 	/**
 	 * @param vertexData

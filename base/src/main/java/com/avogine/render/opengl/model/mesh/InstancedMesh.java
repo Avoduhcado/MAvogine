@@ -12,14 +12,14 @@ import com.avogine.render.opengl.model.mesh.data.InstancedMeshData;
 /**
  *
  */
-public final class InstancedMesh2 extends MaterialMesh<InstancedMeshData> implements Instanceable {
+public final class InstancedMesh extends MaterialMesh<InstancedMeshData> implements Instanceable {
 
 	private final int maxInstances;
 	
 	/**
 	 * @param vertexData
 	 */
-	public InstancedMesh2(InstancedMeshData vertexData) {
+	public InstancedMesh(InstancedMeshData vertexData) {
 		super(vertexData);
 		maxInstances = vertexData.maxInstances();
 	}

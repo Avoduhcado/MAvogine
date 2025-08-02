@@ -15,7 +15,7 @@ import com.avogine.render.opengl.model.mesh.data.ParticleVertexData;
 /**
  *
  */
-public class ParticleMesh2 extends VertexArrayObject<ParticleVertexData> implements Instanceable {
+public class ParticleMesh extends VertexArrayObject<ParticleVertexData> implements Instanceable {
 
 	private final int maxInstances;
 	private int currentInstances;
@@ -23,7 +23,7 @@ public class ParticleMesh2 extends VertexArrayObject<ParticleVertexData> impleme
 	/**
 	 * @param vertexData
 	 */
-	public ParticleMesh2(ParticleVertexData vertexData) {
+	public ParticleMesh(ParticleVertexData vertexData) {
 		super(vertexData);
 		maxInstances = vertexData.maxInstances();
 	}

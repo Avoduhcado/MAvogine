@@ -229,30 +229,30 @@ public class Material {
 	/**
 	 * @return
 	 */
-	public List<Mesh2> getStaticMeshes() {
+	public List<Mesh> getStaticMeshes() {
 		return meshes.stream()
-				.filter(Mesh2.class::isInstance)
-				.map(Mesh2.class::cast)
+				.filter(Mesh.class::isInstance)
+				.map(Mesh.class::cast)
 				.toList();
 	}
 	
 	/**
 	 * @return
 	 */
-	public List<AnimatedMesh2> getAnimatedMeshes() {
+	public List<AnimatedMesh> getAnimatedMeshes() {
 		return meshes.stream()
-				.filter(AnimatedMesh2.class::isInstance)
-				.map(AnimatedMesh2.class::cast)
+				.filter(AnimatedMesh.class::isInstance)
+				.map(AnimatedMesh.class::cast)
 				.toList();
 	}
 	
 	/**
 	 * @return
 	 */
-	public List<InstancedMesh2> getInstancedMeshes() {
+	public List<InstancedMesh> getInstancedMeshes() {
 		return meshes.stream()
-				.filter(InstancedMesh2.class::isInstance)
-				.map(InstancedMesh2.class::cast)
+				.filter(InstancedMesh.class::isInstance)
+				.map(InstancedMesh.class::cast)
 				.toList();
 	}
 	
