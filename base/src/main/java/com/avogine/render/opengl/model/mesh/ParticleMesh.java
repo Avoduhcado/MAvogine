@@ -5,33 +5,22 @@ import static org.lwjgl.opengl.GL15.GL_STREAM_DRAW;
 import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
 
 import java.nio.*;
+import java.util.function.Function;
 
 import org.lwjgl.system.MemoryUtil;
 
 import com.avogine.render.model.mesh.Instanceable;
-import com.avogine.render.opengl.VertexArrayObject;
+import com.avogine.render.opengl.*;
 import com.avogine.render.opengl.model.mesh.data.ParticleVertexData;
 
 /**
  *
  */
-public class ParticleMesh extends VertexArrayObject<ParticleVertexData> implements Instanceable {
+public class ParticleMesh extends VertexArrayObject implements Instanceable {
 
-	private final int maxInstances;
-	private int currentInstances;
-	
-	/**
-	 * @param vertexData
-	 */
-	public ParticleMesh(ParticleVertexData vertexData) {
-		super(vertexData);
-		maxInstances = vertexData.maxInstances();
-	}
-
-	@Override
-	protected Builder init(ParticleVertexData vertexData) {
-		try {
-			return initVAO()
+	private static final Function<ParticleVertexData, Builder> PARTICLE_2D_VAO = vertexData -> {
+		try (var builder = new Builder()) {
+			return builder
 					.buffer(VertexBufferObject.arrayBufferStaticDraw(vertexData.positions()))
 					.attrib(VertexAttrib.array(0).pointer(VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3)).divisor(0))
 					.buffer(new VertexBufferObject(GL_STREAM_DRAW).bind().bufferData(4L * Float.BYTES * vertexData.maxInstances()))
@@ -39,9 +28,19 @@ public class ParticleMesh extends VertexArrayObject<ParticleVertexData> implemen
 					.buffer(new VertexBufferObject(GL_STREAM_DRAW).bind().bufferData(4L * Float.BYTES * vertexData.maxInstances()))
 					.attrib(VertexAttrib.array(2).pointer(4, GL_UNSIGNED_BYTE, true, 0, 0).divisor(1));
 		} finally {
-			unbind();
 			MemoryUtil.memFree(vertexData.positions());
 		}
+	};
+	
+	private final int maxInstances;
+	private int currentInstances;
+	
+	/**
+	 * @param vertexData
+	 */
+	public ParticleMesh(ParticleVertexData vertexData) {
+		super(PARTICLE_2D_VAO.apply(vertexData), vertexData.getVertexCount());
+		maxInstances = vertexData.maxInstances();
 	}
 
 	@Override

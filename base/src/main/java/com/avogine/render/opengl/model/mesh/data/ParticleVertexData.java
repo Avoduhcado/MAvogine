@@ -2,13 +2,13 @@ package com.avogine.render.opengl.model.mesh.data;
 
 import java.nio.FloatBuffer;
 
-import com.avogine.render.model.mesh.VertexArrayData;
+import com.avogine.render.model.mesh.VertexData;
 
 /**
  * @param positions 
  * @param maxInstances 
  */
-public record ParticleVertexData(FloatBuffer positions, int maxInstances) implements VertexArrayData {
+public record ParticleVertexData(FloatBuffer positions, int maxInstances) implements VertexData {
 
 	@Override
 	public int getVertexCount() {

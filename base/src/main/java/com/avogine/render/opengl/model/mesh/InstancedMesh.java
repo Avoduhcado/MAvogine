@@ -4,36 +4,28 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
 
 import java.nio.Buffer;
+import java.util.function.BiFunction;
 
 import com.avogine.render.model.mesh.Instanceable;
 import com.avogine.render.model.mesh.data.*;
-import com.avogine.render.opengl.model.mesh.data.InstancedMeshData;
+import com.avogine.render.opengl.VertexBufferObject;
+import com.avogine.render.opengl.model.mesh.data.*;
 
 /**
  *
  */
-public final class InstancedMesh extends MaterialMesh<InstancedMeshData> implements Instanceable {
+public final class InstancedMesh extends Mesh implements Instanceable {
 
-	private final int maxInstances;
-	
-	/**
-	 * @param vertexData
-	 */
-	public InstancedMesh(InstancedMeshData vertexData) {
-		super(vertexData);
-		maxInstances = vertexData.maxInstances();
-	}
-
-	@Override
-	protected Builder init(InstancedMeshData vertexData) {
-		try (VertexBuffers vertexBuffers = vertexData.meshData().vertexBuffers();
-				InstancedBuffers instancedBuffers = vertexData.instancedBuffers()) {
+	private static final BiFunction<MeshData, InstancedData, Builder> STATIC_INSTANCED_VAO = (meshData, instancedData) -> {
+		try (VertexBuffers vertexBuffers = meshData.vertexBuffers();
+				InstancedBuffers instancedBuffers = instancedData.instancedBuffers();
+				var builder = new Builder()) {
 			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var w, var b, var indices) &&
 					instancedBuffers instanceof InstancedBuffers(var instanceMatrices, var instanceNormals)) {
 				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
 				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);
-				
-				return new Builder()
+
+				return builder
 						.buffer(VertexBufferObject.arrayBufferStaticDraw(positions))
 						.attrib(VertexAttrib.array(0).pointer(vertexFormat3f).divisor(0))
 						.buffer(VertexBufferObject.arrayBufferStaticDraw(normals))
@@ -58,11 +50,20 @@ public final class InstancedMesh extends MaterialMesh<InstancedMeshData> impleme
 			} else {
 				throw new IllegalArgumentException("Record deconstruction failed.");
 			}
-		} finally {
-			unbind();
 		}
+	};
+	
+	private final int maxInstances;
+	
+	/**
+	 * @param meshData 
+	 * @param instancedData 
+	 */
+	public InstancedMesh(MeshData meshData, InstancedData instancedData) {
+		super(STATIC_INSTANCED_VAO.apply(meshData, instancedData), meshData.getVertexCount());
+		maxInstances = instancedData.maxInstances();
 	}
-
+	
 	@Override
 	public void draw() {
 		glDrawElementsInstanced(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0, getMaxInstances());

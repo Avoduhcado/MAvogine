@@ -6,6 +6,7 @@ import org.joml.primitives.AABBf;
 
 import com.avogine.render.model.animation.Animation;
 import com.avogine.render.model.mesh.Boundable;
+import com.avogine.render.opengl.model.material.*;
 
 /**
  * 
@@ -28,7 +29,7 @@ public class Model {
 		this.id = id;
 		this.materials = materials;
 		this.animations = animations;
-		aabb = materials.stream().flatMap(material -> material.getBoundableMeshes().stream())
+		aabb = materials.stream().flatMap(Material::getAllBoundables)
 				.map(Boundable::getAABB)
 				.reduce(AABBf::union)
 				.orElseGet(AABBf::new);
@@ -78,6 +79,16 @@ public class Model {
 	 */
 	public List<Material> getMaterials() {
 		return materials;
+	}
+	
+	/**
+	 * @return a list of {@link BPMaterial}.
+	 */
+	public List<BPMaterial> getBlinnPhongMaterials() {
+		return materials.stream()
+				.filter(BPMaterial.class::isInstance)
+				.map(BPMaterial.class::cast)
+				.toList();
 	}
 	
 	/**

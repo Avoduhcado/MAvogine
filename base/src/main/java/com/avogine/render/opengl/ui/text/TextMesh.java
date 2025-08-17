@@ -4,49 +4,47 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
 
 import java.nio.FloatBuffer;
+import java.util.function.Function;
 
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.render.opengl.VertexArrayObject;
-import com.avogine.render.opengl.ui.data.BufferVertexArrayData;
+import com.avogine.render.opengl.*;
 
 /**
  *
  */
-public class TextMesh extends VertexArrayObject<BufferVertexArrayData<FloatBuffer>> {
-
-	private int vertexCount;
+public class TextMesh extends VertexArrayObject {
+	
+	private static final Function<FloatBuffer, Builder> TEXT_VAO = vertexData -> {
+		try (var builder = new Builder()) {
+			return builder
+					.buffer(VertexBufferObject.arrayBufferWithUsage(GL_DYNAMIC_DRAW, vertexData))
+					.attrib(VertexAttrib.array(0).pointer(VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4)));
+		} finally {
+			MemoryUtil.memFree(vertexData);
+		}
+	};
+	
+	private int activeVertexCount;
 	
 	/**
 	 * @param vertexData
 	 */
-	public TextMesh(BufferVertexArrayData<FloatBuffer> vertexData) {
-		super(vertexData);
+	public TextMesh(FloatBuffer vertexData) {
+		super(TEXT_VAO.apply(vertexData));
 	}
 
-	@Override
-	protected Builder init(BufferVertexArrayData<FloatBuffer> vertexData) {
-		try {
-			return initVAO()
-					.buffer(VertexBufferObject.arrayBufferWithUsage(GL_DYNAMIC_DRAW, vertexData.buffer()))
-					.attrib(VertexAttrib.array(0).pointer(VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4)));
-		} finally {
-			unbind();
-			MemoryUtil.memFree(vertexData.buffer());
-		}
-	}
-	
 	/**
 	 * @param vertexData
 	 */
 	public void updateText(FloatBuffer vertexData) {
-		vertexCount = vertexData.limit() / 4;
+		activeVertexCount = vertexData.limit() / 4;
 		getVertexBufferObjects()[0].bind().bufferSubData(vertexData);
 	}
 
 	@Override
 	public void draw() {
-		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+		glDrawArrays(GL_TRIANGLES, 0, activeVertexCount);
 	}
 	
 }

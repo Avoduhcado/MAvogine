@@ -13,7 +13,6 @@ import com.avogine.render.font.FontCache;
 import com.avogine.render.opengl.VertexArrayObject;
 import com.avogine.render.opengl.font.Font;
 import com.avogine.render.opengl.shader.FontShader;
-import com.avogine.render.opengl.ui.data.BufferVertexArrayData;
 import com.avogine.render.opengl.ui.text.TextMesh;
 import com.avogine.util.resource.ResourceConstants;
 
@@ -64,7 +63,7 @@ public class TextRender {
 		
 		int textBufferCapacity = TEXT_LENGTH_LIMIT * 4 * 6;
 		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
-		mesh = new TextMesh(new BufferVertexArrayData<>(textVertices));
+		mesh = new TextMesh(textVertices);
 		
 		defaultFont = fontCache.getFont(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
 	}

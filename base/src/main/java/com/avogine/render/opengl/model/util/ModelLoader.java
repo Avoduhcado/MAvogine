@@ -12,12 +12,13 @@ import org.joml.primitives.AABBf;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 
-import com.avogine.render.model.MaterialData;
 import com.avogine.render.model.animation.*;
 import com.avogine.render.model.mesh.data.VertexBuffers;
 import com.avogine.render.model.util.AssimpFileUtils;
 import com.avogine.render.opengl.image.util.TextureCache;
-import com.avogine.render.opengl.model.*;
+import com.avogine.render.opengl.model.Model;
+import com.avogine.render.opengl.model.material.*;
+import com.avogine.render.opengl.model.material.data.BlinnPhongData;
 import com.avogine.render.opengl.model.mesh.*;
 import com.avogine.render.opengl.model.mesh.data.MeshData;
 
@@ -34,6 +35,11 @@ public class ModelLoader {
 	 * Max number of bones a single mesh can support.
 	 */
 	public static final int MAX_BONES = 150;
+	
+	/**
+	 * Default color vector to use when no actual color is specified.
+	 */
+	public static final Vector4f DEFAULT_COLOR = new Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
 
 	private static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
 	
@@ -51,36 +57,36 @@ public class ModelLoader {
 	 * @param modelPath
 	 * @param textureCache 
 	 * @param animated 
-	 * @return
+	 * @return a {@link Model} loaded from the given path.
 	 */
 	public static Model loadModel(String id, String modelPath, TextureCache textureCache, boolean animated) {
 		AIScene aiScene = AssimpFileUtils.readSceneFromMemory(modelPath, aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
 				aiProcess_Triangulate | aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights |
 				aiProcess_GenBoundingBoxes | (animated ? 0 : aiProcess_PreTransformVertices));
-		
+
 		List<AIMaterial> aiMaterials = AssimpFileUtils.readMaterials(aiScene);
 		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
 		List<Material> materials = aiMaterials.stream()
-				.map(aiMaterial -> processMaterial(aiMaterial, modelDirectory, textureCache))
+				.map(aiMaterial -> processBlinnPhongMaterial(aiMaterial, modelDirectory, textureCache))
 				.toList();
-		
+
 		List<AIMesh> aiMeshes = AssimpFileUtils.readMeshes(aiScene);
 		List<Bone> bones = new ArrayList<>();
-		Material defaultMaterial = new Material();
+		BPMaterial defaultMaterial = new BPMaterial();
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
 			MeshData meshData = processMesh(aiMesh, bones);
-			var mesh = animated ? new AnimatedMesh(meshData) : new Mesh(meshData);
+			var mesh = animated ? new AnimatedMesh(meshData) : new StaticMesh(meshData);
 			if (materialIndex >= 0 && materialIndex < materials.size()) {
 				materials.get(materialIndex).addMesh(mesh);
 			} else {
 				defaultMaterial.addMesh(mesh);
 			}
 		}
-		if (!defaultMaterial.isMeshesEmpty()) {
+		if (defaultMaterial.getAllMeshes().count() > 0) {
 			materials.add(defaultMaterial);
 		}
-		
+
 		List<AIAnimation> aiAnimations = AssimpFileUtils.readAnimations(aiScene);
 		List<Animation> animations = new ArrayList<>();
 		if (!aiAnimations.isEmpty()) {
@@ -88,33 +94,43 @@ public class ModelLoader {
 			Matrix4f globalInverseTransformation = toMatrix(aiScene.mRootNode().mTransformation()).invert();
 			animations.addAll(processAnimations(aiScene, bones, rootNode, globalInverseTransformation));
 		}
-		
+
 		aiReleaseImport(aiScene);
-		
+
 		return new Model(id, materials, animations);
 	}
 	
-	private static Material processMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
+	private static Material processBlinnPhongMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
 		AIColor4D color = AIColor4D.create();
 		Vector4f diffuseColor = processMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, color);
 		Vector4f ambientColor = processMaterialColor(aiMaterial, AI_MATKEY_COLOR_AMBIENT, color);
 		Vector4f specularColor = processMaterialColor(aiMaterial, AI_MATKEY_COLOR_SPECULAR, color);
 		
-		float reflectance = 0.0f;
+		float shininess = 0.0f;
 		float[] shininessFactor = new float[] { 0.0f };
 		int[] pMax = new int[] { 1 };
 		int result = aiGetMaterialFloatArray(aiMaterial, AI_MATKEY_SHININESS_STRENGTH, aiTextureType_NONE, 0, shininessFactor, pMax);
 		if (result != aiReturn_SUCCESS) {
-			reflectance = shininessFactor[0];
+			shininess = shininessFactor[0];
 		}
 		
 		AIString texturePath = AIString.create();
 		String diffuseTexturePath = processMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, texturePath, modelDirectory, textureCache);
 		String ambientTexturePath = processMaterialTexture(aiMaterial, aiTextureType_AMBIENT, texturePath, modelDirectory, textureCache);
 		String specularTexturePath = processMaterialTexture(aiMaterial, aiTextureType_SPECULAR, texturePath, modelDirectory, textureCache);
-		String normalsTexturePath = processMaterialTexture(aiMaterial, aiTextureType_NORMALS, texturePath, modelDirectory, textureCache);
 		
-		return new Material(diffuseColor, ambientColor, specularColor, reflectance, diffuseTexturePath, ambientTexturePath, specularTexturePath, normalsTexturePath);
+		return new BPMaterial(new BlinnPhongData(diffuseColor, ambientColor, specularColor, shininess, diffuseTexturePath, ambientTexturePath, specularTexturePath));
+	}
+	
+	private static Material processPBRMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
+		AIString texturePath = AIString.create();
+		String albedoTexture = processMaterialTexture(aiMaterial, aiTextureType_BASE_COLOR, texturePath, modelDirectory, textureCache);
+		String normalTexture = processMaterialTexture(aiMaterial, aiTextureType_NORMALS, texturePath, modelDirectory, textureCache);
+		String metallicTexture = processMaterialTexture(aiMaterial, aiTextureType_METALNESS, texturePath, modelDirectory, textureCache);
+		String roughnessTexture = processMaterialTexture(aiMaterial, aiTextureType_DIFFUSE_ROUGHNESS, texturePath, modelDirectory, textureCache);
+		String aoTexture = processMaterialTexture(aiMaterial, aiTextureType_AMBIENT_OCCLUSION, texturePath, modelDirectory, textureCache);
+		
+		return new PBRMaterial(albedoTexture, normalTexture, metallicTexture, roughnessTexture, aoTexture);
 	}
 	
 	private static Vector4f processMaterialColor(AIMaterial aiMaterial, String materialKeyColor, AIColor4D color) {
@@ -122,7 +138,7 @@ public class ModelLoader {
 		if (result == aiReturn_SUCCESS) {
 			return new Vector4f(color.r(), color.g(), color.b(), color.a());
 		}
-		return MaterialData.DEFAULT_COLOR;
+		return DEFAULT_COLOR;
 	}
 	
 	private static String processMaterialTexture(AIMaterial aiMaterial, int textureType, AIString texturePath, String modelDirectory, TextureCache textureCache) {

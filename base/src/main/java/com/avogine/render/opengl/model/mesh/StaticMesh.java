@@ -8,22 +8,21 @@ import org.joml.primitives.AABBf;
 
 import com.avogine.render.model.mesh.Boundable;
 import com.avogine.render.model.mesh.data.VertexBuffers;
-import com.avogine.render.opengl.VertexBufferObject;
+import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.VertexArrayObject.VertexAttrib.Format;
 import com.avogine.render.opengl.model.mesh.data.MeshData;
 
 /**
  *
  */
-public final class AnimatedMesh extends Mesh implements Boundable {
-	
-	private static final Function<MeshData, Builder> ANIMATED_VAO = meshData -> {
-		try (var builder = new Builder();
-				var vertexBuffers = meshData.vertexBuffers()) {
-			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var weights, var boneIds, var indices)) {
-				var vertexFormat4f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4);
-				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
-				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);
+public final class StaticMesh extends Mesh implements Boundable {
 
+	private static final Function<MeshData, Builder> STATIC_VAO = meshData -> {
+		try (var vertexBuffers = meshData.vertexBuffers();
+				var builder = new VertexArrayObject.Builder();) {
+			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var w, var b, var indices)) {
+				var vertexFormat3f = Format.tightlyPackedUnnormalizedFloat(3);
+				var vertexFormat2f = Format.tightlyPackedUnnormalizedFloat(2);
 				return builder
 						.buffer(VertexBufferObject.arrayBufferStaticDraw(positions))
 						.attrib(VertexAttrib.array(0).pointer(vertexFormat3f))
@@ -35,34 +34,31 @@ public final class AnimatedMesh extends Mesh implements Boundable {
 						.attrib(VertexAttrib.array(3).pointer(vertexFormat3f))
 						.buffer(VertexBufferObject.arrayBufferStaticDraw(textureCoordinates))
 						.attrib(VertexAttrib.array(4).pointer(vertexFormat2f))
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(weights))
-						.attrib(VertexAttrib.array(5).pointer(vertexFormat4f))
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(boneIds))
-						.attrib(VertexAttrib.array(6).pointer(vertexFormat4f))
 						.buffer(VertexBufferObject.elementBuffer(indices));
 			} else {
 				throw new IllegalArgumentException("Record deconstruction failed.");
 			}
 		}
 	};
-
-	private final AABBf aabb;
+	
+	private AABBf aabb;
 	
 	/**
 	 * @param vertexData
 	 */
-	public AnimatedMesh(MeshData vertexData) {
-		super(ANIMATED_VAO.apply(vertexData), vertexData.getVertexCount());
+	public StaticMesh(MeshData vertexData) {
+		super(STATIC_VAO.apply(vertexData), vertexData.getVertexCount());
 		aabb = vertexData.aabb();
 	}
-
+	
 	@Override
 	public void draw() {
 		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
 	}
-
+	
 	@Override
 	public AABBf getAABB() {
 		return aabb;
 	}
+
 }

@@ -3,7 +3,7 @@ package com.avogine.render.model.mesh;
 /**
  *
  */
-public interface VertexArrayData {
+public interface VertexData {
 	/**
 	 * @return the number of vertices.
 	 */

@@ -61,6 +61,7 @@ public interface Game {
 	}
 	
 	/**
+	 * TODO This could likely be abstracted into some sort of EnginePrefs that are loaded via config file rather than hardcoded into the Game interface.
 	 * Initialize any render API specific configurations prior to launching the game loop.
 	 * <p>
 	 * Presently, this calls {@link GL#createCapabilities()} to set up an OpenGL capable environment. This could be moved to something like a {@code GameOpenGL} sub type

@@ -155,7 +155,7 @@ public class Window {
 	 * 
 	 */
 	public void makeCurrent() {
-		if (GLFW.glfwGetCurrentContext() != id) {
+		if (GLFW.glfwGetCurrentContext() != id) { // XXX: Potentially unnecessary check, might just be a simple no-op if this context is already current to call makeContextCurrent again
 			GLFW.glfwMakeContextCurrent(id);
 		}
 	}

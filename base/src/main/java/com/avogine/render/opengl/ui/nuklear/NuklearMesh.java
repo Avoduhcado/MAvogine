@@ -10,17 +10,17 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.ui.data.EmptyVertexArrayData;
 
 /**
  *
  */
-public class NuklearMesh extends VertexArrayObject<EmptyVertexArrayData> {
+public class NuklearMesh extends VertexArrayObject {
 	
 	private static final int MAX_VERTEX_BUFFER  = 512 * 1024;
 	private static final int MAX_ELEMENT_BUFFER = 128 * 1024;
@@ -35,6 +35,17 @@ public class NuklearMesh extends VertexArrayObject<EmptyVertexArrayData> {
 				.position(3).attribute(NK_VERTEX_ATTRIBUTE_COUNT).format(NK_FORMAT_COUNT).offset(0)
 				.flip();
 	}
+	
+	private static final Supplier<Builder> NUKLEAR_VAO = () -> {
+		try (var builder = new Builder()) {
+			return builder
+					.buffer(new VertexBufferObject().bind())
+					.attrib(VertexAttrib.array(0).pointer(2, GL_FLOAT, false, 20, 0))
+					.attrib(VertexAttrib.array(1).pointer(2, GL_FLOAT, false, 20, 8))
+					.attrib(VertexAttrib.array(2).pointer(4, GL_UNSIGNED_BYTE, true, 20, 16))
+					.buffer(new VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW).bind());
+		}
+	};
 	
 	private NkDrawNullTexture nullTexture;
 	
@@ -52,7 +63,7 @@ public class NuklearMesh extends VertexArrayObject<EmptyVertexArrayData> {
 	 * 
 	 */
 	public NuklearMesh(int displayWidth, int displayHeight, float width, float height) {
-		super(EmptyVertexArrayData.EMPTY);
+		super(NUKLEAR_VAO.get());
 		this.displayWidth = displayWidth;
 		this.displayHeight = displayHeight;
 		this.width = width;
@@ -61,20 +72,6 @@ public class NuklearMesh extends VertexArrayObject<EmptyVertexArrayData> {
 		// An empty texture used for drawing.
 		nullTexture = NkDrawNullTexture.create();
 		setupTexture();
-	}
-
-	@Override
-	protected Builder init(EmptyVertexArrayData vertexData) {
-		try {
-			return initVAO()
-					.buffer(new VertexBufferObject().bind())
-					.attrib(VertexAttrib.array(0).pointer(2, GL_FLOAT, false, 20, 0))
-					.attrib(VertexAttrib.array(1).pointer(2, GL_FLOAT, false, 20, 8))
-					.attrib(VertexAttrib.array(2).pointer(4, GL_UNSIGNED_BYTE, true, 20, 16))
-					.buffer(new VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW).bind());
-		} finally {
-			unbind();
-		}
 	}
 	
 	/**
