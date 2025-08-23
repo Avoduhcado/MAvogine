@@ -9,31 +9,31 @@ import com.avogine.render.opengl.shader.uniform.*;
  */
 public class SimpleInstanceShader extends ShaderProgram {
 	
-	public final UniformMat4 projectionMatrix = new UniformMat4();
-	public final UniformMat4 viewMatrix = new UniformMat4();
+	public final UniformMat4 projection = new UniformMat4();
+	public final UniformMat4 view = new UniformMat4();
 	
 	public final UniformMat4 normalMatrix = new UniformMat4();
-	public final UniformVec3 viewPosition = new UniformVec3();
 
 	public final UniformVec3 lightPosition = new UniformVec3();
 	public final UniformVec3 lightColor = new UniformVec3();
-	
-	public final UniformBoolean hasTexture = new UniformBoolean();
-	public final UniformVec3 objectColor = new UniformVec3();
-	public final UniformSampler objectTexture = new UniformSampler();
 
+	public final UniformSampler diffuseMap = new UniformSampler();
+	public final UniformSampler specularMap = new UniformSampler();
+	public final UniformFloat specularFactor = new UniformFloat();
+	
 	/**
 	 * 
 	 */
 	public SimpleInstanceShader() {
 		super(SHADERS.with("simpleInstanceVertex.glsl"), SHADERS.with("simpleFragment.glsl"));
-		storeAllUniformLocations(projectionMatrix, viewMatrix, normalMatrix, viewPosition, lightPosition, lightColor, hasTexture, objectColor, objectTexture);
+		storeAllUniformLocations(projection, view, normalMatrix, lightPosition, lightColor, diffuseMap, specularMap, specularFactor);
 		linkTextureUnits();
 	}
 	
 	private void linkTextureUnits() {
 		bind();
-		objectTexture.loadTexUnit(0);
+		diffuseMap.loadTexUnit(0);
+		specularMap.loadTexUnit(1);
 		unbind();
 	}
 

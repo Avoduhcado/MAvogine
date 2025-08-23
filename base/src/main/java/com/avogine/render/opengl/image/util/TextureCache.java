@@ -55,6 +55,15 @@ public class TextureCache {
 	public Texture getDefaultTexture() {
 		return textureMap.computeIfAbsent("DEFAULT__", v -> TextureLoader.loadRawTexture(64, 64, (byte) 255, (byte) 0, (byte) 0, (byte) 255));
 	}
+	
+	/**
+	 * @param id
+	 * @param texture
+	 * @return
+	 */
+	public Texture putTexture(String id, Texture texture) {
+		return textureMap.putIfAbsent(id, texture);
+	}
 
 	/**
 	 * 

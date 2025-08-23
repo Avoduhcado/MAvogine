@@ -1,46 +1,24 @@
 package com.avogine.render.opengl.model.material.data;
 
-import org.joml.Vector4f;
-
-import com.avogine.render.opengl.model.util.ModelLoader;
-
 /**
- * @param diffuseColor 
- * @param ambientColor 
- * @param specularColor 
- * @param shininess 
- * @param diffuseTexturePath 
- * @param ambientTexturePath 
- * @param specularTexturePath 
+ * @param diffuseMapPath 
+ * @param specularMapPath 
+ * @param specularFactor 
  */
-public record BlinnPhongData(
-		Vector4f diffuseColor,
-		Vector4f ambientColor,
-		Vector4f specularColor,
-		float shininess,
-		String diffuseTexturePath,
-		String ambientTexturePath,
-		String specularTexturePath) {
-
-	/**
-	 * @param diffuseColor
-	 */
-	public BlinnPhongData(Vector4f diffuseColor) {
-		this(diffuseColor, ModelLoader.DEFAULT_COLOR, ModelLoader.DEFAULT_COLOR, 0f, null, null, null);
-	}
+public record BlinnPhongData(String diffuseMapPath, String specularMapPath, float specularFactor) {
 	
 	/**
 	 * @param diffuseTexturePath
 	 */
 	public BlinnPhongData(String diffuseTexturePath) {
-		this(ModelLoader.DEFAULT_COLOR, ModelLoader.DEFAULT_COLOR, ModelLoader.DEFAULT_COLOR, 0f, diffuseTexturePath, null, null);
+		this(diffuseTexturePath, null, 0.0f);
 	}
 	
 	/**
 	 * 
 	 */
 	public BlinnPhongData() {
-		this(ModelLoader.DEFAULT_COLOR, ModelLoader.DEFAULT_COLOR, ModelLoader.DEFAULT_COLOR, 0f, null, null, null);
+		this(null, null, 0.0f);
 	}
 	
 }

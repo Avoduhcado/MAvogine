@@ -9,9 +9,9 @@ layout (location=4) in vec2 textureCoordinates;
 layout (location=5) in vec4 boneWeights;
 layout (location=6) in ivec4 boneIndices;
 
-uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 modelMatrix;
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
 uniform mat4 normalMatrix;
 
 uniform mat4 boneMatrices[MAX_BONES];
@@ -43,14 +43,14 @@ void main() {
 		initNormal = vec4(normal, 0.0);
 	}
 	
-	mat4 modelViewMatrix = viewMatrix * modelMatrix;
+	mat4 modelViewMatrix = view * model;
 	vec4 mvPosition = modelViewMatrix * initPosition;
-	gl_Position = projectionMatrix * mvPosition;
+	gl_Position = projection * mvPosition;
 	
 	// Transform outs to view space
-	vertPosition = mvPosition.xyz;
+	vertPosition = vec3(mvPosition) / mvPosition.w;
 //	vertNormal = mat3(normalMatrix) * normal;
-	vertNormal = normalize(modelViewMatrix * initNormal).xyz;
+	vertNormal = mat3(transpose(inverse(view * model))) * initNormal.xyz;
 	vertTextureCoordinates = textureCoordinates;
 	
 }

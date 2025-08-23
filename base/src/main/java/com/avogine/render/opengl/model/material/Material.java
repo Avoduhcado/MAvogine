@@ -9,7 +9,7 @@ import com.avogine.render.opengl.model.mesh.*;
 /**
  *
  */
-public abstract sealed class Material permits BPMaterial, PBRMaterial, CustomMaterial {
+public abstract sealed class Material permits SimpleMaterial, PBRMaterial, CustomMaterial {
 	
 	private final List<StaticMesh> staticMeshes;
 	private final List<AnimatedMesh> animatedMeshes;

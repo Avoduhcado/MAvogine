@@ -5,42 +5,45 @@ import static com.avogine.util.resource.ResourceConstants.SHADERS;
 import com.avogine.render.opengl.shader.uniform.*;
 
 /**
- * This is a basic {@link ShaderProgram} implementation for rendering 3D objects with simple lighting and color.
+ * This is a basic {@link ShaderProgram} implementation for rendering 3D objects with Blinn-Phong lighting.
  * <p>
- * It can handle displaying a basic 3D scene through the {@link #projectionMatrix}, {@link #viewMatrix}, 
- * and {@link #modelMatrix}.
+ * It can handle displaying a basic 3D scene through the perspective {@link #projection}, {@link #view}, and {@link #model} matrices.
  * <p>
- * As long as the objects being rendered are supplied with normals, basic lighting can be applied through
+ * As long as the objects being rendered are supplied with normals, lighting can be applied through
  * {@link #lightPosition} and {@link #lightColor}.
  */
 public class SimpleShader extends ShaderProgram {
 	
-	public final UniformMat4 projectionMatrix = new UniformMat4();
-	public final UniformMat4 viewMatrix = new UniformMat4();
-	public final UniformMat4 modelMatrix = new UniformMat4();
-	
+	// Vertex uniforms
+	public final UniformMat4 projection = new UniformMat4();
+	public final UniformMat4 view = new UniformMat4();
+	public final UniformMat4 model = new UniformMat4();
 	public final UniformMat4 normalMatrix = new UniformMat4();
-	public final UniformVec3 viewPosition = new UniformVec3();
-
+	
+	// Fragment uniforms
 	public final UniformVec3 lightPosition = new UniformVec3();
 	public final UniformVec3 lightColor = new UniformVec3();
 	
-	public final UniformBoolean hasTexture = new UniformBoolean();
-	public final UniformVec3 objectColor = new UniformVec3();
-	public final UniformSampler objectTexture = new UniformSampler();
+	public final UniformSampler diffuseMap = new UniformSampler();
+	public final UniformSampler specularMap = new UniformSampler();
+	public final UniformFloat specularFactor = new UniformFloat();
 	
 	/**
 	 * 
 	 */
 	public SimpleShader() {
 		super(SHADERS.with("simpleVertex.glsl"), SHADERS.with("simpleFragment.glsl"));
-		storeAllUniformLocations(projectionMatrix, viewMatrix, modelMatrix, normalMatrix, viewPosition, lightPosition, lightColor, hasTexture, objectColor, objectTexture);
+		storeAllUniformLocations(
+				projection, view, model, normalMatrix, 
+				lightPosition, lightColor,
+				diffuseMap, specularMap, specularFactor);
 		linkTextureUnits();
 	}
 	
 	private void linkTextureUnits() {
 		bind();
-		objectTexture.loadTexUnit(0);
+		diffuseMap.loadTexUnit(0);
+		specularMap.loadTexUnit(1);
 		unbind();
 	}
 

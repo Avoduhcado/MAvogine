@@ -1,6 +1,6 @@
 package com.avogine.render.opengl.shader.uniform;
 
-import com.avogine.render.opengl.model.material.BPMaterial;
+import com.avogine.render.opengl.model.material.SimpleMaterial;
 
 /**
  *
@@ -21,7 +21,7 @@ public class UniformMaterial extends Uniform {
 	/**
 	 * @param material
 	 */
-	public void loadMaterial(BPMaterial material) {
+	public void loadMaterial(SimpleMaterial material) {
 		// TODO#41 Do we want to handle loading the tex unit here, or handle activating/binding textures here? Or neither
 //		shininess.loadFloat(material.shininess());
 	}

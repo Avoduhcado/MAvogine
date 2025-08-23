@@ -12,6 +12,7 @@ import org.joml.primitives.AABBf;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 
+import com.avogine.logging.AvoLog;
 import com.avogine.render.model.animation.*;
 import com.avogine.render.model.mesh.data.VertexBuffers;
 import com.avogine.render.model.util.AssimpFileUtils;
@@ -67,12 +68,12 @@ public class ModelLoader {
 		List<AIMaterial> aiMaterials = AssimpFileUtils.readMaterials(aiScene);
 		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
 		List<Material> materials = aiMaterials.stream()
-				.map(aiMaterial -> processBlinnPhongMaterial(aiMaterial, modelDirectory, textureCache))
+				.map(aiMaterial -> processSimpleMaterial(aiMaterial, modelDirectory, textureCache))
 				.toList();
 
 		List<AIMesh> aiMeshes = AssimpFileUtils.readMeshes(aiScene);
 		List<Bone> bones = new ArrayList<>();
-		BPMaterial defaultMaterial = new BPMaterial();
+		SimpleMaterial defaultMaterial = new SimpleMaterial();
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
 			MeshData meshData = processMesh(aiMesh, bones);
@@ -100,26 +101,19 @@ public class ModelLoader {
 		return new Model(id, materials, animations);
 	}
 	
-	private static Material processBlinnPhongMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
-		AIColor4D color = AIColor4D.create();
-		Vector4f diffuseColor = processMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, color);
-		Vector4f ambientColor = processMaterialColor(aiMaterial, AI_MATKEY_COLOR_AMBIENT, color);
-		Vector4f specularColor = processMaterialColor(aiMaterial, AI_MATKEY_COLOR_SPECULAR, color);
-		
-		float shininess = 0.0f;
-		float[] shininessFactor = new float[] { 0.0f };
+	private static Material processSimpleMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
+		float[] specularFactor = new float[] { 0.0f };
 		int[] pMax = new int[] { 1 };
-		int result = aiGetMaterialFloatArray(aiMaterial, AI_MATKEY_SHININESS_STRENGTH, aiTextureType_NONE, 0, shininessFactor, pMax);
+		int result = aiGetMaterialFloatArray(aiMaterial, AI_MATKEY_SHININESS, aiTextureType_NONE, 0, specularFactor, pMax);
 		if (result != aiReturn_SUCCESS) {
-			shininess = shininessFactor[0];
+			AvoLog.log().info("No value for: {}.", AI_MATKEY_SHININESS);
 		}
 		
 		AIString texturePath = AIString.create();
-		String diffuseTexturePath = processMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, texturePath, modelDirectory, textureCache);
-		String ambientTexturePath = processMaterialTexture(aiMaterial, aiTextureType_AMBIENT, texturePath, modelDirectory, textureCache);
-		String specularTexturePath = processMaterialTexture(aiMaterial, aiTextureType_SPECULAR, texturePath, modelDirectory, textureCache);
+		String diffuseMapPath = processMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, texturePath, modelDirectory, textureCache);
+		String specularMapPath = processMaterialTexture(aiMaterial, aiTextureType_SPECULAR, texturePath, modelDirectory, textureCache);
 		
-		return new BPMaterial(new BlinnPhongData(diffuseColor, ambientColor, specularColor, shininess, diffuseTexturePath, ambientTexturePath, specularTexturePath));
+		return new SimpleMaterial(new BlinnPhongData(diffuseMapPath, specularMapPath, specularFactor[0]));
 	}
 	
 	private static Material processPBRMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {

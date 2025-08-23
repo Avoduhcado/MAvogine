@@ -82,12 +82,12 @@ public class Model {
 	}
 	
 	/**
-	 * @return a list of {@link BPMaterial}.
+	 * @return a list of {@link SimpleMaterial}.
 	 */
-	public List<BPMaterial> getBlinnPhongMaterials() {
+	public List<SimpleMaterial> getBlinnPhongMaterials() {
 		return materials.stream()
-				.filter(BPMaterial.class::isInstance)
-				.map(BPMaterial.class::cast)
+				.filter(SimpleMaterial.class::isInstance)
+				.map(SimpleMaterial.class::cast)
 				.toList();
 	}
 	
