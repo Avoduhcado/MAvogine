@@ -1,4 +1,4 @@
-package com.avogine.render.font;
+package com.avogine.render.font.data;
 
 /**
  * @param ascent 

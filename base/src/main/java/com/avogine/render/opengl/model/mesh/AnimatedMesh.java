@@ -3,10 +3,9 @@ package com.avogine.render.opengl.model.mesh;
 import org.joml.primitives.AABBf;
 
 import com.avogine.render.model.mesh.Boundable;
-import com.avogine.render.model.mesh.data.VertexBuffers;
+import com.avogine.render.model.mesh.data.*;
 import com.avogine.render.opengl.*;
 import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
-import com.avogine.render.opengl.model.mesh.data.MeshData;
 
 /**
  *

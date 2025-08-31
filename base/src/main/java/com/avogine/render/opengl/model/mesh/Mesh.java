@@ -5,8 +5,8 @@ import static org.lwjgl.opengl.GL11.*;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.avogine.render.model.mesh.data.MeshData;
 import com.avogine.render.opengl.VAO;
-import com.avogine.render.opengl.model.mesh.data.MeshData;
 
 /**
  * Parent type of a general Mesh implementation.
@@ -23,7 +23,7 @@ public abstract sealed class Mesh permits StaticMesh, InstancedMesh, AnimatedMes
 	
 	protected Mesh(MeshData meshData) {
 		this.vao = setupVAO(meshData);
-		this.vertexCount = meshData.getVertexCount();
+		this.vertexCount = meshData.vertexBuffers().indices().limit();
 	}
 	
 	/**

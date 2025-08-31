@@ -17,7 +17,7 @@ import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.render.font.*;
+import com.avogine.render.font.data.*;
 import com.avogine.render.image.ImageData;
 import com.avogine.render.image.data.PixelBuffer;
 import com.avogine.render.opengl.Texture;

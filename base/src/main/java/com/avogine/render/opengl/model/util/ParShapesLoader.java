@@ -11,9 +11,8 @@ import org.lwjgl.system.*;
 import org.lwjgl.util.par.ParShapesMesh;
 
 import com.avogine.render.model.mesh.data.*;
-import com.avogine.render.model.util.*;
 import com.avogine.render.opengl.model.mesh.*;
-import com.avogine.render.opengl.model.mesh.data.MeshData;
+import com.avogine.render.util.*;
 
 /**
  * Utility class for immediate {@link Mesh} creation via {@link ParShapesBuilder}.

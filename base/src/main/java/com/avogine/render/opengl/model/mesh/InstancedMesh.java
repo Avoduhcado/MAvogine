@@ -7,11 +7,10 @@ import java.nio.Buffer;
 import java.util.List;
 import java.util.function.*;
 
-import com.avogine.render.model.mesh.Instanceable;
 import com.avogine.render.model.mesh.data.*;
 import com.avogine.render.opengl.*;
 import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
-import com.avogine.render.opengl.model.mesh.data.MeshData;
+import com.avogine.render.util.Instanceable;
 
 /**
  *

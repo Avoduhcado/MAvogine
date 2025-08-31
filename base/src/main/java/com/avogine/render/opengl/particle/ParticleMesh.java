@@ -8,10 +8,9 @@ import java.nio.*;
 
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.render.model.mesh.Instanceable;
 import com.avogine.render.opengl.*;
 import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
-import com.avogine.render.opengl.particle.data.ParticleVertexData;
+import com.avogine.render.util.Instanceable;
 
 /**
  *
@@ -25,22 +24,23 @@ public class ParticleMesh implements Instanceable {
 	private int currentInstances;
 
 	/**
-	 * @param vertexData
+	 * @param positions 
+	 * @param maxInstances 
 	 */
-	public ParticleMesh(ParticleVertexData vertexData) {
+	public ParticleMesh(FloatBuffer positions, int maxInstances) {
 		try {
 			vao = VAO.gen(vertexArray -> vertexArray
-					.bindBufferData(VBO.staticDraw(), vertexData.positions())
+					.bindBufferData(VBO.staticDraw(), positions)
 					.enablePointerDivisor(0, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3), 0)
-					.bind(new VBO(GL_STREAM_DRAW), vbo -> vbo.bufferData(4L * Float.BYTES * vertexData.maxInstances()))
+					.bind(new VBO(GL_STREAM_DRAW), vbo -> vbo.bufferData(4L * Float.BYTES * maxInstances))
 					.enablePointerDivisor(1, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4), 1)
-					.bind(new VBO(GL_STREAM_DRAW), vbo -> vbo.bufferData(4L * Float.BYTES * vertexData.maxInstances()))
+					.bind(new VBO(GL_STREAM_DRAW), vbo -> vbo.bufferData(4L * Float.BYTES * maxInstances))
 					.enablePointerDivisor(2, new VertexAttrib.Format(4, GL_UNSIGNED_BYTE, true, 0, 0), 1));
 		} finally {
-			MemoryUtil.memFree(vertexData.positions());
+			MemoryUtil.memFree(positions);
 		}
-		vertexCount = vertexData.getVertexCount();
-		maxInstances = vertexData.maxInstances();
+		vertexCount = positions.limit() / 3;
+		this.maxInstances = maxInstances;
 	}
 	
 	/**
@@ -50,11 +50,16 @@ public class ParticleMesh implements Instanceable {
 		vao.cleanup();
 	}
 	
+	protected void draw() {
+		glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, vertexCount, getCurrentInstances());
+	}
+	
 	/**
 	 * 
 	 */
-	public void draw() {
-		glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, vertexCount, getCurrentInstances());
+	public void render() {
+		vao.bind();
+		draw();
 	}
 
 	@Override
