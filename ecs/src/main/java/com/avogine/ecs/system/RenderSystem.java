@@ -12,7 +12,7 @@ import com.avogine.ecs.components.*;
 import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
-import com.avogine.render.opengl.VertexArrayObject;
+import com.avogine.render.opengl.VAO;
 import com.avogine.render.opengl.shader.BasicShader;
 
 /**
@@ -66,19 +66,17 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 			modelCache.getTexture(material.getDiffuseTexturePath()).bind();
 			
 			material.getStaticMeshes().forEach(mesh -> {
-				mesh.bind();
-				
 				model.identity().translationRotateScale(
 						entity.transform.position().x, entity.transform.position().y, entity.transform.position().z,
 						entity.transform.orientation().x, entity.transform.orientation().y, entity.transform.orientation().z, entity.transform.orientation().w,
 						entity.transform.scale().x, entity.transform.scale().y, entity.transform.scale().z);
 				basicShader.model.loadMatrix(model);
 				
-				mesh.draw();
+				mesh.render();
 			});
 		});
 		
-		VertexArrayObject.unbind();
+		VAO.unbind();
 	}
 	
 	@Override

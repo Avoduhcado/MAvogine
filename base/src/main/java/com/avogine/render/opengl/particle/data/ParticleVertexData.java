@@ -1,8 +1,8 @@
-package com.avogine.render.opengl.model.mesh.data;
+package com.avogine.render.opengl.particle.data;
 
 import java.nio.FloatBuffer;
 
-import com.avogine.render.model.mesh.VertexData;
+import com.avogine.render.model.mesh.data.VertexData;
 
 /**
  * @param positions 

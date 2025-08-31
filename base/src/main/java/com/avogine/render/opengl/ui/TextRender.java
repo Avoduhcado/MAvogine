@@ -10,7 +10,7 @@ import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.font.FontCache;
-import com.avogine.render.opengl.VertexArrayObject;
+import com.avogine.render.opengl.VAO;
 import com.avogine.render.opengl.font.Font;
 import com.avogine.render.opengl.shader.FontShader;
 import com.avogine.render.opengl.ui.text.TextMesh;
@@ -130,15 +130,14 @@ public class TextRender {
 			
 			vertexData.flip();
 			
-			mesh.bind();
 			mesh.updateText(vertexData);
 		} finally {
 			MemoryUtil.memFree(vertexData);
 		}
 		
-		mesh.draw();
+		mesh.render();
 		
-		VertexArrayObject.unbind();
+		VAO.unbind();
 		
 		fontShader.unbind();
 		

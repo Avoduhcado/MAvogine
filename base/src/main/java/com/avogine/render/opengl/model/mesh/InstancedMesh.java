@@ -4,74 +4,94 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
 
 import java.nio.Buffer;
-import java.util.function.BiFunction;
+import java.util.List;
+import java.util.function.*;
 
 import com.avogine.render.model.mesh.Instanceable;
 import com.avogine.render.model.mesh.data.*;
-import com.avogine.render.opengl.VertexBufferObject;
-import com.avogine.render.opengl.model.mesh.data.*;
+import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
+import com.avogine.render.opengl.model.mesh.data.MeshData;
 
 /**
  *
  */
 public final class InstancedMesh extends Mesh implements Instanceable {
 
-	private static final BiFunction<MeshData, InstancedData, Builder> STATIC_INSTANCED_VAO = (meshData, instancedData) -> {
-		try (VertexBuffers vertexBuffers = meshData.vertexBuffers();
-				InstancedBuffers instancedBuffers = instancedData.instancedBuffers();
-				var builder = new Builder()) {
-			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var w, var b, var indices) &&
-					instancedBuffers instanceof InstancedBuffers(var instanceMatrices, var instanceNormals)) {
-				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
-				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);
-
-				return builder
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(positions))
-						.attrib(VertexAttrib.array(0).pointer(vertexFormat3f).divisor(0))
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(normals))
-						.attrib(VertexAttrib.array(1).pointer(vertexFormat3f).divisor(0))
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(tangents))
-						.attrib(VertexAttrib.array(2).pointer(vertexFormat3f).divisor(0))
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(bitangents))
-						.attrib(VertexAttrib.array(3).pointer(vertexFormat3f).divisor(0))
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(textureCoordinates))
-						.attrib(VertexAttrib.array(4).pointer(vertexFormat2f).divisor(0))
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(instanceMatrices))
-						.attrib(VertexAttrib.array(5).pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), 0).divisor(1))
-						.attrib(VertexAttrib.array(6).pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), 1L * (Float.BYTES * 4)).divisor(1))
-						.attrib(VertexAttrib.array(7).pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), 2L * (Float.BYTES * 4)).divisor(1))
-						.attrib(VertexAttrib.array(8).pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), 3L * (Float.BYTES * 4)).divisor(1))
-						.buffer(VertexBufferObject.arrayBufferStaticDraw(instanceNormals))
-						.attrib(VertexAttrib.array(9).pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), 0).divisor(1))
-						.attrib(VertexAttrib.array(10).pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), 1L * (Float.BYTES * 4)).divisor(1))
-						.attrib(VertexAttrib.array(11).pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), 2L * (Float.BYTES * 4)).divisor(1))
-						.attrib(VertexAttrib.array(12).pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), 3L * (Float.BYTES * 4)).divisor(1))
-						.buffer(VertexBufferObject.elementBuffer(indices));
-			} else {
-				throw new IllegalArgumentException("Record deconstruction failed.");
-			}
-		}
+	private static final ObjLongConsumer<VertexAttrib> INSTANCED_ATTRIB_FORMAT = (attrib, pointerOffset) -> {
+		attrib.pointer(4, GL_FLOAT, false, 4 * (Float.BYTES * 4), pointerOffset * (Float.BYTES * 4));
+		attrib.divisor(1);
 	};
 	
 	private final int maxInstances;
 	
 	/**
 	 * @param meshData 
-	 * @param instancedData 
 	 */
-	public InstancedMesh(MeshData meshData, InstancedData instancedData) {
-		super(STATIC_INSTANCED_VAO.apply(meshData, instancedData), meshData.getVertexCount());
-		maxInstances = instancedData.maxInstances();
+	public InstancedMesh(MeshData meshData) {
+		super(meshData);
+		maxInstances = meshData.maxInstances();
 	}
 	
 	@Override
-	public void draw() {
+	protected VAO setupVAO(MeshData meshData) {
+		try (VertexBuffers vertexBuffers = meshData.vertexBuffers();
+				InstancedBuffers instancedBuffers = meshData.instancedBuffers();) {
+			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var w, var b, var indices) &&
+					instancedBuffers instanceof InstancedBuffers(var instanceMatrices, var instanceNormals)) {
+				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
+				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);
+
+				return VAO.gen(vertexArray -> vertexArray
+						.bindBufferData(VBO.staticDraw(), positions)
+						.enablePointerDivisor(0, vertexFormat3f, 0)
+						.bindBufferData(VBO.staticDraw(), normals)
+						.enablePointerDivisor(1, vertexFormat3f, 0)
+						.bindBufferData(VBO.staticDraw(), tangents)
+						.enablePointerDivisor(2, vertexFormat3f, 0)
+						.bindBufferData(VBO.staticDraw(), bitangents)
+						.enablePointerDivisor(3, vertexFormat3f, 0)
+						.bindBufferData(VBO.staticDraw(), textureCoordinates)
+						.enablePointerDivisor(4, vertexFormat2f, 0)
+						.bindBufferData(VBO.staticDraw(), instanceMatrices)
+						.enable(VertexAttrib.array(5), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 0L))
+						.enable(VertexAttrib.array(6), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 1L))
+						.enable(VertexAttrib.array(7), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 2L))
+						.enable(VertexAttrib.array(8), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 3L))
+						.bindBufferData(VBO.staticDraw(), instanceNormals)
+						.enable(VertexAttrib.array(9), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 0L))
+						.enable(VertexAttrib.array(10), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 1L))
+						.enable(VertexAttrib.array(11), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 2L))
+						.enable(VertexAttrib.array(12), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 3L))
+						.bindElements(indices));
+			} else {
+				throw new IllegalArgumentException("Record deconstruction failed. VertexBuffers or InstanceBuffers not found.");
+			}
+		}
+	}
+	
+	@Override
+	protected void draw() {
 		glDrawElementsInstanced(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0, getMaxInstances());
 	}
 	
 	@Override
 	public <T extends Buffer> void updateInstanceBuffer(int vboIndex, long offset, T data) {
-		getVertexBufferObjects()[vboIndex].bind().bufferSubData(offset, data);
+		VBO instanceBuffer = getVao().vertexBufferObjects()[vboIndex];
+		instanceBuffer.bind();
+		instanceBuffer.bufferSubData(offset, data);
+	}
+	
+	/**
+	 * @param <T>
+	 * @param elements
+	 * @param action
+	 */
+	public <T> void update(List<T> elements, ObjIntConsumer<T> action) {
+		getVao().bind();
+		for (int i = 0; i < elements.size(); i++) {
+			action.accept(elements.get(i), i);
+		}
 	}
 	
 	@Override

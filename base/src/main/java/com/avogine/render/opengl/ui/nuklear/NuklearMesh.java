@@ -10,17 +10,17 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
 
 /**
  *
  */
-public class NuklearMesh extends VertexArrayObject {
+public class NuklearMesh {
 	
 	private static final int MAX_VERTEX_BUFFER  = 512 * 1024;
 	private static final int MAX_ELEMENT_BUFFER = 128 * 1024;
@@ -36,16 +36,7 @@ public class NuklearMesh extends VertexArrayObject {
 				.flip();
 	}
 	
-	private static final Supplier<Builder> NUKLEAR_VAO = () -> {
-		try (var builder = new Builder()) {
-			return builder
-					.buffer(new VertexBufferObject().bind())
-					.attrib(VertexAttrib.array(0).pointer(2, GL_FLOAT, false, 20, 0))
-					.attrib(VertexAttrib.array(1).pointer(2, GL_FLOAT, false, 20, 8))
-					.attrib(VertexAttrib.array(2).pointer(4, GL_UNSIGNED_BYTE, true, 20, 16))
-					.buffer(new VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW).bind());
-		}
-	};
+	private final VAO vao;
 	
 	private NkDrawNullTexture nullTexture;
 	
@@ -63,7 +54,12 @@ public class NuklearMesh extends VertexArrayObject {
 	 * 
 	 */
 	public NuklearMesh(int displayWidth, int displayHeight, float width, float height) {
-		super(NUKLEAR_VAO.get());
+		vao = VAO.gen(vertexArray -> vertexArray
+				.bindBufferData(VBO.staticDraw(), null)
+				.enablePointer(0, new VertexAttrib.Format(2, GL_FLOAT, false, 20, 0))
+				.enablePointer(1, new VertexAttrib.Format(2, GL_FLOAT, false, 20, 8))
+				.enablePointer(2, new VertexAttrib.Format(4, GL_UNSIGNED_BYTE, true, 20, 16))
+				.bindElements(null));
 		this.displayWidth = displayWidth;
 		this.displayHeight = displayHeight;
 		this.width = width;
@@ -77,9 +73,8 @@ public class NuklearMesh extends VertexArrayObject {
 	/**
 	 * Free all GPU memory.
 	 */
-	@Override
 	public void cleanup() {
-		super.cleanup();
+		vao.cleanup();
 		glDeleteTextures(nullTexture.texture().id());
 	}
 	
@@ -106,8 +101,8 @@ public class NuklearMesh extends VertexArrayObject {
 		// convert from command queue into draw list and draw to screen
 
 		// allocate vertex and element buffer
-		bind();
-		getVertexBufferObjects()[0].bind();
+		vao.bind();
+		vao.vertexBufferObjects()[0].bind();
 
 		glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_BUFFER, GL_STREAM_DRAW);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_BUFFER, GL_STREAM_DRAW);
@@ -169,11 +164,6 @@ public class NuklearMesh extends VertexArrayObject {
 		glBindVertexArray(0);
 	}
 	
-	@Override
-	public void draw() {
-		// Rendering is handled by Nuklear internals
-	}
-
 	/**
 	 * Should this only be updating displayWidth/Height?
 	 * @param width 
