@@ -1,7 +1,6 @@
 package com.avogine.render.opengl.ui;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
 
 import java.nio.FloatBuffer;
 
@@ -104,8 +103,7 @@ public class TextRender {
 		fontShader.bind();
 		fontShader.projection.loadMatrix(orthoMatrix);
 		
-		glActiveTexture(GL_TEXTURE0);
-		font.getTexture(size).bind();
+		font.getTexture(size).activate(0);
 		
 		modelMatrix.identity();
 		fontShader.model.loadMatrix(modelMatrix);

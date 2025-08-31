@@ -12,16 +12,12 @@ import java.util.*;
 import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.font.data.*;
-import com.avogine.render.image.ImageData;
-import com.avogine.render.image.data.PixelBuffer;
-import com.avogine.render.opengl.Texture;
-import com.avogine.render.opengl.Texture.Image2D;
+import com.avogine.render.opengl.texture.Texture;
 import com.avogine.util.ResourceUtils;
 
 /**
@@ -232,14 +228,13 @@ public class Font {
 			cdata.clear(); // Doesn't actually clear the data, just resets position/mark
 			stbtt_PackEnd(packContext);
 
-			var fontPixels = new ImageData(BITMAP_WIDTH, BITMAP_HEIGHT, GL11.GL_RED, new PixelBuffer(bitmap));
-			try (var pixelBuffer = fontPixels.getPixelBuffers()) {
-				return Texture.gen().bind()
-						.filterLinear()
-						.wrap2DRepeat()
-						.tex(Image2D.from(fontPixels));
+			try {
+				return Texture.gen2D(fontMap -> fontMap
+						.texFilterLinear()
+						.texWrap2DRepeat()
+						.texImage2D(BITMAP_WIDTH, BITMAP_HEIGHT, bitmap));
 			} finally {
-				Texture.unbind();
+				MemoryUtil.memFree(bitmap);
 			}
 		}
 	}

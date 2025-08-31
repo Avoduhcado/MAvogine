@@ -1,7 +1,5 @@
 package com.avogine.ecs.system;
 
-import static org.lwjgl.opengl.GL13.*;
-
 import java.util.UUID;
 
 import org.joml.Matrix4f;
@@ -62,8 +60,7 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	private void renderEntity(Renderable entity, ModelCache modelCache) {
 		var realModel = modelCache.getStaticModel(entity.modelComponent.model(), "");
 		realModel.getBlinnPhongMaterials().forEach(material -> {
-			glActiveTexture(GL_TEXTURE0);
-			modelCache.getTexture(material.getDiffuseTexturePath()).bind();
+			modelCache.getTexture(material.getDiffuseTexturePath()).activate(0);
 			
 			material.getStaticMeshes().forEach(mesh -> {
 				model.identity().translationRotateScale(

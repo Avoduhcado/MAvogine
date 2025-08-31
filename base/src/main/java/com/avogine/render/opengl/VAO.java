@@ -100,7 +100,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 		/**
 		 * 
 		 */
-		public VAOBuilder() {
+		private VAOBuilder() {
 			this(glGenVertexArrays(), new ArrayList<>(), new LinkedHashSet<>());
 		}
 

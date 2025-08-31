@@ -1,8 +1,8 @@
-package com.avogine.render.opengl.image.util;
+package com.avogine.render.opengl.texture.util;
 
 import java.util.*;
 
-import com.avogine.render.opengl.Texture;
+import com.avogine.render.opengl.texture.Texture;
 
 /**
  *
@@ -19,6 +19,8 @@ public class TextureCache {
 	}
 
 	/**
+	 * TODO Reference texture paths from a properties file rather than direct file paths so that you don't need to specify if its a 2D texture or a cubemap here.
+	 * Not sure how that would affect model loading though, so maybe not a great idea. 
 	 * @param textureFile
 	 * @return
 	 */
@@ -57,6 +59,7 @@ public class TextureCache {
 	}
 	
 	/**
+	 * XXX Experimental, it may not be worth exposing the ability to manually submit textures to the cache, but currently this enables in memory model creation
 	 * @param id
 	 * @param texture
 	 * @return

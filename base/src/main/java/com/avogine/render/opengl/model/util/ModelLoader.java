@@ -15,11 +15,11 @@ import org.lwjgl.assimp.*;
 import com.avogine.logging.AvoLog;
 import com.avogine.render.model.animation.*;
 import com.avogine.render.model.mesh.data.*;
-import com.avogine.render.opengl.image.util.TextureCache;
 import com.avogine.render.opengl.model.Model;
 import com.avogine.render.opengl.model.material.*;
 import com.avogine.render.opengl.model.material.data.BlinnPhongData;
 import com.avogine.render.opengl.model.mesh.*;
+import com.avogine.render.opengl.texture.util.TextureCache;
 import com.avogine.render.util.AssimpFileUtils;
 
 /**

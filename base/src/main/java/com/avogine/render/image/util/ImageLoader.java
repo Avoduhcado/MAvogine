@@ -1,6 +1,4 @@
-package com.avogine.render.opengl.image.util;
-
-import static org.lwjgl.opengl.GL11.*;
+package com.avogine.render.image.util;
 
 import java.nio.*;
 
@@ -8,8 +6,7 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.render.image.ImageData;
-import com.avogine.render.image.data.STBPixelBuffer;
+import com.avogine.render.image.data.ImageData;
 import com.avogine.util.ResourceUtils;
 
 /**
@@ -26,7 +23,7 @@ public class ImageLoader {
 	 * @param flipVerticallyOnLoad true if the image data should be flipped vertically when loading.
 	 * @return an {@link ImageData} containing image data of the loaded file and the contained pixels buffer.
 	 */
-	public static ImageData loadImageSTB(String imagePath, boolean flipVerticallyOnLoad) {
+	public static ImageData loadImage(String imagePath, boolean flipVerticallyOnLoad) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer widthBuffer = stack.mallocInt(1);
 			IntBuffer heightBuffer = stack.mallocInt(1);
@@ -43,17 +40,8 @@ public class ImageLoader {
 			int width = widthBuffer.get(0);
 			int height = heightBuffer.get(0);
 			int channels = channelsBuffer.get(0);
-			int format = switch (channels) {
-				case 1 -> GL_RED;
-				case 3 -> GL_RGB;
-				case 4 -> GL_RGBA;
-				default -> {
-					AvoLog.log().warn("Image: [{}] was loaded with channel count: [{}] defaulting to GL_RED.", imagePath, channels);
-					yield GL_RED;
-				}
-			};
 			
-			return new ImageData(width, height, format, new STBPixelBuffer(imageBuffer));
+			return new ImageData(width, height, channels, imageBuffer);
 		}
 	}
 	
@@ -61,8 +49,8 @@ public class ImageLoader {
 	 * @param imagePath the relative resource location of the image file to load.
 	 * @return an {@link ImageData} containing image data of the loaded file and the contained pixels buffer.
 	 */
-	public static ImageData loadImageSTB(String imagePath) {
-		return loadImageSTB(imagePath, false);
+	public static ImageData loadImage(String imagePath) {
+		return loadImage(imagePath, false);
 	}
 	
 }

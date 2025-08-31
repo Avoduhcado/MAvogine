@@ -4,10 +4,10 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.avogine.ecs.*;
-import com.avogine.render.opengl.Texture;
-import com.avogine.render.opengl.image.util.TextureCache;
 import com.avogine.render.opengl.model.Model;
 import com.avogine.render.opengl.model.util.ModelLoader;
+import com.avogine.render.opengl.texture.Texture;
+import com.avogine.render.opengl.texture.util.TextureCache;
 
 /**
  * 

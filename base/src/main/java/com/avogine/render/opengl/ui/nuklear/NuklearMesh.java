@@ -16,6 +16,8 @@ import org.lwjgl.system.*;
 
 import com.avogine.render.opengl.*;
 import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
+import com.avogine.render.opengl.texture.Texture;
+import com.avogine.render.opengl.texture.Texture.TextureBuilder.Image2D;
 
 /**
  *
@@ -81,15 +83,13 @@ public class NuklearMesh {
 	private void setupTexture() {
 		// null texture setup
 		try (MemoryStack stack = stackPush()) {
-			int nullTexID = Texture.gen().bind()
-					.filterNearest()
-					.texImage2D(GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF))
-					.id();
+			int nullTexID = Texture.gen2D(nullTex -> nullTex
+					.texFilterNearest()
+					.tex(new Image2D<>(0, GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF))))
+			.id();
 
 			nullTexture.texture().id(nullTexID);
 			nullTexture.uv().set(0.5f, 0.5f);
-		} finally {
-			Texture.unbind();
 		}
 	}
 	
