@@ -1,7 +1,5 @@
 package com.avogine.ecs.system;
 
-import static org.lwjgl.opengl.GL13.*;
-
 import java.util.UUID;
 
 import org.joml.Matrix4f;
@@ -13,7 +11,7 @@ import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
 import com.avogine.render.opengl.VAO;
-import com.avogine.render.shader.BasicShader;
+import com.avogine.render.opengl.shader.BasicShader;
 
 /**
  *
@@ -61,21 +59,17 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	
 	private void renderEntity(Renderable entity, ModelCache modelCache) {
 		var realModel = modelCache.getStaticModel(entity.modelComponent.model(), "");
-		realModel.getMaterialMeshMap().forEach((material, meshList) -> {
-			glActiveTexture(GL_TEXTURE0);
-			modelCache.getTexture(material.getDiffuseTexture()).bind();
+		realModel.getBlinnPhongMaterials().forEach(material -> {
+			modelCache.getTexture(material.getDiffuseTexturePath()).activate(0);
 			
-			meshList.stream()
-			.forEach(mesh -> {
-				mesh.getVao().bind();
-				
+			material.getStaticMeshes().forEach(mesh -> {
 				model.identity().translationRotateScale(
 						entity.transform.position().x, entity.transform.position().y, entity.transform.position().z,
 						entity.transform.orientation().x, entity.transform.orientation().y, entity.transform.orientation().z, entity.transform.orientation().w,
 						entity.transform.scale().x, entity.transform.scale().y, entity.transform.scale().z);
 				basicShader.model.loadMatrix(model);
 				
-				mesh.draw();
+				mesh.render();
 			});
 		});
 		

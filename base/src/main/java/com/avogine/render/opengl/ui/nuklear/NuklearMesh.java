@@ -15,12 +15,15 @@ import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
+import com.avogine.render.opengl.texture.Texture;
+import com.avogine.render.opengl.texture.Texture.TextureBuilder.Image2D;
 
 /**
  *
  */
 public class NuklearMesh {
-
+	
 	private static final int MAX_VERTEX_BUFFER  = 512 * 1024;
 	private static final int MAX_ELEMENT_BUFFER = 128 * 1024;
 	
@@ -35,8 +38,8 @@ public class NuklearMesh {
 				.flip();
 	}
 	
-	private VAO vao;
-
+	private final VAO vao;
+	
 	private NkDrawNullTexture nullTexture;
 	
 	private int displayWidth;
@@ -53,41 +56,40 @@ public class NuklearMesh {
 	 * 
 	 */
 	public NuklearMesh(int displayWidth, int displayHeight, float width, float height) {
+		vao = VAO.gen(vertexArray -> vertexArray
+				.bindBufferData(VBO.staticDraw(), null)
+				.enablePointer(0, new VertexAttrib.Format(2, GL_FLOAT, false, 20, 0))
+				.enablePointer(1, new VertexAttrib.Format(2, GL_FLOAT, false, 20, 8))
+				.enablePointer(2, new VertexAttrib.Format(4, GL_UNSIGNED_BYTE, true, 20, 16))
+				.bindElements(null));
 		this.displayWidth = displayWidth;
 		this.displayHeight = displayHeight;
 		this.width = width;
 		this.height = height;
 		
-		setupMesh();
 		// An empty texture used for drawing.
 		nullTexture = NkDrawNullTexture.create();
 		setupTexture();
 	}
-
-	private void setupMesh() {
-		// buffer setup
-		vao = VAO.gen().bind()
-				.vertexBuffer(VBO.gen().bind()
-						.enable(VertexAttrib.array(0).pointer(new VertexAttrib.Pointer(2, GL_FLOAT, false, 20, 0)))
-						.enable(VertexAttrib.array(1).pointer(new VertexAttrib.Pointer(2, GL_FLOAT, false, 20, 8)))
-						.enable(VertexAttrib.array(2).pointer(new VertexAttrib.Pointer(4, GL_UNSIGNED_BYTE, true, 20, 16))))
-				.vertexBuffer(VBO.genEBO().bind());
-		
-		VAO.unbind();
+	
+	/**
+	 * Free all GPU memory.
+	 */
+	public void cleanup() {
+		vao.cleanup();
+		glDeleteTextures(nullTexture.texture().id());
 	}
-
+	
 	private void setupTexture() {
 		// null texture setup
 		try (MemoryStack stack = stackPush()) {
-			int nullTexID = Texture.gen().bind()
-					.filterNearest()
-					.texImage2D(GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF))
-					.id();
+			int nullTexID = Texture.gen2D(nullTex -> nullTex
+					.texFilterNearest()
+					.tex(new Image2D<>(0, GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF))))
+			.id();
 
 			nullTexture.texture().id(nullTexID);
 			nullTexture.uv().set(0.5f, 0.5f);
-		} finally {
-			Texture.unbind();
 		}
 	}
 	
@@ -100,7 +102,7 @@ public class NuklearMesh {
 
 		// allocate vertex and element buffer
 		vao.bind();
-		vao.vertexBuffers().get(0).bind();
+		vao.vertexBufferObjects()[0].bind();
 
 		glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_BUFFER, GL_STREAM_DRAW);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_BUFFER, GL_STREAM_DRAW);
@@ -163,16 +165,6 @@ public class NuklearMesh {
 	}
 	
 	/**
-	 * Free all GPU memory.
-	 */
-	public void cleanup() {
-		if (vao != null) {
-			vao.cleanup();
-		}
-		glDeleteTextures(nullTexture.texture().id());
-	}
-	
-	/**
 	 * Should this only be updating displayWidth/Height?
 	 * @param width 
 	 * @param height 
@@ -183,5 +175,4 @@ public class NuklearMesh {
 		this.width = width;
 		this.height = height;
 	}
-
 }

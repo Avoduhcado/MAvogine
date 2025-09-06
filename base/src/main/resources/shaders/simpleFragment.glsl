@@ -4,41 +4,34 @@ in vec3 vertPosition;
 in vec3 vertNormal;
 in vec2 vertTextureCoordinates;
 
-uniform vec3 viewPosition;
-
 uniform vec3 lightPosition;
 uniform vec3 lightColor;
 
-uniform int hasTexture;
-uniform vec3 objectColor;
-uniform sampler2D objectTexture;
+uniform sampler2D diffuseMap;
+uniform sampler2D specularMap;
+uniform float specularFactor;
 
 out vec4 fragColor;
 
 void main() {
 	
 	// Ambient
-	vec3 ambient = 0.8f * lightColor;
+	float ambientStrength = 0.6;
+	vec3 ambient = (lightColor * ambientStrength) * texture(diffuseMap, vertTextureCoordinates).rgb;
 	
 	// Diffuse
 	vec3 normal = normalize(vertNormal);
 	vec3 lightDirection = normalize(lightPosition - vertPosition);
 	float diffuseStrength = max(dot(normal, lightDirection), 0.0);
-	vec3 diffuse = lightColor * diffuseStrength;
+	vec3 diffuse = lightColor * diffuseStrength * texture(diffuseMap, vertTextureCoordinates).rgb;
 	
 	// Specular
-	float specularStrength = 0.5;
-	vec3 viewDirection = normalize(viewPosition - vertPosition);
+	vec3 viewDirection = normalize(-vertPosition);
 	vec3 reflectDirection = reflect(-lightDirection, normal);
-	float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 16);
-	vec3 specular = specularStrength * spec * lightColor;
+	float specularStrength = pow(max(dot(viewDirection, reflectDirection), 0.0), specularFactor);
+	vec3 specular = lightColor * specularStrength * texture(specularMap, vertTextureCoordinates).rgb;
 	
-	vec3 result = (ambient + diffuse + specular);
-	if (hasTexture == 1) {
-		result *= texture(objectTexture, vertTextureCoordinates).xyz;
-	} else {
-		result *= objectColor;
-	}
+	vec3 result = ambient + diffuse + specular;
 	fragColor = vec4(result, 1.0);
 	
 }

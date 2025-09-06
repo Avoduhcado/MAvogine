@@ -10,14 +10,12 @@ import org.joml.primitives.AABBf;
 import org.lwjgl.system.*;
 import org.lwjgl.util.par.ParShapesMesh;
 
-import com.avogine.render.model.mesh.*;
 import com.avogine.render.model.mesh.data.*;
 import com.avogine.render.opengl.model.mesh.*;
-import com.avogine.render.util.parshapes.*;
+import com.avogine.render.util.*;
 
 /**
- * Utility class for immediate {@link StaticMesh} creation via {@link ParShapesBuilder}.
- *
+ * Utility class for immediate {@link Mesh} creation via {@link ParShapesBuilder}.
  */
 public class ParShapesLoader {
 	
@@ -54,7 +52,7 @@ public class ParShapesLoader {
 	 * <p>
 	 * This will center the cube on [0, 0, 0].
 	 * @param scale size of the cube.
-	 * @return a cube {@code StaticMesh}
+	 * @return a cube {@code Mesh}
 	 */
 	public static StaticMesh loadCube(float scale) {
 		return builder
@@ -67,7 +65,7 @@ public class ParShapesLoader {
 	/**
 	 * Generate a plane {@link StaticMesh}.
 	 * @param scale size of the plane.
-	 * @return a plane {@code StaticMesh}.
+	 * @return a plane {@code Mesh}.
 	 */
 	public static StaticMesh loadPlane(float scale) {
 		return builder.createPlane(100, 100)
@@ -118,12 +116,12 @@ public class ParShapesLoader {
 	}
 	
 	/**
-	 * Generate a new {@link StaticInstancedMesh}.
+	 * Generate a new {@link InstancedMesh}.
 	 * @param builder the {@link ParShapesBuilder} defining the mesh to create with all transformations.
 	 * @param instanceCount the total number of instances to allocate.
-	 * @return a new {@code StaticInstancedMesh}
+	 * @return a new {@code InstancedMesh}
 	 */
-	public static StaticInstancedMesh loadInstancedBuilder(ParShapesBuilder builder, int instanceCount) {
+	public static InstancedMesh loadInstancedBuilder(ParShapesBuilder builder, int instanceCount) {
 		return builder.build(parMesh -> {
 			int vertexCount = parMesh.npoints();
 			int vert3D = vertexCount * 3;
@@ -140,7 +138,7 @@ public class ParShapesLoader {
 				FloatBuffer aabb = stack.mallocFloat(6);
 				par_shapes_compute_aabb(parMesh, aabb);
 
-				return new StaticInstancedMesh(new InstancedMeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()), instancedBuffers), instanceCount);
+				return new InstancedMesh(new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()), 1, instancedBuffers, instanceCount));
 			} finally {
 				par_shapes_free_mesh(parMesh);
 			}

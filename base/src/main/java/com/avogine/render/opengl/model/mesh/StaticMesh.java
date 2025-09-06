@@ -1,63 +1,55 @@
 package com.avogine.render.opengl.model.mesh;
 
-import static org.lwjgl.opengl.GL11.*;
-
 import org.joml.primitives.AABBf;
 
-import com.avogine.render.model.mesh.MeshData;
-import com.avogine.render.model.mesh.data.VertexBuffers;
-import com.avogine.render.model.mesh.parameters.Bound3D;
+import com.avogine.render.model.mesh.Boundable;
+import com.avogine.render.model.mesh.data.*;
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.model.StaticModel;
+import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
 
 /**
- * Used by {@link StaticModel}.
+ *
  */
-public class StaticMesh extends Mesh<MeshData> implements Bound3D {
+public final class StaticMesh extends Mesh implements Boundable {
 	
-	protected AABBf aabb;
+	private AABBf aabb;
 	
 	/**
 	 * @param meshData
 	 */
 	public StaticMesh(MeshData meshData) {
 		super(meshData);
-		this.aabb = meshData.getAabb();
+		aabb = meshData.aabb();
 	}
 	
 	@Override
-	public VAO buildVertexArray(MeshData meshData) {
-		try (VertexBuffers vertexBuffers = meshData.getVertexBuffers()) {
-			var vertexAttrib3f = VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(3);
-			return VAO.gen().bind()
-					.vertexBuffer(VBO.gen().bind().bufferData(vertexBuffers.positions())
-							.enable(VertexAttrib.array(0)
-									.pointer(vertexAttrib3f)))
-					.vertexBuffer(VBO.gen().bind().bufferData(vertexBuffers.normals())
-							.enable(VertexAttrib.array(1)
-									.pointer(vertexAttrib3f)))
-					.vertexBuffer(VBO.gen().bind().bufferData(vertexBuffers.tangents())
-							.enable(VertexAttrib.array(2)
-									.pointer(vertexAttrib3f)))
-					.vertexBuffer(VBO.gen().bind().bufferData(vertexBuffers.bitangents())
-							.enable(VertexAttrib.array(3)
-									.pointer(vertexAttrib3f)))
-					.vertexBuffer(VBO.gen().bind().bufferData(vertexBuffers.textureCoordinates())
-							.enable(VertexAttrib.array(4)
-									.pointer(VertexAttrib.Pointer.tightlyPackedUnnormalizedFloat(2))))
-					.vertexBuffer(VBO.genEBO().bind().bufferData(vertexBuffers.indices()));
-		} finally {
-			VAO.unbind();
+	protected VAO setupVAO(MeshData meshData) {
+		try (var vertexBuffers = meshData.vertexBuffers()) {
+			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var w, var b, var indices)) {
+				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
+				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);
+				
+				return VAO.gen(vertexArray -> vertexArray
+						.bindBufferData(VBO.staticDraw(), positions)
+						.enablePointer(0, vertexFormat3f)
+						.bindBufferData(VBO.staticDraw(), normals)
+						.enablePointer(1, vertexFormat3f)
+						.bindBufferData(VBO.staticDraw(), tangents)
+						.enablePointer(2, vertexFormat3f)
+						.bindBufferData(VBO.staticDraw(), bitangents)
+						.enablePointer(3, vertexFormat3f)
+						.bindBufferData(VBO.staticDraw(), textureCoordinates)
+						.enablePointer(4, vertexFormat2f)
+						.bindElements(indices));
+			} else {
+				throw new IllegalArgumentException("Record deconstruction failed. VertexBuffers not found.");
+			}
 		}
 	}
-
-	@Override
-	public void draw() {
-		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
-	}
-
+	
 	@Override
 	public AABBf getAABB() {
 		return aabb;
 	}
+
 }

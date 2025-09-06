@@ -1,85 +1,84 @@
 package com.avogine.render.opengl;
 
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 
 import java.nio.*;
 
-import org.lwjgl.opengl.GL15;
+import org.lwjgl.system.MemoryUtil;
 
 /**
- * @param id 
- * @param target 
+ * A wrapper class of OpenGL's Vertex Buffer Object.
+ * 
+ * @param id the object ID of the vertex buffer.
+ * @param target the target to which the buffer object is bound. This target will be re-used by any subsequent bind calls.
+ * @param usage the expected usage pattern of the data store. This usage will be re-used by any subsequent bufferData calls.
+ * @see <a href="https://www.khronos.org/opengl/wiki/Buffer_Object">Buffer Object</a>
  */
-public record VBO(int id, int target) {
-	/**
-	 * @param target 
-	 * @return a new Vertex Buffer Object wrapper generated with {@link GL15#glGenBuffers()} with a specific buffer target.
-	 */
-	public static VBO gen(int target) {
-		return new VBO(glGenBuffers(), target);
-	}
-	
-	/**
-	 * @return a new Vertex Buffer Object wrapper generated with {@link GL15#glGenBuffers()}.
-	 */
-	public static VBO gen() {
-		return new VBO(glGenBuffers(), GL_ARRAY_BUFFER);
-	}
+public record VBO(int id, int target, int usage) {
 
 	/**
-	 * @return a new Vertex Buffer Object wrapper specifically bound to {@link GL15#GL_ELEMENT_ARRAY_BUFFER}.
+	 * @param target the target to which the buffer object is bound. This target will be re-used by any subsequent bind calls.
+	 * @param usage the expected usage pattern of the data store. This usage will be re-used by any subsequent bufferData calls.
 	 */
-	public static VBO genEBO() {
-		return new VBO(glGenBuffers(), GL_ELEMENT_ARRAY_BUFFER);
+	public VBO(int target, int usage) {
+		this(glGenBuffers(), target, usage);
 	}
 	
 	/**
-	 * @param target
+	 * @param usage the expected usage pattern of the data store. This usage will be re-used by any subsequent bufferData calls.
 	 */
-	public static void unbind(int target) {
-		glBindBuffer(target, 0);
+	public VBO(int usage) {
+		this(GL_ARRAY_BUFFER, usage);
 	}
 	
 	/**
-	 * 
+	 * @return an array buffer configured for static drawing.
+	 */
+	public static VBO staticDraw() {
+		return new VBO(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+	}
+	
+	/**
+	 * @return an element array buffer configured for static drawing.
+	 */
+	public static VBO elementArrayBuffer() {
+		return new VBO(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+	}
+	
+	/**
+	 * Static convenient method to clear the currently bound array buffer.
 	 */
 	public static void unbind() {
-		unbind(GL_ARRAY_BUFFER);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	
 	/**
-	 * 
+	 * Delete this buffer object.
 	 */
 	public void cleanup() {
 		glDeleteBuffers(id);
 	}
 	
 	/**
-	 * @return this
+	 * Bind this named buffer object.
 	 */
-	public VBO bind() {
+	public void bind() {
 		glBindBuffer(target, id);
-		return this;
 	}
 	
+
 	/**
 	 * @param size
-	 * @param usage
-	 * @return this
 	 */
-	public VBO bufferData(long size, int usage) {
+	public void bufferData(long size) {
 		glBufferData(target, size, usage);
-		return this;
 	}
 	
 	/**
 	 * @param <T>
-	 * @param data
-	 * @param usage
-	 * @return this
+	 * @param data the data to copy into the buffer's data store, or null
 	 */
-	public <T extends Buffer> VBO bufferData(T data, int usage) {
+	public <T extends Buffer> void bufferData(T data) {
 		switch (data) {
 			case ByteBuffer b -> glBufferData(target, b, usage);
 			case DoubleBuffer d -> glBufferData(target, d, usage);
@@ -87,28 +86,17 @@ public record VBO(int id, int target) {
 			case IntBuffer i -> glBufferData(target, i, usage);
 			case LongBuffer l -> glBufferData(target, l, usage);
 			case ShortBuffer s -> glBufferData(target, s, usage);
-			case null -> glBufferData(target, (ByteBuffer) data, usage);
+			case null -> glBufferData(target, MemoryUtil.NULL, usage);
 			default -> throw new IllegalArgumentException("Cannot buffer data of type " + data.getClass());
 		}
-		return this;
-	}
-	
-	/**
-	 * @param <T>
-	 * @param data
-	 * @return this
-	 */
-	public <T extends Buffer> VBO bufferData(T data) {
-		return bufferData(data, GL_STATIC_DRAW);
 	}
 	
 	/**
 	 * @param <T>
 	 * @param offset
 	 * @param data
-	 * @return this
 	 */
-	public <T extends Buffer> VBO bufferSubData(long offset, T data) {
+	public <T extends Buffer> void bufferSubData(long offset, T data) {
 		switch (data) {
 			case ByteBuffer b -> glBufferSubData(target, offset, b);
 			case DoubleBuffer d -> glBufferSubData(target, offset, d);
@@ -116,28 +104,15 @@ public record VBO(int id, int target) {
 			case IntBuffer i -> glBufferSubData(target, offset, i);
 			case LongBuffer l -> glBufferSubData(target, offset, l);
 			case ShortBuffer s -> glBufferSubData(target, offset, s);
-			case null -> glBufferSubData(target, offset, (ByteBuffer) data);
-			default -> throw new IllegalArgumentException("Cannot buffer data of type " + data.getClass());
+			default -> throw new IllegalArgumentException("Cannot buffer sub data of type " + data.getClass());
 		}
-		return this;
 	}
 	
 	/**
 	 * @param <T>
 	 * @param data
-	 * @return this
 	 */
-	public <T extends Buffer> VBO bufferSubData(T data) {
-		return bufferSubData(0, data);
+	public <T extends Buffer> void bufferSubData(T data) {
+		bufferSubData(0, data);
 	}
-	
-	/**
-	 * @param vertexAttrib
-	 * @return this
-	 */
-	public VBO enable(VertexAttrib vertexAttrib) {
-		glEnableVertexAttribArray(vertexAttrib.index());
-		return this;
-	}
-	
 }

@@ -1,53 +1,76 @@
 package com.avogine.render.opengl.model.mesh;
 
-import com.avogine.render.model.mesh.MeshData;
+import static org.lwjgl.opengl.GL11.*;
+
+import java.util.List;
+import java.util.function.Consumer;
+
+import com.avogine.render.model.mesh.data.MeshData;
 import com.avogine.render.opengl.VAO;
-import com.avogine.render.opengl.model.mesh.data.VertexArrayBuilder;
 
 /**
- * @param <T> 
+ * Parent type of a general Mesh implementation.
  */
-public abstract class Mesh<T extends MeshData> implements VertexArrayBuilder<T> {
+public abstract sealed class Mesh permits StaticMesh, InstancedMesh, AnimatedMesh {
 
-	protected int vertexCount;
+	private final VAO vao;
+	private final int vertexCount;
+
+	protected Mesh(VAO vao, int vertexCount) {
+		this.vao = vao;
+		this.vertexCount = vertexCount;
+	}
 	
-	protected final VAO vao;
-	
-	protected Mesh(T meshData) {
-		this.vertexCount = meshData.getVertexCount();
-		this.vao = buildVertexArray(meshData);
+	protected Mesh(MeshData meshData) {
+		this.vao = setupVAO(meshData);
+		this.vertexCount = meshData.vertexBuffers().indices().limit();
 	}
 	
 	/**
-	 * Free this Mesh's {@link VAO}.
+	 * Free the underlying vertex array object of this mesh.
 	 */
 	public void cleanup() {
 		vao.cleanup();
 	}
 	
-	/**
-	 * Render the mesh.
-	 */
-	public abstract void draw();
+	protected abstract VAO setupVAO(MeshData meshData);
+	
+	protected void draw() {
+		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
+	}
 	
 	/**
-	 * @return the {@link VAO} this mesh is bound to.
+	 * Bind and draw this mesh.
 	 */
-	public VAO getVao() {
+	public void render() {
+		vao.bind();
+		draw();
+	}
+	
+	/**
+	 * Bind this mesh, and then issue a separate draw for each element after applying the action per element.
+	 * 
+	 * @param <T> The type of element to process for this bulk render operation.
+	 * @param elements A list of elements to process before drawing.
+	 * @param action The action to perform on each element before drawing.
+	 */
+	public <T> void render(List<T> elements, Consumer<T> action) {
+		vao.bind();
+		for (var element : elements) {
+			action.accept(element);
+			draw();
+		}
+	}
+	
+	protected VAO getVao() {
 		return vao;
 	}
-	
+
 	/**
-	 * @return the address this mesh is bound to in GPU memory.
-	 */
-	public int getVaoId() {
-		return vao.id();
-	}
-	
-	/**
-	 * @return the number of vertices that make up this {@link Mesh}.
+	 * @return the number of vertices.
 	 */
 	public int getVertexCount() {
 		return vertexCount;
 	}
+	
 }
