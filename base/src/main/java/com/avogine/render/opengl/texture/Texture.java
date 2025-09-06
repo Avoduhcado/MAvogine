@@ -15,9 +15,9 @@ import com.avogine.logging.AvoLog;
 import com.avogine.render.image.data.ImageData;
 
 /**
+ * TODO#40 Subtype this based on target? Texture1D/Texture2D/TextureCubeMap?
  * @param id 
  * @param target 
- *
  */
 public record Texture(int id, int target) {
 	
@@ -79,7 +79,7 @@ public record Texture(int id, int target) {
 	}
 	
 	/**
-	 * 
+	 * Bind this texture to its target.
 	 */
 	protected void bind() {
 		glBindTexture(target, id);
@@ -95,26 +95,23 @@ public record Texture(int id, int target) {
 	}
 	
 	/**
-	 * TODO Convert to regular class with private constructor, would allow easily storing parameters dynamically during building to warn of duplicate/overwritten params
-	 * @param id
-	 * @param target
+	 * 
 	 */
-	public static record TextureBuilder(int id, int target) implements AutoCloseable {
+	public static final class TextureBuilder implements AutoCloseable {
 		
 		private static final Function<TextureBuilder, Texture> TO_TEXTURE = builder -> new Texture(builder.id, builder.target);
 		
-		/**
-		 * 
-		 */
-		public TextureBuilder {
-			glBindTexture(target, id);
-		}
+		private final int id;
+		private final int target;
 		
 		/**
 		 * @param target
 		 */
 		private TextureBuilder(int target) {
-			this(glGenTextures(), target);
+			id = glGenTextures();
+			this.target = target;
+			
+			glBindTexture(target, id);
 		}
 		
 		@Override
@@ -126,7 +123,7 @@ public record Texture(int id, int target) {
 		 * @param texInit
 		 * @return this
 		 */
-		public TextureBuilder tex(IntConsumer texInit) {
+		private TextureBuilder tex(IntConsumer texInit) {
 			texInit.accept(target);
 			return this;
 		}
@@ -324,7 +321,7 @@ public record Texture(int id, int target) {
 		}
 		
 		/**
-		 * TODO Validate the param value against the pname
+		 * TODO#40 Validate the param value against the pname
 		 * @param pname
 		 * @param param
 		 */
@@ -394,7 +391,7 @@ public record Texture(int id, int target) {
 		 * @param internalFormat 
 		 * @param width 
 		 * @param height 
-		 * @param channels 
+		 * @param format 
 		 * @param type 
 		 * @param pixels 
 		 */

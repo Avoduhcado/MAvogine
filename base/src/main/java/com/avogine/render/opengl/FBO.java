@@ -5,7 +5,7 @@ import static org.lwjgl.opengl.GL30.*;
 import com.avogine.logging.AvoLog;
 
 /**
- * TODO Refactor to follow design from VAO and Texture
+ * TODO#55 Refactor to follow design from VAO and Texture
  * @param id 
  * @param target 
  */

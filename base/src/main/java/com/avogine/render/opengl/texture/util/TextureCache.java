@@ -19,7 +19,7 @@ public class TextureCache {
 	}
 
 	/**
-	 * TODO Reference texture paths from a properties file rather than direct file paths so that you don't need to specify if its a 2D texture or a cubemap here.
+	 * TODO#40 Reference texture paths from a properties file rather than direct file paths so that you don't need to specify if its a 2D texture or a cubemap here.
 	 * Not sure how that would affect model loading though, so maybe not a great idea. 
 	 * @param textureFile
 	 * @return

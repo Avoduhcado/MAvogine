@@ -27,7 +27,7 @@ public interface StateSwappable<T extends GameState<?, ?>> {
 	public void swapGameState(Window window);
 	
 	/**
-	 * TODO Allow the state queue to "pre-load" assets of the next state without just immediately swapping to promote instances such as knowing a title scene will 
+	 * TODO#43 Allow the state queue to "pre-load" assets of the next state without just immediately swapping to promote instances such as knowing a title scene will 
 	 * progress into a main game scene and can pull a set of assets it should begin loading in the background to speed up state swaps.
 	 * @param <T>
 	 */

@@ -56,7 +56,7 @@ public class Window {
 	private final Queue<Registerable> queuedRegisters;
 	
 	/**
-	 * TODO Add WindowBuilder param that can take in a bunch of custom settings or just use defaults?
+	 * TODO#12 Add WindowBuilder param that can take in a bunch of custom settings or just use defaults?
 	 * @param title The window title
 	 * @param preferences 
 	 */

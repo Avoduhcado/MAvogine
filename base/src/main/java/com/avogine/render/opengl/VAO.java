@@ -38,7 +38,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 	}
 	
 	/**
-	 * 
+	 * Cleanup all vertex buffers and then delete this vertex array.
 	 */
 	public void cleanup() {
 		Arrays.stream(vertexBufferObjects).forEach(VBO::cleanup);
@@ -46,7 +46,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 	}
 	
 	/**
-	 * 
+	 * Bind this vertex array.
 	 */
 	public void bind() {
 		glBindVertexArray(id);
@@ -78,30 +78,28 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 	
 	/**
 	 *
-	 * @param id
-	 * @param vertexBufferObjects
-	 * @param vertexAttribs
 	 */
-	public static record VAOBuilder(int id, List<VBO> vertexBufferObjects, Set<VertexAttrib> vertexAttribs) implements AutoCloseable {
-		
+	public static final class VAOBuilder implements AutoCloseable {
+
 		private static final Function<VAOBuilder, VAO> TO_VAO = builder -> new VAO(builder.id, builder.vertexBufferObjects.toArray(VBO[]::new));
 		
 		private static final Consumer<VBO> BIND_VBO = VBO::bind;
 		
 		private static final Consumer<VertexAttrib> ENABLE_VERTEX_ATTRIB = VertexAttrib::enable;
 		
-		/**
-		 * Canonical constructor that binds this vertex array object upon instantiation.
-		 */
-		public VAOBuilder {
-			glBindVertexArray(id);
-		}
+		private final int id;
+		private final List<VBO> vertexBufferObjects;
+		private final Set<VertexAttrib> vertexAttribs;
 		
 		/**
-		 * 
+		 * Instances of this class should only be constructed via the VAO static gen method.
 		 */
 		private VAOBuilder() {
-			this(glGenVertexArrays(), new ArrayList<>(), new LinkedHashSet<>());
+			id = glGenVertexArrays();
+			vertexBufferObjects = new ArrayList<>();
+			vertexAttribs = new LinkedHashSet<>();
+
+			glBindVertexArray(id);
 		}
 
 		@Override
