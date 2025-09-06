@@ -28,7 +28,7 @@
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <mavogine.version>0.1.3-SNAPSHOT</mavogine.version>
-    <lwjgl.version>3.3.3</lwjgl.version>
+    <lwjgl.version>3.3.6</lwjgl.version>
     <joml.version>1.10.8</joml.version>
     <lwjgl.natives>natives-windows</lwjgl.natives>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -36,57 +36,41 @@
   </properties>
   
   <build>
-	<pluginManagement>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<version>3.1.2</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>3.0.1</version>
-				<configuration>
-					<tagNameFormat>v@{project.version}</tagNameFormat>
-					<autoVersionSubmodules>true</autoVersionSubmodules>
-					<scmCommentPrefix>[maven-release-plugin][skip ci]</scmCommentPrefix>
-					<releaseProfiles>releases</releaseProfiles>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.1</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.6.3</version>
-			</plugin>
-		</plugins>
-	</pluginManagement>
 	<plugins>
 		<plugin>
 			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-source-plugin</artifactId>
+			<artifactId>maven-compiler-plugin</artifactId>
+			<version>3.14.0</version>
+		</plugin>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-enforcer-plugin</artifactId>
+			<version>3.6.1</version>
 			<executions>
 				<execution>
-					<id>attach-sources</id>
+					<id>enforce-maven</id>
 					<goals>
-						<goal>jar-no-fork</goal>
+						<goal>enforce</goal>
 					</goals>
+					<configuration>
+						<rules>
+							<requireMavenVersion>
+								<version>3.6.3</version>
+							</requireMavenVersion>
+						</rules>
+					</configuration>
 				</execution>
 			</executions>
 		</plugin>
 		<plugin>
 			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-deploy-plugin</artifactId>
+			<version>3.1.4</version>
+		</plugin>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
 			<artifactId>maven-javadoc-plugin</artifactId>
+			<version>3.11.3</version>
 			<executions>
 				<execution>
 					<id>attach-javadocs</id>
@@ -98,6 +82,30 @@
 			<configuration>
 				<doclint>none</doclint>
 			</configuration>
+		</plugin>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-release-plugin</artifactId>
+			<version>3.1.1</version>
+			<configuration>
+				<tagNameFormat>v@{project.version}</tagNameFormat>
+				<autoVersionSubmodules>true</autoVersionSubmodules>
+				<scmCommentPrefix>[maven-release-plugin][skip ci]</scmCommentPrefix>
+				<releaseProfiles>releases</releaseProfiles>
+			</configuration>
+		</plugin>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-source-plugin</artifactId>
+			<version>3.3.1</version>
+			<executions>
+				<execution>
+					<id>attach-sources</id>
+					<goals>
+						<goal>jar-no-fork</goal>
+					</goals>
+				</execution>
+			</executions>
 		</plugin>
 	</plugins>
   </build>
@@ -124,7 +132,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.8.2</version>
+			<version>5.13.4</version>
 			<type>pom.sha512</type>
 			<scope>test</scope>
 		</dependency>
