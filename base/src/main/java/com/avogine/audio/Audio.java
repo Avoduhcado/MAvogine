@@ -288,7 +288,7 @@ public class Audio {
 				default -> AvoLog.log().debug("Event of type: {}", eventType);
 			}
 		});
-		SOFTEvents.alEventCallbackSOFT(callback, (ByteBuffer) null);
+		SOFTEvents.alEventCallbackSOFT(callback, MemoryUtil.NULL);
 		int[] eventTypes = new int[] { SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT };
 		SOFTEvents.alEventControlSOFT(eventTypes, true);
 		softEventCallbacks.add(callback);
