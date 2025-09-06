@@ -52,7 +52,7 @@ public class ModelLoader {
 	private ModelLoader() {}
 	
 	/**
-	 * TODO convert modelPath to modelName, source modelName from a resource property that points to the file location and pass _that_ file location to the reader
+	 * TODO#57 convert modelPath to modelName, source modelName from a resource property that points to the file location and pass _that_ file location to the reader
 	 * @param id 
 	 * @param modelPath
 	 * @param textureCache 
@@ -115,6 +115,7 @@ public class ModelLoader {
 		return new SimpleMaterial(new BlinnPhongData(diffuseMapPath, specularMapPath, specularFactor[0]));
 	}
 	
+	@SuppressWarnings("unused")
 	private static Material processPBRMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
 		AIString texturePath = AIString.create();
 		String albedoTexture = processMaterialTexture(aiMaterial, aiTextureType_BASE_COLOR, texturePath, modelDirectory, textureCache);
@@ -125,7 +126,8 @@ public class ModelLoader {
 		
 		return new PBRMaterial(albedoTexture, normalTexture, metallicTexture, roughnessTexture, aoTexture);
 	}
-	
+
+	@SuppressWarnings("unused")
 	private static Vector4f processMaterialColor(AIMaterial aiMaterial, String materialKeyColor, AIColor4D color) {
 		int result = aiGetMaterialColor(aiMaterial, materialKeyColor, aiTextureType_NONE, 0, color);
 		if (result == aiReturn_SUCCESS) {
