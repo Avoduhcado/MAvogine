@@ -21,6 +21,7 @@ import com.avogine.logging.AvoLog;
  */
 public class Audio {
 
+	// TODO#52 Create a real BufferCache and a SourceCache that allocates at least 32 or ALC_MONO_SOURCES sources to pull from possibly with the option to allocate "high priority" sources or BGM sources
 	private final List<SoundBuffer> soundBuffers;
 	private final Map<String, SoundSource> soundSourceCache;
 	
@@ -29,10 +30,13 @@ public class Audio {
 	private long device;
 	private long context;
 	
-	private AudioProperties properties;
-	
+	private ALCapabilities caps;
+
 	private String currentDevice;
 	
+	private AudioProperties properties;
+	
+	private final List<SOFTEventProc> softEventCallbacks;
 	private Timer defaultDeviceReopenTimer;
 
 	/**
@@ -43,6 +47,8 @@ public class Audio {
 		soundSourceCache = new HashMap<>();
 		
 		properties = new AudioProperties();
+		
+		softEventCallbacks = new ArrayList<>();
 	}
 	
 	/**
@@ -64,21 +70,27 @@ public class Audio {
 			throw new IllegalStateException("Failed to open OpenAL device.");
 		}
 		
-		currentDevice = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
+		var deviceCaps = ALC.createCapabilities(device);
+		
+		if (deviceCaps.OpenALC11) {
+			currentDevice = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
+		}
+		
 		context = alcCreateContext(device, (IntBuffer) null);
 		if (context == MemoryUtil.NULL) {
 			throw new IllegalStateException("Failed to create OpenAL context.");
 		}
+		
 		alcMakeContextCurrent(context);
-		var alcCaps = ALC.createCapabilities(device);
-		AL.createCapabilities(alcCaps);
+		
+		caps = AL.createCapabilities(deviceCaps, MemoryUtil::memCallocPointer);
 
 		setListenerVolume(properties.listenerGain);
 		
-		if (alcCaps.ALC_SOFT_reopen_device) {
+		if (deviceCaps.ALC_SOFT_reopen_device) {
 			configureDeviceReopen();
 		}
-		if (AL.getCapabilities().AL_SOFT_events) {
+		if (caps.AL_SOFT_events) {
 			configureSoftEvents();
 			// With this disabled, if a device disconnects sources won't be stopped and can hopefully just immediately start playing on another reconnected device.
 			// This might cause issues?
@@ -140,14 +152,21 @@ public class Audio {
 	 * and close the device if they were properly allocated.
 	 */
 	public void cleanup() {
+		if (defaultDeviceReopenTimer != null) {
+			defaultDeviceReopenTimer.cancel();
+		}
+		
 		clearSources();
 		clearBuffers();
-		if (context != MemoryUtil.NULL) {
-			alcDestroyContext(context);
+		
+		softEventCallbacks.forEach(SOFTEventProc::free);
+		
+		alcMakeContextCurrent(MemoryUtil.NULL);
+		if (caps != null) {
+			MemoryUtil.memFree(caps.getAddressBuffer());
 		}
-		if (device != MemoryUtil.NULL) {
-			alcCloseDevice(device);
-		}
+		alcDestroyContext(context);
+		alcCloseDevice(device);
 	}
 	
 	/**
@@ -233,7 +252,7 @@ public class Audio {
 	}
 
 	/**
-	 * @return 
+	 * @return a list of all available device specifiers.
 	 */
 	public List<String> enumerateAudioDevices() {
 		return ALUtil.getStringList(0, ALC_ALL_DEVICES_SPECIFIER);
@@ -249,12 +268,12 @@ public class Audio {
 		}
 		AvoLog.log().info("Scheduling default audio device poller.");
 
-		defaultDeviceReopenTimer = new Timer();
+		defaultDeviceReopenTimer = new Timer("OpenAL-Device-Reopen_Timer", true);
 		defaultDeviceReopenTimer.scheduleAtFixedRate(new DefaultDeviceReopenTask(), new Date(), TimeUnit.SECONDS.toMillis(1));
 	}
 
 	private void configureSoftEvents() {
-		SOFTEvents.alEventCallbackSOFT((eventType, object, param, length, message, userParam) -> {
+		SOFTEventProc callback = SOFTEventProc.create((eventType, object, param, length, message, userParam) -> {
 			switch (eventType) {
 				case SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT -> {
 					if (ALC.getCapabilities().ALC_SOFT_reopen_device && properties.defaultDevice == null) {
@@ -268,9 +287,11 @@ public class Audio {
 				case SOFTEvents.AL_EVENT_TYPE_BUFFER_COMPLETED_SOFT -> AvoLog.log().debug("Buffer completed?");
 				default -> AvoLog.log().debug("Event of type: {}", eventType);
 			}
-		}, (ByteBuffer) null);
+		});
+		SOFTEvents.alEventCallbackSOFT(callback, MemoryUtil.NULL);
 		int[] eventTypes = new int[] { SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT };
 		SOFTEvents.alEventControlSOFT(eventTypes, true);
+		softEventCallbacks.add(callback);
 	}
 	
 	private class DefaultDeviceReopenTask extends TimerTask {

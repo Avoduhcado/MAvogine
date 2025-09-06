@@ -3,6 +3,7 @@ package com.avogine.audio.data;
 import static org.lwjgl.openal.AL10.*;
 
 import org.joml.Vector3f;
+import org.lwjgl.openal.AL11;
 
 /**
  *
@@ -72,6 +73,10 @@ public class SoundSource {
 	
 	public boolean isStopped() {
 		return alGetSourcei(sourceId, AL_SOURCE_STATE) == AL_STOPPED;
+	}
+	
+	public float getSampleOffset() {
+		return alGetSourcef(sourceId, AL11.AL_SEC_OFFSET);
 	}
 
 }

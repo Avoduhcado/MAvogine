@@ -17,6 +17,8 @@ public class ResourceUtils {
 		
 	}
 	
+	private static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
+	
 	/**
 	 * @param resourcePath A relative path to the resource file from the resources directory.
 	 * @return A string containing the contents of the file, line by line.
@@ -34,6 +36,12 @@ public class ResourceUtils {
 	}
 	
 	/**
+	 * Allocates a ByteBuffer via {@link BufferUtils} with the given size and attempts to read the given resource into it, resizing if necessary.
+	 * </p>
+	 * Caution should be taken when reading large files as the ByteBuffer will not only be held in memory, but also persist until
+	 * garbage collection removes it. A sensible bufferSize should also be chosen relative to the resources being read since if the
+	 * bytes don't fit in the initial size, the buffer will be doubled in size until they do. 
+	 * 
 	 * @param resourcePath
 	 * @param bufferSize
 	 * @return a buffer containing the byte contents of the given resource.
@@ -65,11 +73,12 @@ public class ResourceUtils {
 	}
 	
 	/**
+	 * Allocates a ByteBuffer via {@link BufferUtils} with a default size and attempts to read the given resource into it, resizing if necessary.
 	 * @param resourcePath
 	 * @return a buffer containing the byte contents of the given resource.
 	 */
 	public static ByteBuffer readResourceToBuffer(String resourcePath) {
-		return readResourceToBuffer(resourcePath, 8 * 1024);
+		return readResourceToBuffer(resourcePath, DEFAULT_BUFFER_SIZE);
 	}
 
 	/**

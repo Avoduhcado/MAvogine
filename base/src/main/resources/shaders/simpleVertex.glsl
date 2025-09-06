@@ -4,9 +4,9 @@ layout (location=0) in vec3 position;
 layout (location=1) in vec3 normal;
 layout (location=4) in vec2 textureCoordinates;
 
-uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 modelMatrix;
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
 uniform mat4 normalMatrix;
 
 out vec3 vertPosition;
@@ -15,11 +15,11 @@ out vec2 vertTextureCoordinates;
 
 void main() {
 	
-	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+	gl_Position = projection * view * model * vec4(position, 1.0);
 	
-	// Transform outs to view space
-	vertPosition = vec3(viewMatrix * modelMatrix * vec4(position, 1.0));
-	vertNormal = mat3(normalMatrix) * normal;
+	vec4 vertPos4 = view * model * vec4(position, 1.0);
+	vertPosition = vec3(vertPos4) / vertPos4.w;
+	vertNormal = mat3(transpose(inverse(view * model))) * normal;
 	vertTextureCoordinates = textureCoordinates;
 	
 }

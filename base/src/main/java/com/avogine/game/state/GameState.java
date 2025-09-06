@@ -2,6 +2,7 @@ package com.avogine.game.state;
 
 import com.avogine.game.scene.Scene;
 import com.avogine.io.Window;
+import com.avogine.io.listener.InputListener;
 import com.avogine.render.SceneRender;
 
 /**
@@ -17,6 +18,15 @@ public abstract class GameState<T extends Scene, U extends SceneRender<T>> {
 	 * @param window
 	 */
 	public abstract void init(Window window);
+	
+	/**
+	 * Optional method for any actions that need to be performed by this {@link GameState} prior to
+	 * swapping to another state like removing any {@link InputListener}s from {@code window}.
+	 * @param window
+	 */
+	public void prepareForSwap(Window window) {
+		
+	}
 	
 	/**
 	 * 

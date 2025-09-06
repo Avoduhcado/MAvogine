@@ -70,7 +70,7 @@ public abstract class RegisterableGame implements Game {
 	 * @param window The Window to register this listener to.
 	 */
 	public void addInputListener(InputListener l, Window window) {
-		inputListeners.add(window.getInput().addInputListener(l));
+		inputListeners.add(window.addInputListener(l));
 	}
 	
 	/**
@@ -78,7 +78,7 @@ public abstract class RegisterableGame implements Game {
 	 */
 	protected void removeSceneInputListeners(Window window) {
 		for (InputListener l : inputListeners) {
-			window.getInput().removeInputListener(l);
+			window.removeInputListener(l);
 		}
 	}
 	
