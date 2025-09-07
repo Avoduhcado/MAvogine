@@ -1,16 +1,17 @@
 package com.avogine.ecs;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 /**
- * TODO Document process of adding entities here, how they're stored and updated, and how to access them through component queries
+ * Document process of adding entities here, how they're stored and updated, and how to access them through component queries
  */
 public class EntityManager {
 
 	private final Set<EntityChunk> chunks;
 	
-	private final Map<Class<? extends EntitySystemAddon>, EntitySystemAddon> addons;
+	private final Map<Class<EntitySystemAddon>, EntitySystemAddon> addons;
 	
 	/**
 	 * 
@@ -57,7 +58,7 @@ public class EntityManager {
 				.flatMap(chunk -> chunk.getComponentMaps().entrySet().stream())
 				.filter(entry -> entry.getKey().equals(entityID))
 				.findFirst()
-				.map(map -> map.getValue());
+				.map(Entry::getValue);
 	}
 	
 	/**
@@ -160,8 +161,9 @@ public class EntityManager {
 	 * @param addon the {@code EntitySystemAddon} to register
 	 * @return the previous value associated with the given addon's class, or null if there was no mapping for that class.
 	 */
+	@SuppressWarnings("unchecked")
 	public EntitySystemAddon registerAddon(EntitySystemAddon addon) {
-		return this.addons.put(addon.getClass(), addon);
+		return this.addons.put((Class<EntitySystemAddon>) addon.getClass(), addon);
 	}
 	
 	/**
@@ -176,12 +178,4 @@ public class EntityManager {
 		}
 		return Optional.empty();
 	}
-
-	/**
-	 * @return the addons
-	 */
-	public Map<Class<? extends EntitySystemAddon>, EntitySystemAddon> getAddons() {
-		return addons;
-	}
-	
 }

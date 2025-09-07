@@ -1,12 +1,12 @@
 package com.avogine.io.listener;
 
-import com.avogine.io.event.KeyEvent;
+import com.avogine.io.event.*;
 import com.avogine.io.event.MouseEvent.*;
 
 /**
  *
  */
-public abstract class InputAdapter implements KeyListener, MouseButtonListener, MouseMotionListener, MouseWheelListener {
+public abstract class InputAdapter implements KeyListener, CharListener, MouseButtonListener, MouseMotionListener, MouseWheelListener {
 
 	/**
 	 * 
@@ -26,7 +26,7 @@ public abstract class InputAdapter implements KeyListener, MouseButtonListener, 
 	}
 	
 	@Override
-	public void keyTyped(KeyEvent event) {
+	public void charTyped(CharEvent event) {
 		
 	}
 	

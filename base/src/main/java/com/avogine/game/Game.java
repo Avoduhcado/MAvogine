@@ -1,5 +1,6 @@
 package com.avogine.game;
 
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 
 import com.avogine.Avogine;
@@ -55,18 +56,25 @@ public interface Game {
 	 * @param window
 	 */
 	public default void baseInit(Window window) {
-		initRender();
+		initRender(window);
 		init(window);
 	}
 	
 	/**
+	 * TODO#12 This could likely be abstracted into some sort of EnginePrefs that are loaded via config file rather than hardcoded into the Game interface.
 	 * Initialize any render API specific configurations prior to launching the game loop.
 	 * <p>
-	 * Presently, this just calls {@link GL#createCapabilities()} to set up an OpenGL capable environment. This could be moved to something like a {@code GameOpenGL} sub type
+	 * Presently, this calls {@link GL#createCapabilities()} to set up an OpenGL capable environment. This could be moved to something like a {@code GameOpenGL} sub type
 	 * if multiple render API vendors should be supported, i.e., Vulkan.
+	 * @param window 
 	 */
-	public default void initRender() {
+	public default void initRender(Window window) {
 		GL.createCapabilities();
+		if (window.isVsync()) {
+			GLFW.glfwSwapInterval(1);
+		} else {
+			GLFW.glfwSwapInterval(0);
+		}
 	}
 
 	/**
@@ -78,14 +86,14 @@ public interface Game {
 	}
 
 	/**
-	 * @return
+	 * @return the {@link GLFWConfig}
 	 */
 	public default GLFWConfig getGLFWConfig() {
 		return GLFWConfig.defaultConfig();
 	}
 	
 	/**
-	 * @return
+	 * @return the {@link InputConfig}
 	 */
 	public default InputConfig getInputConfig() {
 		return InputConfig.defaultConfig();

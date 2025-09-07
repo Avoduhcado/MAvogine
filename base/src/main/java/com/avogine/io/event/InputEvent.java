@@ -5,11 +5,11 @@ import com.avogine.io.Window;
 /**
  * Base interface for {@link AvoEvent}s fired by user input.
  */
-public sealed interface InputEvent extends AvoEvent permits MouseEvent, KeyEvent {
+public sealed interface InputEvent extends AvoEvent permits MouseEvent, KeyEvent, CharEvent {
 	
 	/**
-	 * @return  the ID of the GLFW {@link Window} that captured this event.
+	 * @return  the {@link Window} that captured this event.
 	 */
-	public long window();
+	public Window window();
 	
 }
