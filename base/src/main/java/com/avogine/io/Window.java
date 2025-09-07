@@ -2,16 +2,17 @@ package com.avogine.io;
 
 import java.nio.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
-import com.avogine.game.ui.nuklear.NuklearUI;
+import com.avogine.game.util.Registerable;
 import com.avogine.io.config.*;
+import com.avogine.io.listener.*;
 import com.avogine.logging.AvoLog;
 import com.avogine.util.ResourceUtils;
 import com.avogine.util.resource.ResourceConstants;
@@ -33,24 +34,29 @@ public class Window {
 	
 	private int width;
 	private int height;
+	private int fbWidth;
+	private int fbHeight;
 	
 	private boolean fullscreen;
+	private int monitorIndex;
+	private List<Long> monitorList = new ArrayList<>();
 	
+	private boolean vsync;
 	private int maxFps;
 	private int maxBackgroundFps;
-	private double targetFrameTime;
+	private int targetFps;
 	private int fps;
 	
 	private boolean debugMode;
 	
-	private int monitorIndex;
-	private List<Long> monitorList = new ArrayList<>();
-	
 	private final Input input;
 	
-	private final List<NuklearUI> guiContexts;
+	private final Set<WindowResizeListener> resizeListeners;
+	
+	private final Queue<Registerable> queuedRegisters;
 	
 	/**
+	 * TODO#12 Add WindowBuilder param that can take in a bunch of custom settings or just use defaults?
 	 * @param title The window title
 	 * @param preferences 
 	 */
@@ -63,14 +69,15 @@ public class Window {
 		fullscreen = preferences.fullscreen();
 		monitorIndex = preferences.monitor();
 		
-		maxFps = Math.clamp(preferences.fpsCap(), 0, 1000);
-		if (maxFps > 0) {
-			maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
-		}
+		vsync = preferences.vsync();
+		maxFps = Math.clamp(preferences.fpsCap(), 1, 1000);
+		maxBackgroundFps = Math.clamp(preferences.backgroundFps(), 1, maxFps);
 		
-		input = new Input(this);
+		input = new Input();
 		
-		guiContexts = new ArrayList<>();
+		resizeListeners = new HashSet<>();
+		
+		queuedRegisters = new ConcurrentLinkedQueue<>();
 	}
 	
 	/**
@@ -99,11 +106,7 @@ public class Window {
 			throw new IllegalStateException("Failed to create window!");
 		}
 		
-		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> {
-			width = w;
-			height = h;
-			GL11.glViewport(0, 0, width, height);
-		});
+		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> resized(w, h));
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -119,17 +122,10 @@ public class Window {
 			
 			GLFW.glfwSetWindowPos(id, pX.get() + (videoMode.width() - pWidth.get(0)) / 2, pY.get() + (videoMode.height() - pHeight.get(0)) / 2);
 		}
-
-		GLFW.glfwMakeContextCurrent(id);
 		
-		if (maxFps == 0) {
-			GLFW.glfwSwapInterval(1);
-		} else {
-			GLFW.glfwSwapInterval(0);
-			targetFrameTime = 1.0 / maxFps;
-			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFrameTime = 1.0 / (focused ? maxFps : maxBackgroundFps));
-		}
-
+		targetFps = maxFps;
+		GLFW.glfwSetWindowFocusCallback(id, (windowC, focused) -> targetFps = focused ? maxFps : maxBackgroundFps);
+		
 		// XXX Customize by WindowConfig?
 		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
 			GLFW.glfwSetWindowOpacity(id, 1.0f);
@@ -141,10 +137,27 @@ public class Window {
 		if (GLFW.glfwRawMouseMotionSupported()) {
 			GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
 		}
-
+		
 		GLFW.glfwShowWindow(id);
 		
-		input.init(inputConfig);
+		int[] arrWidth = new int[1];
+		int[] arrHeight = new int[1];
+		GLFW.glfwGetFramebufferSize(id, arrWidth, arrHeight);
+		width = arrWidth[0];
+		height = arrHeight[0];
+		fbWidth = arrWidth[0];
+		fbHeight = arrHeight[0];
+		
+		input.init(inputConfig, this);
+	}
+	
+	/**
+	 * 
+	 */
+	public void makeCurrent() {
+		if (GLFW.glfwGetCurrentContext() != id) { // XXX: Potentially unnecessary check, might just be a simple no-op if this context is already current to call makeContextCurrent again
+			GLFW.glfwMakeContextCurrent(id);
+		}
 	}
 	
 	/**
@@ -154,41 +167,86 @@ public class Window {
 	 * and, if needed, set this window context to be current.
 	 */
 	public void swapBuffers() {
-		if (GLFW.glfwGetCurrentContext() != id) {
-			GLFW.glfwMakeContextCurrent(id);
-		}
+		makeCurrent();
 		
 		GLFW.glfwSwapBuffers(id);
 	}
 	
 	/**
-	 * Poll GLFW for events and process them in {@link Input}.
+	 * 
 	 */
-	public void pollEvents() {
-		guiContexts.forEach(NuklearUI::inputBegin);
-		GLFW.glfwPollEvents();
-		guiContexts.forEach(NuklearUI::inputEnd);
+	public void update() {
+		input.getMouse().newFrame();
+	}
+	
+	/**
+	 * 
+	 */
+	public void waitEvents() {
+		while (!queuedRegisters.isEmpty()) {
+			var register = queuedRegisters.poll();
+			register.init(this);
+		}
 		
-		input.update();
+		// XXX Maybe use this with a timeout to target whatever the game's update loop interval is?
+		GLFW.glfwWaitEvents();
 	}
 	
 	/**
-	 * Register a {@link NuklearUI} to this Window so that it's internal input state can be processed around calls to {@link #pollEvents()}.
-	 * @param gui The {@link NuklearUI} to register.
-	 * @return The {@link NuklearUI}.
+	 * Register an {@link InputListener} to this Window's {@link Input} and store
+	 * a reference to it for potential de-registering later.
+	 * @param l The {@code InputListener} to add.
+	 * @return the {@code InputListener}.
 	 */
-	public NuklearUI registerGUIContext(NuklearUI gui) {
-		guiContexts.add(gui);
-		return gui;
+	public InputListener addInputListener(InputListener l) {
+		input.addInputListener(l);
+		return l;
 	}
 	
 	/**
-	 * Unregister a {@link NuklearUI} from this Window.
-	 * @param gui The {@link NuklearUI} to remove.
-	 * @return {@code true} if the {@link NuklearUI} was removed.
+	 * @param listener
+	 * @return the removed {@link InputListener}
 	 */
-	public boolean removeGUIContext(NuklearUI gui) {
-		return guiContexts.remove(gui);
+	public InputListener removeInputListener(InputListener listener) {
+		input.removeInputListener(listener);
+		return listener;
+	}
+	
+	/**
+	 * 
+	 * @param listener
+	 * @return the {@link WindowResizeListener}
+	 */
+	public WindowResizeListener addResizeListener(WindowResizeListener listener) {
+		resizeListeners.add(listener);
+		return listener;
+	}
+	
+	/**
+	 * 
+	 * @param listener
+	 * @return true if the listener was removed.
+	 */
+	public boolean removeResizeListener(WindowResizeListener listener) {
+		return resizeListeners.remove(listener);
+	}
+	
+	/**
+	 * @param register
+	 * @return the register
+	 */
+	public Registerable addRegisterable(Registerable register) {
+		queuedRegisters.add(register);
+		return register;
+	}
+	
+	/**
+	 * Must only be called from the main thread.
+	 * @param inputMode
+	 */
+	public void setCursorInput(int inputMode) {
+		GLFW.glfwSetInputMode(id, GLFW.GLFW_CURSOR, inputMode);
+		input.getMouse().setCaptured(GLFW.glfwGetInputMode(id, GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_NORMAL);
 	}
 	
 	/**
@@ -217,10 +275,16 @@ public class Window {
 	 * This should only be called when exiting the entire application.
 	 */
 	public void cleanup() {
-		close();
-		
 		GLFW.glfwTerminate();
 		Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
+	}
+	
+	private void resized(int width, int height) {
+		this.width = width;
+		this.height = height;
+		this.fbWidth = width;
+		this.fbHeight = height;
+		resizeListeners.forEach(listener -> listener.windowFramebufferResized(width, height));
 	}
 	
 	/**
@@ -229,7 +293,7 @@ public class Window {
 	 */
 	private void loadAndSetIcons(String...filePaths) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
-			List<GLFWImage> iconList = new ArrayList<>();
+			Map<GLFWImage, ByteBuffer> iconBufferMap = new HashMap<>();
 			
 			for (String filePath : filePaths) {
 				GLFWImage icon = GLFWImage.malloc(stack);
@@ -242,51 +306,43 @@ public class Window {
 				ByteBuffer imageData = STBImage.stbi_load_from_memory(fileData, iconWidth, iconHeight, nrChannels, 0);
 				if (imageData != null) {
 					icon.set(iconWidth.get(), iconHeight.get(), imageData);
-					iconList.add(icon);
+					iconBufferMap.put(icon, imageData);
 				} else {
 					AvoLog.log().warn("Icon failed to load: {}", filePath);
 				}
 			}
 			
-			GLFWImage.Buffer iconBuffer = GLFWImage.malloc(iconList.size(), stack);
-			iconList.forEach(iconBuffer::put);
+			GLFWImage.Buffer iconBuffer = GLFWImage.malloc(iconBufferMap.size(), stack);
+			iconBufferMap.keySet().forEach(iconBuffer::put);
 			iconBuffer.flip();
 			GLFW.glfwSetWindowIcon(id, iconBuffer);
+			iconBufferMap.values().forEach(MemoryUtil::memFree);
 		}
 	}
 	
 	/**
-	 * @return the input
+	 * @return the keyboard
 	 */
-	public Input getInput() {
-		return input;
+	public Keyboard getKeyboard() {
+		return input.getKeyboard();
 	}
 	
 	/**
-	 * Return target frames per second. Controls how often the screen is rendered in a single second.
+	 * @return the mouse
+	 */
+	public Mouse getMouse() {
+		return input.getMouse();
+	}
+	
+	/**
+	 * Return maximum frames per second.
 	 * </p>
-	 * @return target frames per second. Controls how often the screen is rendered in a single second.
+	 * Controls how often the screen is rendered in a single second. This value may change when the window loses focus
+	 * to allow for the application to consume less processing power in the background.
+	 * @return the target maximum frames per second.
 	 */
-	public double getTargetFps() {
-		return targetFrameTime;
-	}
-	
-	/**
-	 * @param maxFps
-	 */
-	public void setFpsCap(int maxFps) {
-		this.maxFps = maxFps;
-		if (maxFps > 0) {
-			GLFW.glfwSwapInterval(0);
-			targetFrameTime = 1.0 / maxFps;
-			GLFW.glfwSetWindowFocusCallback(id, (window, focused) -> targetFrameTime = 1.0 / (focused ? maxFps : maxBackgroundFps));
-		} else {
-			GLFW.glfwSwapInterval(1);
-		}
-	}
-	
-	public void setBackgroundFpsCap(int maxBackgroundFps) {
-		
+	public int getTargetFps() {
+		return targetFps;
 	}
 	
 	/**
@@ -330,6 +386,27 @@ public class Window {
 	 */
 	public int getHeight() {
 		return height;
+	}
+
+	/**
+	 * @return the width of the main framebuffer in pixels.
+	 */
+	public int getFbWidth() {
+		return fbWidth;
+	}
+	
+	/**
+	 * @return the height of the main framebuffer in pixels.
+	 */
+	public int getFbHeight() {
+		return fbHeight;
+	}
+	
+	/**
+	 * @return true if VSync should be enabled.
+	 */
+	public boolean isVsync() {
+		return vsync;
 	}
 	
 	/**
