@@ -229,7 +229,7 @@ public class ModelLoader {
 			AIVertexWeight.Buffer aiWeights = aiBone.mWeights();
 			aiWeights.forEach(aiWeight -> {
 				VertexWeight weight = new VertexWeight(bone.boneId(), aiWeight.mVertexId(), aiWeight.mWeight());
-				weightMap.computeIfAbsent(weight.vertexId(), v -> new ArrayList<>()).add(weight);
+				weightMap.computeIfAbsent(weight.vertexId(), _ -> new ArrayList<>()).add(weight);
 			});
 		}
 		

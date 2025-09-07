@@ -25,7 +25,7 @@ public final class AnimatedMesh extends Mesh implements Boundable {
 	@Override
 	protected VAO setupVAO(MeshData meshData) {
 		try (var vertexBuffers = meshData.vertexBuffers()) {
-			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var weights, var boneIds, var indices)) {
+			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, _, var weights, var boneIds, var indices)) {
 				var vertexFormat4f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4);
 				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
 				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);

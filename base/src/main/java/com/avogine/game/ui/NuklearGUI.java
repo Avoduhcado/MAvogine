@@ -38,8 +38,8 @@ public class NuklearGUI implements GUI {
 	
 	static {
 		ALLOCATOR = NkAllocator.create()
-				.alloc((handle, old, size) -> nmemAllocChecked(size))
-				.mfree((handle, ptr) -> nmemFree(ptr));
+				.alloc((_, _, size) -> nmemAllocChecked(size))
+				.mfree((_, ptr) -> nmemFree(ptr));
 	}
 	
 	private record NkKeyEvent(int key, boolean pressed) {}
@@ -144,7 +144,7 @@ public class NuklearGUI implements GUI {
 		}
 
 		defaultFont
-		.width((handle, h, text, len) -> {
+		.width((_, _, text, len) -> {
 			float textWidth = 0;
 			try (MemoryStack stack = stackPush()) {
 				IntBuffer unicode = stack.mallocInt(1);
@@ -174,7 +174,7 @@ public class NuklearGUI implements GUI {
 			return textWidth;
 		})
 		.height(FONT_HEIGHT)
-		.query((handle, fontHeight, glyph, codepoint, nextCodepoint) -> {
+		.query((_, _, glyph, codepoint, _) -> {
 			try (MemoryStack stack = stackPush()) {
 				FloatBuffer x = stack.floats(0.0f);
 				FloatBuffer y = stack.floats(0.0f);
@@ -433,7 +433,7 @@ public class NuklearGUI implements GUI {
 	@SuppressWarnings("unused")
 	private void configureCopyPaste(long windowID) {
 		context.clip()
-		.copy((handle, text, len) -> {
+		.copy((_, text, len) -> {
 			if (len == 0) {
 				return;
 			}
@@ -446,7 +446,7 @@ public class NuklearGUI implements GUI {
 				glfwSetClipboardString(windowID, str);
 			}
 		})
-		.paste((handle, edit) -> {
+		.paste((_, edit) -> {
 			long text = nglfwGetClipboardString(windowID);
 			if (text != NULL) {
 				nnk_textedit_paste(edit, text, nnk_strlen(text));

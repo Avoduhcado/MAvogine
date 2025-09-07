@@ -25,7 +25,7 @@ public final class StaticMesh extends Mesh implements Boundable {
 	@Override
 	protected VAO setupVAO(MeshData meshData) {
 		try (var vertexBuffers = meshData.vertexBuffers()) {
-			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var w, var b, var indices)) {
+			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, _, _, _, var indices)) {
 				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
 				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);
 				

@@ -28,6 +28,10 @@ public class VectorUtil {
 	 * Vector with 0 in each component. Do Not Modify.
 	 */
 	private static final Vector3f ZERO = new Vector3f();
+	
+	private VectorUtil() {
+		
+	}
 
 	/**
 	 * Subtract {@code other} from {@code value} and clamp each component to zero if the operation would otherwise cause
@@ -45,6 +49,11 @@ public class VectorUtil {
 		return value;
 	}
 	
+	/**
+	 * @param value
+	 * @param other
+	 * @return
+	 */
 	public static Vector3f clampDirection(Vector3f value, Vector3f other) {
 		value.x = value.x > 0 ? Math.clamp(value.x + other.x, 0, value.x) : Math.clamp(value.x + other.x, value.x, 0);
 		value.y = value.y > 0 ? Math.clamp(value.y + other.y, 0, value.y) : Math.clamp(value.y + other.y, value.y, 0);
