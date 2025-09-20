@@ -39,7 +39,7 @@ public class PropertiesUtil {
 		String value = properties.getProperty(key);
 		try {
 			return Integer.parseInt(value.trim());
-		} catch(NumberFormatException e) {
+		} catch(NumberFormatException _) {
 			AvoLog.log().info("Could not parse property '{}'. Received invalid value: '{}'", key, value);
 		}
 		return defaultValue;
@@ -56,7 +56,7 @@ public class PropertiesUtil {
 		String value = properties.getProperty(key);
 		try {
 			return Float.parseFloat(value.trim());
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException _) {
 			AvoLog.log().info("Could not parse property '{}'. Received invalid value: '{}'", key, value);
 		}
 		return defaultValue;

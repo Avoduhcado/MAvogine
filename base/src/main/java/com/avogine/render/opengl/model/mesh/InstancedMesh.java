@@ -36,7 +36,7 @@ public final class InstancedMesh extends Mesh implements Instanceable {
 	protected VAO setupVAO(MeshData meshData) {
 		try (VertexBuffers vertexBuffers = meshData.vertexBuffers();
 				InstancedBuffers instancedBuffers = meshData.instancedBuffers();) {
-			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, var c, var w, var b, var indices) &&
+			if (vertexBuffers instanceof VertexBuffers(var positions, var normals, var tangents, var bitangents, var textureCoordinates, _, _, _, var indices) &&
 					instancedBuffers instanceof InstancedBuffers(var instanceMatrices, var instanceNormals)) {
 				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
 				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);

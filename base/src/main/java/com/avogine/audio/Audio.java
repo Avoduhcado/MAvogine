@@ -273,7 +273,7 @@ public class Audio {
 	}
 
 	private void configureSoftEvents() {
-		SOFTEventProc callback = SOFTEventProc.create((eventType, object, param, length, message, userParam) -> {
+		SOFTEventProc callback = SOFTEventProc.create((eventType, _, _, _, _, _) -> {
 			switch (eventType) {
 				case SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT -> {
 					if (ALC.getCapabilities().ALC_SOFT_reopen_device && properties.defaultDevice == null) {

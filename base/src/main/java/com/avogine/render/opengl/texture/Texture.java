@@ -262,7 +262,7 @@ public record Texture(int id, int target) {
 		 * @return this
 		 */
 		public <T extends Buffer> TextureBuilder texCubeMap(Image2D<T> positiveX, Image2D<T> negativeX, Image2D<T> positiveY, Image2D<T> negativeY, Image2D<T> positiveZ, Image2D<T> negativeZ) {
-			return tex(texInit -> {
+			return tex(_ -> {
 				positiveX.specify(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
 				negativeX.specify(GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
 				positiveY.specify(GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
