@@ -9,7 +9,7 @@ import java.nio.*;
 import org.lwjgl.system.MemoryUtil;
 
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
+import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
 import com.avogine.render.util.Instanceable;
 
 /**
@@ -29,13 +29,14 @@ public class ParticleMesh implements Instanceable {
 	 */
 	public ParticleMesh(FloatBuffer positions, int maxInstances) {
 		try {
-			vao = VAO.gen(vertexArray -> vertexArray
+			vao = VAO.gen()
 					.bindBufferData(VBO.staticDraw(), positions)
 					.enablePointerDivisor(0, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3), 0)
 					.bind(new VBO(GL_STREAM_DRAW), vbo -> vbo.bufferData(4L * Float.BYTES * maxInstances))
 					.enablePointerDivisor(1, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4), 1)
 					.bind(new VBO(GL_STREAM_DRAW), vbo -> vbo.bufferData(4L * Float.BYTES * maxInstances))
-					.enablePointerDivisor(2, new VertexAttrib.Format(4, GL_UNSIGNED_BYTE, true, 0, 0), 1));
+					.enablePointerDivisor(2, new VertexAttrib.Format(4, GL_UNSIGNED_BYTE, true, 0, 0), 1)
+					.build();
 		} finally {
 			MemoryUtil.memFree(positions);
 		}

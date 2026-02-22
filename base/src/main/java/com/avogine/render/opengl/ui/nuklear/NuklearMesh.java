@@ -15,7 +15,7 @@ import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
+import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
 import com.avogine.render.opengl.texture.Texture;
 import com.avogine.render.opengl.texture.Texture.TextureBuilder.Image2D;
 
@@ -56,12 +56,13 @@ public class NuklearMesh {
 	 * 
 	 */
 	public NuklearMesh(int displayWidth, int displayHeight, float width, float height) {
-		vao = VAO.gen(vertexArray -> vertexArray
+		vao = VAO.gen()
 				.bindBufferData(VBO.staticDraw(), null)
 				.enablePointer(0, new VertexAttrib.Format(2, GL_FLOAT, false, 20, 0))
 				.enablePointer(1, new VertexAttrib.Format(2, GL_FLOAT, false, 20, 8))
 				.enablePointer(2, new VertexAttrib.Format(4, GL_UNSIGNED_BYTE, true, 20, 16))
-				.bindElements(null));
+				.bindElements(null)
+				.build();
 		this.displayWidth = displayWidth;
 		this.displayHeight = displayHeight;
 		this.width = width;

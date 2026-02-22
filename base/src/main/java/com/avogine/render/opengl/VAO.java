@@ -7,7 +7,7 @@ import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 import java.nio.*;
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Consumer;
 
 import org.lwjgl.opengl.GL20;
 
@@ -19,15 +19,10 @@ import com.avogine.logging.AvoLog;
  */
 public record VAO(int id, VBO[] vertexBufferObjects) {
 	/**
-	 * @param vaoInit
 	 * @return a newly constructed {@link VAO} with the configurations from {@code vaoInit} applied.
 	 */
-	public static VAO gen(UnaryOperator<VAOBuilder> vaoInit) {
-		try (VAOBuilder builder = new VAOBuilder()) {
-			return vaoInit
-					.andThen(VAOBuilder.TO_VAO)
-					.apply(builder);
-		}
+	public static VAO.Builder gen() {
+		return new Builder();
 	}
 	
 	/**
@@ -79,9 +74,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 	/**
 	 *
 	 */
-	public static final class VAOBuilder implements AutoCloseable {
-
-		private static final Function<VAOBuilder, VAO> TO_VAO = builder -> new VAO(builder.id, builder.vertexBufferObjects.toArray(VBO[]::new));
+	public static final class Builder {
 		
 		private static final Consumer<VBO> BIND_VBO = VBO::bind;
 		
@@ -94,17 +87,21 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 		/**
 		 * Instances of this class should only be constructed via the VAO static gen method.
 		 */
-		private VAOBuilder() {
+		private Builder() {
 			id = glGenVertexArrays();
 			vertexBufferObjects = new ArrayList<>();
 			vertexAttribs = new LinkedHashSet<>();
 
 			glBindVertexArray(id);
 		}
-
-		@Override
-		public void close() {
+		
+		/**
+		 * Un-bind the VAO context and return a newly built VAO.
+		 * @return a newly built VAO.
+		 */
+		public VAO build() {
 			VAO.unbind();
+			return new VAO(id, vertexBufferObjects.toArray(VBO[]::new));
 		}
 		
 		/**
@@ -112,7 +109,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 		 * @param bufferInit 
 		 * @return this
 		 */
-		public VAOBuilder bind(VBO arrayBuffer, Consumer<VBO> bufferInit) {
+		public Builder bind(VBO arrayBuffer, Consumer<VBO> bufferInit) {
 			BIND_VBO.andThen(bufferInit.andThen(vertexBufferObjects::add)).accept(arrayBuffer);
 			return this;
 		}
@@ -123,7 +120,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 		 * @param data
 		 * @return this
 		 */
-		public <T extends Buffer> VAOBuilder bindBufferData(VBO arrayBuffer, T data) {
+		public <T extends Buffer> Builder bindBufferData(VBO arrayBuffer, T data) {
 			return bind(arrayBuffer, vbo -> vbo.bufferData(data));
 		}
 		
@@ -131,7 +128,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 		 * @param indices
 		 * @return this
 		 */
-		public VAOBuilder bindElements(IntBuffer indices) {
+		public Builder bindElements(IntBuffer indices) {
 			return bind(VBO.elementArrayBuffer(), ebo -> ebo.bufferData(indices));
 		}
 		
@@ -140,7 +137,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 		 * @param attribInit
 		 * @return this
 		 */
-		public VAOBuilder enable(VertexAttrib vertexAttribArray, Consumer<VertexAttrib> attribInit) {
+		public Builder enable(VertexAttrib vertexAttribArray, Consumer<VertexAttrib> attribInit) {
 			if (vertexAttribs.contains(vertexAttribArray)) {
 				AvoLog.log().debug("Overwriting vertex attribute at index: {}", vertexAttribArray.index);
 			}
@@ -153,7 +150,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 		 * @param pointerFormat
 		 * @return this
 		 */
-		public VAOBuilder enablePointer(int index, VertexAttrib.Format pointerFormat) {
+		public Builder enablePointer(int index, VertexAttrib.Format pointerFormat) {
 			return enable(VertexAttrib.array(index), attrib -> attrib.pointer(pointerFormat));
 		}
 		
@@ -163,7 +160,7 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 		 * @param divisor
 		 * @return this
 		 */
-		public VAOBuilder enablePointerDivisor(int index, VertexAttrib.Format pointerFormat, int divisor) {
+		public Builder enablePointerDivisor(int index, VertexAttrib.Format pointerFormat, int divisor) {
 			return enable(VertexAttrib.array(index), attrib -> {
 				attrib.pointer(pointerFormat);
 				attrib.divisor(divisor);

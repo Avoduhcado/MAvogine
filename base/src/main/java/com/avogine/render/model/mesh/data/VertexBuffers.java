@@ -5,6 +5,7 @@ import static org.lwjgl.system.MemoryUtil.memFree;
 import java.nio.*;
 
 /**
+ * TODO rename to VertexData?
  * @param positions 
  * @param normals 
  * @param tangents 

@@ -9,7 +9,7 @@ import java.util.function.*;
 
 import com.avogine.render.model.mesh.data.*;
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
+import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
 import com.avogine.render.util.Instanceable;
 
 /**
@@ -41,7 +41,7 @@ public final class InstancedMesh extends Mesh implements Instanceable {
 				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
 				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);
 
-				return VAO.gen(vertexArray -> vertexArray
+				return VAO.gen()
 						.bindBufferData(VBO.staticDraw(), positions)
 						.enablePointerDivisor(0, vertexFormat3f, 0)
 						.bindBufferData(VBO.staticDraw(), normals)
@@ -62,7 +62,8 @@ public final class InstancedMesh extends Mesh implements Instanceable {
 						.enable(VertexAttrib.array(10), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 1L))
 						.enable(VertexAttrib.array(11), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 2L))
 						.enable(VertexAttrib.array(12), attrib -> INSTANCED_ATTRIB_FORMAT.accept(attrib, 3L))
-						.bindElements(indices));
+						.bindElements(indices)
+						.build();
 			} else {
 				throw new IllegalArgumentException("Record deconstruction failed. VertexBuffers or InstanceBuffers not found.");
 			}

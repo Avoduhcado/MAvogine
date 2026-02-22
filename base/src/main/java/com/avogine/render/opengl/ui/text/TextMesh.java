@@ -8,7 +8,7 @@ import java.nio.FloatBuffer;
 import org.lwjgl.system.MemoryUtil;
 
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
+import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
 
 /**
  *
@@ -23,9 +23,10 @@ public class TextMesh {
 	 */
 	public TextMesh(FloatBuffer vertexData) {
 		try {
-			vao = VAO.gen(vertexArray -> vertexArray
+			vao = VAO.gen()
 					.bindBufferData(new VBO(GL_DYNAMIC_DRAW), vertexData)
-					.enablePointer(0, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4)));
+					.enablePointer(0, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4))
+					.build();
 		} finally {
 			MemoryUtil.memFree(vertexData);
 		}

@@ -5,7 +5,7 @@ import org.joml.primitives.AABBf;
 import com.avogine.render.model.mesh.Boundable;
 import com.avogine.render.model.mesh.data.*;
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.VAO.VAOBuilder.VertexAttrib;
+import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
 
 /**
  *
@@ -30,7 +30,7 @@ public final class AnimatedMesh extends Mesh implements Boundable {
 				var vertexFormat3f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3);
 				var vertexFormat2f = VertexAttrib.Format.tightlyPackedUnnormalizedFloat(2);
 
-				return VAO.gen(vertexArray -> vertexArray
+				return VAO.gen()
 						.bindBufferData(VBO.staticDraw(), positions)
 						.enablePointer(0, vertexFormat3f)
 						.bindBufferData(VBO.staticDraw(), normals)
@@ -45,7 +45,8 @@ public final class AnimatedMesh extends Mesh implements Boundable {
 						.enablePointer(5, vertexFormat4f)
 						.bindBufferData(VBO.staticDraw(), boneIds)
 						.enablePointer(6, vertexFormat4f)
-						.bindElements(indices));
+						.bindElements(indices)
+						.build();
 			} else {
 				throw new IllegalArgumentException("Record deconstruction failed. VertexBuffers not found.");
 			}
