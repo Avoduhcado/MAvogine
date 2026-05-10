@@ -1,14 +1,12 @@
 package com.avogine.render.opengl.ui.text;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
 
 import java.nio.FloatBuffer;
 
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
+import com.avogine.render.opengl.VAO;
 
 /**
  *
@@ -23,10 +21,14 @@ public class TextMesh {
 	 */
 	public TextMesh(FloatBuffer vertexData) {
 		try {
-			vao = VAO.gen()
-					.bindBufferData(new VBO(GL_DYNAMIC_DRAW), vertexData)
-					.enablePointer(0, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4))
-					.build();
+			vao = VAO.gen(builder -> builder
+					.buffer()
+						.dynamic().draw()
+						.data(vertexData)
+						.bind()
+					.vertexAttribArray(0)
+						.pointer().tightlyPacked()
+						.enable());
 		} finally {
 			MemoryUtil.memFree(vertexData);
 		}
@@ -45,9 +47,7 @@ public class TextMesh {
 	public void updateText(FloatBuffer vertexData) {
 		vertexCount = vertexData.limit() / 4;
 		vao.bind();
-		VBO vertexBuffer = vao.vertexBufferObjects()[0];
-		vertexBuffer.bind();
-		vertexBuffer.bufferSubData(vertexData);
+		vao.bindBuffer(0, vertexBuffer -> vertexBuffer.bufferSubData(vertexData));
 	}
 
 	private void draw() {

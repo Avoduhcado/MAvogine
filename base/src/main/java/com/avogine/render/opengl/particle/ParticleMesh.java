@@ -1,15 +1,13 @@
 package com.avogine.render.opengl.particle;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL15.GL_STREAM_DRAW;
+import static org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN;
 import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
 
 import java.nio.*;
 
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
+import com.avogine.render.opengl.VAO;
 import com.avogine.render.util.Instanceable;
 
 /**
@@ -28,15 +26,31 @@ public class ParticleMesh implements Instanceable {
 	 * @param maxInstances 
 	 */
 	public ParticleMesh(FloatBuffer positions, int maxInstances) {
+		long instanceBufferSize = 4L * Float.BYTES * maxInstances;
+		
 		try {
-			vao = VAO.gen()
-					.bindBufferData(VBO.staticDraw(), positions)
-					.enablePointerDivisor(0, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(3), 0)
-					.bind(new VBO(GL_STREAM_DRAW), vbo -> vbo.bufferData(4L * Float.BYTES * maxInstances))
-					.enablePointerDivisor(1, VertexAttrib.Format.tightlyPackedUnnormalizedFloat(4), 1)
-					.bind(new VBO(GL_STREAM_DRAW), vbo -> vbo.bufferData(4L * Float.BYTES * maxInstances))
-					.enablePointerDivisor(2, new VertexAttrib.Format(4, GL_UNSIGNED_BYTE, true, 0, 0), 1)
-					.build();
+			vao = VAO.gen(builder -> builder
+					.buffer().data(positions).bind()
+					.vertexAttribArray(0)
+						.pointer().size(3).tightlyPacked()
+						.divisor(0)
+						.enable()
+					.buffer()
+						.stream().draw()
+						.data(instanceBufferSize)
+						.bind()
+					.vertexAttribArray(1)
+						.pointer().tightlyPacked()
+						.divisor(1)
+						.enable()
+					.buffer()
+						.stream().draw()
+						.data(instanceBufferSize)
+						.bind()
+					.vertexAttribArray(2)
+						.pointer().size(4).unsignedByte().normalized().tightlyPacked()
+						.divisor(1)
+						.enable());
 		} finally {
 			MemoryUtil.memFree(positions);
 		}
@@ -65,9 +79,7 @@ public class ParticleMesh implements Instanceable {
 
 	@Override
 	public <T extends Buffer> void updateInstanceBuffer(int vboIndex, long offset, T data) {
-		VBO instanceBuffer = vao.vertexBufferObjects()[vboIndex];
-		instanceBuffer.bind();
-		instanceBuffer.bufferSubData(offset, data);
+		vao.bindBuffer(vboIndex, instanceBuffer -> instanceBuffer.bufferSubData(offset, data));
 	}
 	
 	/**

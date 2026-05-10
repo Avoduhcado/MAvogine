@@ -30,3 +30,9 @@ hs_err_pid*
 .factorypath
 .classpath
 .project
+
+# Project modules
+/base/
+/concurrent/
+/ecs/
+/log/

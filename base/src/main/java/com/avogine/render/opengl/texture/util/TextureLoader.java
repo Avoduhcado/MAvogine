@@ -9,7 +9,6 @@ import org.lwjgl.system.MemoryStack;
 import com.avogine.render.image.data.ImageData;
 import com.avogine.render.image.util.ImageLoader;
 import com.avogine.render.opengl.texture.Texture;
-import com.avogine.render.opengl.texture.Texture.TextureBuilder.Image2D;
 
 /**
  *
@@ -38,10 +37,10 @@ public class TextureLoader {
 			}
 			pixels.flip();
 			
-			return Texture.gen2D(texture -> texture
-					.texFilterLinear()
-					.texWrap2DRepeat()
-					.texImage2D(width, height, GL_RGBA, pixels));
+			return Texture.gen2D(tex -> tex
+					.filter().linear()
+					.wrap2D().repeat()
+					.image2D(width, height, GL_RGBA, pixels));
 		}
 	}
 	
@@ -51,10 +50,10 @@ public class TextureLoader {
 	 */
 	public static Texture loadTexture(String texturePath) {
 		try (ImageData imageData = ImageLoader.loadImage(texturePath)) {
-			return Texture.gen2D(texture -> texture
-					.texFilterLinear()
-					.texWrap2DRepeat()
-					.tex(Image2D.fromImage(imageData))
+			return Texture.gen2D(tex -> tex
+					.filter().linear()
+					.wrap2D().repeat()
+					.image2D(imageData)
 					.generateMipmap()
 					.anisotropicFiltering());
 		}
@@ -76,15 +75,15 @@ public class TextureLoader {
 				ImageData negYImageData = ImageLoader.loadImage(negYImagePath);
 				ImageData posZImageData = ImageLoader.loadImage(posZImagePath);
 				ImageData negZImageData = ImageLoader.loadImage(negZImagePath);) {
-			return Texture.genCubeMap(cubeMap -> cubeMap
-					.texFilterLinear()
-					.texWrap3DClampToEdge()
-					.texCubeMap(Image2D.fromImage(posXImageData),
-							Image2D.fromImage(negXImageData),
-							Image2D.fromImage(posYImageData),
-							Image2D.fromImage(negYImageData),
-							Image2D.fromImage(posZImageData),
-							Image2D.fromImage(negZImageData)));
+			return Texture.genCubeMap(tex -> tex
+					.filter().linear()
+					.wrap3D().clampToEdge()
+					.image2D().cubeMap(posXImageData,
+							negXImageData,
+							posYImageData,
+							negYImageData,
+							posZImageData,
+							negZImageData));
 		}
 	}
 	

@@ -1,28 +1,49 @@
 package com.avogine.render.opengl;
 
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
-import java.nio.*;
+import java.nio.IntBuffer;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.Map.Entry;
+import java.util.function.*;
 
-import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.*;
 
-import com.avogine.logging.AvoLog;
+import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
+import com.avogine.render.opengl.VBO.VertexArrayBuilder;
 
 /**
  * @param id 
  * @param vertexBufferObjects 
  */
 public record VAO(int id, VBO[] vertexBufferObjects) {
+	private static final Consumer<VBO> BIND_BUFFER = VBO::bind;
+	
+	private VAO(Builder builder) {
+		this(glGenVertexArrays(), new VBO[builder.vertexArray.size()]);
+		
+		bind();
+		
+		int index = 0;
+		for (var entry : builder.vertexArray.entrySet()) {
+			vertexBufferObjects[index] = INIT_BUFFER_AND_VERTEX_ATTRIB.apply(entry);
+			index++;
+		}
+		// XXX Some sort of special handling for ELEMENT_ARRAY_BUFFER?
+		
+		unbind();
+	}
+	
 	/**
-	 * @return a newly constructed {@link VAO} with the configurations from {@code vaoInit} applied.
+	 * @param configuration
+	 * @return a newly constructed {@link VAO} with the configurations from {@code configuration} applied.
 	 */
-	public static VAO.Builder gen() {
-		return new Builder();
+	public static VAO gen(UnaryOperator<Builder> configuration) {
+		return configuration.andThen(Builder.TO_VAO).apply(new Builder());
 	}
 	
 	/**
@@ -46,6 +67,41 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 	public void bind() {
 		glBindVertexArray(id);
 	}
+	
+	/**
+	 * @param vboIndex
+	 * @param boundBuffer
+	 */
+	public void bindBuffer(int vboIndex, Consumer<VBO> boundBuffer) {
+		BIND_BUFFER
+			.andThen(boundBuffer)
+			.andThen(_ -> VBO.unbind())
+			.accept(vertexBufferObjects[vboIndex]);
+	}
+	
+	/**
+	 * @param <E>
+	 * @param vertexArrayEnum
+	 * @param boundBuffer
+	 */
+	public <E extends Enum<E>> void bindBuffer(E vertexArrayEnum, Consumer<VBO> boundBuffer) {
+		bindBuffer(vertexArrayEnum.ordinal(), boundBuffer);
+	}
+	
+	private static final Function<Entry<VertexArrayBuilder, SequencedSet<VertexAttrib>>, VBO> INIT_BUFFER_AND_VERTEX_ATTRIB = entry -> {
+		VBO vbo = entry.getKey().build();
+		
+		for (var vertexAttrib : entry.getValue()) {
+			int index = vertexAttrib.index;
+			glEnableVertexAttribArray(index);
+			if (vertexAttrib.pointer instanceof VertexAttrib.Pointer (var size, var type, var normalized, var stride, var pointer)) {
+				glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+			}
+			glVertexAttribDivisor(index, vertexAttrib.divisor);
+		}
+		
+		return vbo;
+	};
 	
 	@Override
 	public int hashCode() {
@@ -75,181 +131,282 @@ public record VAO(int id, VBO[] vertexBufferObjects) {
 	 *
 	 */
 	public static final class Builder {
+		private static final Function<Builder, VAO> TO_VAO = Builder::build;
 		
-		private static final Consumer<VBO> BIND_VBO = VBO::bind;
-		
-		private static final Consumer<VertexAttrib> ENABLE_VERTEX_ATTRIB = VertexAttrib::enable;
-		
-		private final int id;
-		private final List<VBO> vertexBufferObjects;
-		private final Set<VertexAttrib> vertexAttribs;
+		private final SequencedMap<VertexArrayBuilder, SequencedSet<VertexAttrib>> vertexArray;
 		
 		/**
 		 * Instances of this class should only be constructed via the VAO static gen method.
 		 */
 		private Builder() {
-			id = glGenVertexArrays();
-			vertexBufferObjects = new ArrayList<>();
-			vertexAttribs = new LinkedHashSet<>();
-
-			glBindVertexArray(id);
+			vertexArray = new LinkedHashMap<>();
 		}
 		
 		/**
-		 * Un-bind the VAO context and return a newly built VAO.
-		 * @return a newly built VAO.
+		 * Initialize the vertex array object and return the newly constructed VAO.
+		 * @return a newly constructed VAO.
 		 */
 		public VAO build() {
-			VAO.unbind();
-			return new VAO(id, vertexBufferObjects.toArray(VBO[]::new));
+			return new VAO(this);
 		}
 		
 		/**
-		 * @param arrayBuffer 
-		 * @param bufferInit 
+		 * @param vertexBuffer
 		 * @return this
 		 */
-		public Builder bind(VBO arrayBuffer, Consumer<VBO> bufferInit) {
-			BIND_VBO.andThen(bufferInit.andThen(vertexBufferObjects::add)).accept(arrayBuffer);
+		Builder bind(VertexArrayBuilder vertexBuffer) {
+			vertexArray.putLast(vertexBuffer, new LinkedHashSet<>());
 			return this;
 		}
 		
 		/**
-		 * @param <T>
-		 * @param arrayBuffer
-		 * @param data
-		 * @return this
+		 * @param target 
+		 * @return a VertexBuffer
 		 */
-		public <T extends Buffer> Builder bindBufferData(VBO arrayBuffer, T data) {
-			return bind(arrayBuffer, vbo -> vbo.bufferData(data));
+		public VertexArrayBuilder buffer(int target) {
+			return new VertexArrayBuilder(target, this);
+		}
+		
+		/**
+		 * Add an ARRAY_BUFFER pre-configured for STATIC_DRAW usage.
+		 * @return a VertexBuffer
+		 */
+		public VertexArrayBuilder buffer() {
+			return buffer(GL_ARRAY_BUFFER).staticUsage().draw();
+		}
+		
+		/**
+		 * Add an ELEMENT_ARRAY_BUFFER pre-configured for STATIC_DRAW usage.
+		 * @return a VertexBuffer
+		 */
+		public VertexArrayBuilder elementBuffer() {
+			return buffer(GL_ELEMENT_ARRAY_BUFFER).staticUsage().draw();
 		}
 		
 		/**
 		 * @param indices
-		 * @return this
+		 * @return a VertexBuffer
 		 */
-		public Builder bindElements(IntBuffer indices) {
-			return bind(VBO.elementArrayBuffer(), ebo -> ebo.bufferData(indices));
+		public Builder elementBuffer(IntBuffer indices) {
+			return bind(elementBuffer().data(indices));
 		}
 		
 		/**
-		 * @param vertexAttribArray 
-		 * @param attribInit
-		 * @return this
+		 * @param index
+		 * @return a VertexAttrib
 		 */
-		public Builder enable(VertexAttrib vertexAttribArray, Consumer<VertexAttrib> attribInit) {
-			if (vertexAttribs.contains(vertexAttribArray)) {
-				AvoLog.log().debug("Overwriting vertex attribute at index: {}", vertexAttribArray.index);
-			}
-			ENABLE_VERTEX_ATTRIB.andThen(attribInit.andThen(vertexAttribs::add)).accept(vertexAttribArray);
-			return this;
+		public VertexAttrib vertexAttribArray(int index) {
+			return new VertexAttrib(index);
 		}
 		
 		/**
-		 * @param index 
-		 * @param pointerFormat
-		 * @return this
+		 * @param <E>
+		 * @param vertexArrayEnum
+		 * @return a VertexAttrib
 		 */
-		public Builder enablePointer(int index, VertexAttrib.Format pointerFormat) {
-			return enable(VertexAttrib.array(index), attrib -> attrib.pointer(pointerFormat));
+		public <E extends Enum<E>> VertexAttrib vertexAttribArray(E vertexArrayEnum) {
+			return vertexAttribArray(vertexArrayEnum.ordinal());
 		}
 		
 		/**
-		 * @param index 
-		 * @param pointerFormat
-		 * @param divisor
-		 * @return this
-		 */
-		public Builder enablePointerDivisor(int index, VertexAttrib.Format pointerFormat, int divisor) {
-			return enable(VertexAttrib.array(index), attrib -> {
-				attrib.pointer(pointerFormat);
-				attrib.divisor(divisor);
-			});
-		}
-		
-		/**
-		 * A wrapper class for OpenGL's vertex formats.
-		 * </br>
-		 * The intended usage is to construct and configure vertex attributes through the builder pattern. This record exposes
-		 * a static creation method to enable a {@link VertexAttrib} targeting a specific array index and then apply
-		 * necessary attribute configurations.
-		 * </br>
+		 * A wrapper class for OpenGL's vertex attributes.
+		 * </p>
+		 * The intended usage is to construct and configure vertex attributes through the builder pattern. This class exposes
+		 * a static creation method to enable a {@link VertexAttrib} targeting a specific attribute location and organize data in
+		 * the vertex attribute array.
+		 * </p>
 		 * {@snippet :
-		 * VertexAttrib2.array(0).pointer(Format.initial())
+		 * vaoBuilder.vertexAttribArray(0)
+		 * 	.pointer().size(3).tightlyPacked()
+		 * 	.enable()
 		 * }
 		 * 
-		 * @param index the index of the generic vertex attribute to be enabled.
 		 * @see <a href="https://www.khronos.org/opengl/wiki/Vertex_Specification">Vertex Specification</a>
 		 */
-		public static record VertexAttrib(int index) {
+		public class VertexAttrib {
+			private final int index;
+			private Pointer pointer;
+			private int divisor;
 			
-			/**
-			 * Construct a new {@link VertexAttrib} for the given array index of the currently bound {@link VAO}.
-			 * @param index the index of the generic vertex attribute.
-			 * @return a new {@link VertexAttrib} for the given array index of the currently bound {@link VAO}.
-			 */
-			public static VertexAttrib array(int index) {
-				return new VertexAttrib(index);
+			private VertexAttrib(int index) {
+				this.index = index;
 			}
 			
 			/**
-			 * Enable this vertex attribute array.
+			 * Enable this vertex attribute array for the current vertex buffer.
+			 * @return Builder
 			 */
-			public void enable() {
-				glEnableVertexAttribArray(index);
+			public Builder enable() {
+				vertexArray.lastEntry().getValue().add(this);
+				return Builder.this;
 			}
 			
 			/**
-			 * 
-			 * @param size
-			 * @param type
-			 * @param normalized
-			 * @param stride
-			 * @param pointer
+			 * @param size the number of values per vertex that are stored in the array.
+			 * @param type the data type of each component in the array. The initial value is GL_FLOAT.
+			 * @param normalized whether fixed-point data values should be normalized or converted directly as fixed-point values when they are accessed.
+			 * @param stride the byte offset between consecutive generic vertex attributes. If stride is 0, the generic vertex attributes are understood to be tightly packed in 
+			 * the array. The initial value is 0.
+			 * @param pointer the vertex attribute data or the offset of the first component of the first generic vertex attribute in the array in the data store of the buffer 
+			 * currently bound to the {@link GL15#GL_ARRAY_BUFFER ARRAY_BUFFER} target. The initial value is 0.
+			 * @return this
 			 */
-			public void pointer(int size, int type, boolean normalized, int stride, long pointer) {
-				glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+			public VertexAttrib pointer(int size, int type, boolean normalized, int stride, long pointer) {
+				this.pointer = new Pointer(size, type, normalized, stride, pointer);
+				return this;
 			}
 			
 			/**
-			 * @param format
+			 * @return a Pointer
 			 */
-			public void pointer(Format format) {
-				switch (format) {
-					case Format(var size, var type, var normalized, var stride, var pointer) -> pointer(size, type, normalized, stride, pointer);
-				}
-			}
-			
-			/**
-			 * @param divisor
-			 */
-			public void divisor(int divisor) {
-				glVertexAttribDivisor(index, divisor);
+			public PointerBuilder pointer() {
+				return new PointerBuilder();
 			}
 			
 			/**
 			 *
-			 * @param size
-			 * @param type
-			 * @param normalized
-			 * @param stride
-			 * @param pointer
 			 */
-			public static record Format(int size, int type, boolean normalized, int stride, long pointer) {
+			public interface SizeStep extends TypeStep {
 				/**
-				 * @return a default component {@link Format} for a vertex attribute set to OpenGL's initial values for {@link GL20#glVertexAttribPointer}
+				 * @param size the number of values per vertex that are stored in the array. The initial value is 4. One of: 1	2	3	4 {@link GL12#GL_BGRA BGRA}
+				 * @return TypeStep
 				 */
-				public static Format initial() {
-					return new Format(4, GL_FLOAT, false, 0, 0);
+				public TypeStep size(int size);
+				
+				/**
+				 * @return TypeStep
+				 */
+				public default TypeStep b() {
+					return size(1);
+				}
+
+				/**
+				 * @return TypeStep
+				 */
+				public default TypeStep bg() {
+					return size(2);
+				}
+
+				/**
+				 * @return TypeStep
+				 */
+				public default TypeStep bgr() {
+					return size(3);
+				}
+			}
+			
+			/**
+			 *
+			 */
+			public interface TypeStep extends NormalizedStep {
+				/**
+				 * @param type
+				 * @return NormalizedStep
+				 */
+				public NormalizedStep type(int type);
+				
+				/**
+				 * @return NormalizedStep
+				 */
+				public default NormalizedStep floats() {
+					return type(GL_FLOAT);
 				}
 				
 				/**
-				 * @param size the number of values per vertex that are stored in the array. The initial value is 4. One of: 1	2	3	4
-				 * @return a new {@link Format} for un-normalized {@code float} values that are considered to be tightly packed in the buffer with specified size.
+				 * @return NormalizedStep
 				 */
-				public static Format tightlyPackedUnnormalizedFloat(int size) {
-					return new Format(size, GL_FLOAT, false, 0, 0);
+				public default NormalizedStep unsignedByte() {
+					return type(GL_UNSIGNED_BYTE);
 				}
+			}
+			
+			/**
+			 *
+			 */
+			public interface NormalizedStep extends OffsetStep {
+				/**
+				 * @return OffsetStep
+				 */
+				public OffsetStep normalized();
+			}
+			
+			/**
+			 *
+			 */
+			public interface OffsetStep {
+				/**
+				 * @param stride
+				 * @param pointer
+				 * @return VertexAttrib
+				 */
+				public VertexAttrib interleaved(int stride, long pointer);
+				
+				/**
+				 * @return VertexAttrib
+				 */
+				public default VertexAttrib tightlyPacked() {
+					return interleaved(0, 0);
+				}
+			}
+			
+			/**
+			 *
+			 */
+			public final class PointerBuilder implements SizeStep {
+				private int size = 4;
+				private int type = GL_FLOAT;
+				private boolean normalized;
+				private int stride;
+				private long pointer;
+				
+				private VertexAttrib specify() {
+					return VertexAttrib.this.pointer(size, type, normalized, stride, pointer);
+				}
+				
+				@Override
+				public TypeStep size(int size) {
+					this.size = size;
+					return this;
+				}
+				
+				@Override
+				public NormalizedStep type(int type) {
+					this.type = type;
+					return this;
+				}
+				
+				@Override
+				public OffsetStep normalized() {
+					normalized = true;
+					return this;
+				}
+				
+				@Override
+				public VertexAttrib interleaved(int stride, long pointer) {
+					this.stride = stride;
+					this.pointer = pointer;
+					return specify();
+				}
+			}
+			
+			/**
+			 * @param size the number of values per vertex that are stored in the array.
+			 * @param type the data type of each component in the array. The initial value is GL_FLOAT.
+			 * @param normalized whether fixed-point data values should be normalized or converted directly as fixed-point values when they are accessed.
+			 * @param stride the byte offset between consecutive generic vertex attributes. If stride is 0, the generic vertex attributes are understood to be tightly packed in 
+			 * the array. The initial value is 0.
+			 * @param pointer the vertex attribute data or the offset of the first component of the first generic vertex attribute in the array in the data store of the buffer 
+			 * currently bound to the {@link GL15#GL_ARRAY_BUFFER ARRAY_BUFFER} target. The initial value is 0.
+			 */
+			public record Pointer(int size, int type, boolean normalized, int stride, long pointer) {}
+			
+			/**
+			 * @param divisor
+			 * @return Builder
+			 */
+			public VertexAttrib divisor(int divisor) {
+				this.divisor = divisor;
+				return this;
 			}
 		}
 		

@@ -14,10 +14,8 @@ import java.util.Objects;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
-import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.VAO.Builder.VertexAttrib;
+import com.avogine.render.opengl.VAO;
 import com.avogine.render.opengl.texture.Texture;
-import com.avogine.render.opengl.texture.Texture.TextureBuilder.Image2D;
 
 /**
  *
@@ -56,13 +54,12 @@ public class NuklearMesh {
 	 * 
 	 */
 	public NuklearMesh(int displayWidth, int displayHeight, float width, float height) {
-		vao = VAO.gen()
-				.bindBufferData(VBO.staticDraw(), null)
-				.enablePointer(0, new VertexAttrib.Format(2, GL_FLOAT, false, 20, 0))
-				.enablePointer(1, new VertexAttrib.Format(2, GL_FLOAT, false, 20, 8))
-				.enablePointer(2, new VertexAttrib.Format(4, GL_UNSIGNED_BYTE, true, 20, 16))
-				.bindElements(null)
-				.build();
+		vao = VAO.gen(builder -> builder
+				.buffer().data(null).bind()
+				.vertexAttribArray(0).pointer(2, GL_FLOAT, false, 20, 0).enable()
+				.vertexAttribArray(1).pointer(2, GL_FLOAT, false, 20, 8).enable()
+				.vertexAttribArray(2).pointer(4, GL_UNSIGNED_BYTE, true, 20, 16).enable()
+				.elementBuffer(null));
 		this.displayWidth = displayWidth;
 		this.displayHeight = displayHeight;
 		this.width = width;
@@ -85,8 +82,8 @@ public class NuklearMesh {
 		// null texture setup
 		try (MemoryStack stack = stackPush()) {
 			int nullTexID = Texture.gen2D(nullTex -> nullTex
-					.texFilterNearest()
-					.tex(new Image2D<>(0, GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF))))
+					.filter().nearest()
+					.image2D(0, GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF)))
 			.id();
 
 			nullTexture.texture().id(nullTexID);

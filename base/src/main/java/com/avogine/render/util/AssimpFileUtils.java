@@ -60,7 +60,11 @@ public class AssimpFileUtils {
 					aiFile.FileSizeProc().free();
 				});
 		
-		AIScene aiScene = Assimp.aiImportFileEx(modelPath, flags, fileIo);
+		var propertyStore = Assimp.aiCreatePropertyStore();
+		Assimp.aiSetImportPropertyInteger(propertyStore, Assimp.AI_CONFIG_IMPORT_COLLADA_IGNORE_UNIT_SIZE, Assimp.AI_TRUE);
+		AIScene aiScene = Assimp.aiImportFileExWithProperties(modelPath, flags, fileIo, propertyStore);
+		
+		Assimp.aiReleasePropertyStore(propertyStore);
 
 		fileIo.OpenProc().free();
 		fileIo.CloseProc().free();

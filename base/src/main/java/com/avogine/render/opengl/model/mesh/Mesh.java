@@ -7,23 +7,23 @@ import java.util.function.Consumer;
 
 import com.avogine.render.model.mesh.data.MeshData;
 import com.avogine.render.opengl.VAO;
+import com.avogine.render.opengl.model.mesh.util.MeshBuilder;
 
 /**
  * Parent type of a general Mesh implementation.
  */
 public abstract sealed class Mesh permits StaticMesh, InstancedMesh, AnimatedMesh {
-
 	private final VAO vao;
 	private final int vertexCount;
-
+	
 	protected Mesh(VAO vao, int vertexCount) {
 		this.vao = vao;
 		this.vertexCount = vertexCount;
 	}
 	
 	protected Mesh(MeshData meshData) {
-		this.vao = setupVAO(meshData);
-		this.vertexCount = meshData.vertexBuffers().indices().limit();
+		vao = MeshBuilder.generateVAO(this, meshData);
+		vertexCount = meshData.vertexBuffers().indices().limit();
 	}
 	
 	/**
@@ -32,8 +32,6 @@ public abstract sealed class Mesh permits StaticMesh, InstancedMesh, AnimatedMes
 	public void cleanup() {
 		vao.cleanup();
 	}
-	
-	protected abstract VAO setupVAO(MeshData meshData);
 	
 	protected void draw() {
 		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
@@ -65,12 +63,11 @@ public abstract sealed class Mesh permits StaticMesh, InstancedMesh, AnimatedMes
 	protected VAO getVao() {
 		return vao;
 	}
-
+	
 	/**
 	 * @return the number of vertices.
 	 */
 	public int getVertexCount() {
 		return vertexCount;
 	}
-	
 }

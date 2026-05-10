@@ -10,7 +10,7 @@ import com.avogine.logging.AvoLog;
  * @param target 
  */
 public record FBO(int id, int target) {
-
+	
 	/**
 	 * @param target
 	 * @return
@@ -85,5 +85,4 @@ public record FBO(int id, int target) {
 	public FBO validate() {
 		return validate(target);
 	}
-	
 }

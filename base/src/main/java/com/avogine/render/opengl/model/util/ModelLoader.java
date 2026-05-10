@@ -63,7 +63,7 @@ public class ModelLoader {
 		AIScene aiScene = AssimpFileUtils.readSceneFromMemory(modelPath, aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
 				aiProcess_Triangulate | aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights |
 				aiProcess_GenBoundingBoxes | (animated ? 0 : aiProcess_PreTransformVertices));
-
+		
 		List<AIMaterial> aiMaterials = AssimpFileUtils.readMaterials(aiScene);
 		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
 		List<Material> materials = aiMaterials.stream()
@@ -75,12 +75,14 @@ public class ModelLoader {
 		SimpleMaterial defaultMaterial = new SimpleMaterial();
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
-			MeshData meshData = processMesh(aiMesh, bones);
-			var mesh = animated ? new AnimatedMesh(meshData) : new StaticMesh(meshData);
-			if (materialIndex >= 0 && materialIndex < materials.size()) {
-				materials.get(materialIndex).addMesh(mesh);
-			} else {
-				defaultMaterial.addMesh(mesh);
+			try (MeshData meshData = processMesh(aiMesh, bones)) {
+				var mesh = animated ? new AnimatedMesh(meshData) : new StaticMesh(meshData);
+				
+				if (materialIndex >= 0 && materialIndex < materials.size()) {
+					materials.get(materialIndex).addMesh(mesh);
+				} else {
+					defaultMaterial.addMesh(mesh);
+				}
 			}
 		}
 		if (defaultMaterial.getAllMeshes().count() > 0) {
@@ -229,7 +231,7 @@ public class ModelLoader {
 			AIVertexWeight.Buffer aiWeights = aiBone.mWeights();
 			aiWeights.forEach(aiWeight -> {
 				VertexWeight weight = new VertexWeight(bone.boneId(), aiWeight.mVertexId(), aiWeight.mWeight());
-				weightMap.computeIfAbsent(weight.vertexId(), v -> new ArrayList<>()).add(weight);
+				weightMap.computeIfAbsent(weight.vertexId(), _ -> new ArrayList<>()).add(weight);
 			});
 		}
 		

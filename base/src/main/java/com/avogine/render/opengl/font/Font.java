@@ -229,10 +229,10 @@ public class Font {
 			stbtt_PackEnd(packContext);
 
 			try {
-				return Texture.gen2D(fontMap -> fontMap
-						.texFilterLinear()
-						.texWrap2DRepeat()
-						.texImage2D(BITMAP_WIDTH, BITMAP_HEIGHT, bitmap));
+				return Texture.gen2D(fontMapTex -> fontMapTex
+						.filter().linear()
+						.wrap2D().repeat()
+						.image2D(BITMAP_WIDTH, BITMAP_HEIGHT, bitmap));
 			} finally {
 				MemoryUtil.memFree(bitmap);
 			}

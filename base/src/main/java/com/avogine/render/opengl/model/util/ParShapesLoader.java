@@ -39,7 +39,9 @@ public class ParShapesLoader {
 			FloatBuffer aabb = stack.mallocFloat(6);
 			par_shapes_compute_aabb(parMesh, aabb);
 
-			return new StaticMesh(new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get())));
+			try (var meshData = new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()))) {
+				return new StaticMesh(meshData);
+			}
 		} finally {
 			par_shapes_free_mesh(parMesh);
 		}
@@ -138,7 +140,9 @@ public class ParShapesLoader {
 				FloatBuffer aabb = stack.mallocFloat(6);
 				par_shapes_compute_aabb(parMesh, aabb);
 
-				return new InstancedMesh(new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()), 1, instancedBuffers, instanceCount));
+				try (var meshData = new MeshData(vertexBuffers, new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get()), 1, instancedBuffers, instanceCount)) {
+					return new InstancedMesh(meshData);
+				}
 			} finally {
 				par_shapes_free_mesh(parMesh);
 			}

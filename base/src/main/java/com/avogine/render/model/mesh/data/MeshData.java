@@ -9,8 +9,7 @@ import org.joml.primitives.AABBf;
  * @param instancedBuffers Optional per instance data stored in individual buffers per instanced attribute.
  * @param maxInstances Optional maximum number of instances to draw during instanced rendering.
  */
-public record MeshData(VertexBuffers vertexBuffers, AABBf aabb, int materialIndex, InstancedBuffers instancedBuffers, int maxInstances) {
-	
+public record MeshData(VertexBuffers vertexBuffers, AABBf aabb, int materialIndex, InstancedBuffers instancedBuffers, int maxInstances) implements AutoCloseable {
 	/**
 	 * @param vertexBuffers
 	 * @param aabb
@@ -26,5 +25,15 @@ public record MeshData(VertexBuffers vertexBuffers, AABBf aabb, int materialInde
 	 */
 	public MeshData(VertexBuffers vertexBuffers, AABBf aabb) {
 		this(vertexBuffers, aabb, 1);
+	}
+	
+	@Override
+	public void close() {
+		if (vertexBuffers != null) {
+			vertexBuffers.close();
+		}
+		if (instancedBuffers != null) {
+			instancedBuffers.close();
+		}
 	}
 }
