@@ -5,7 +5,6 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
 import java.nio.ByteBuffer;
@@ -14,7 +13,7 @@ import java.util.Objects;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
-import com.avogine.render.opengl.VAO;
+import com.avogine.render.opengl.VertexArrayObject;
 import com.avogine.render.opengl.texture.Texture;
 
 /**
@@ -36,7 +35,7 @@ public class NuklearMesh {
 				.flip();
 	}
 	
-	private final VAO vao;
+	private final VertexArrayObject vao;
 	
 	private NkDrawNullTexture nullTexture;
 	
@@ -54,12 +53,18 @@ public class NuklearMesh {
 	 * 
 	 */
 	public NuklearMesh(int displayWidth, int displayHeight, float width, float height) {
-		vao = VAO.gen(builder -> builder
-				.buffer().data(null).bind()
-				.vertexAttribArray(0).pointer(2, GL_FLOAT, false, 20, 0).enable()
-				.vertexAttribArray(1).pointer(2, GL_FLOAT, false, 20, 8).enable()
-				.vertexAttribArray(2).pointer(4, GL_UNSIGNED_BYTE, true, 20, 16).enable()
-				.elementBuffer(null));
+		vao = VertexArrayObject.gen(mesh -> mesh
+				.vertex(buffer -> buffer
+						.bufferSize(MAX_VERTEX_BUFFER)
+						.vertexAttribArray(0, attrib -> attrib
+								.pointer(pointer -> pointer.size(2).interleaved(20, 0)))
+						.vertexAttribArray(1, attrib -> attrib
+								.pointer(pointer -> pointer.size(2).interleaved(20, 8)))
+						.vertexAttribArray(2, attrib -> attrib
+								.pointer(pointer -> pointer.unsignedByte().normalized().interleaved(20, 16)))
+						)
+				.elements(buffer -> buffer.bufferSize(MAX_ELEMENT_BUFFER)));
+		
 		this.displayWidth = displayWidth;
 		this.displayHeight = displayHeight;
 		this.width = width;
@@ -99,67 +104,62 @@ public class NuklearMesh {
 		// convert from command queue into draw list and draw to screen
 
 		// allocate vertex and element buffer
-		vao.bind();
-		vao.vertexBufferObjects()[0].bind();
+		vao.bindVBO(0, _ -> {
+			glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_BUFFER, GL_STREAM_DRAW);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_BUFFER, GL_STREAM_DRAW);
+			
+			glActiveTexture(GL_TEXTURE0);
 
-		glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_BUFFER, GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_BUFFER, GL_STREAM_DRAW);
-		
-		glActiveTexture(GL_TEXTURE0);
+			// load draw vertices & elements directly into vertex + element buffer
+			ByteBuffer vertices = Objects.requireNonNull(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY, MAX_VERTEX_BUFFER, null));
+			ByteBuffer elements = Objects.requireNonNull(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY, MAX_ELEMENT_BUFFER, null));
+			try (MemoryStack stack = stackPush()) {
+				// fill convert configuration
+				NkConvertConfig config = NkConvertConfig.calloc(stack)
+						.vertex_layout(VERTEX_LAYOUT)
+						.vertex_size(20)
+						.vertex_alignment(4)
+						.tex_null(nullTexture)
+						.circle_segment_count(22)
+						.curve_segment_count(22)
+						.arc_segment_count(22)
+						.global_alpha(1.0f)
+						.shape_AA(NK_ANTI_ALIASING_ON)
+						.line_AA(NK_ANTI_ALIASING_ON);
 
-		// load draw vertices & elements directly into vertex + element buffer
-		ByteBuffer vertices = Objects.requireNonNull(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY, MAX_VERTEX_BUFFER, null));
-		ByteBuffer elements = Objects.requireNonNull(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY, MAX_ELEMENT_BUFFER, null));
-		try (MemoryStack stack = stackPush()) {
-			// fill convert configuration
-			NkConvertConfig config = NkConvertConfig.calloc(stack)
-					.vertex_layout(VERTEX_LAYOUT)
-					.vertex_size(20)
-					.vertex_alignment(4)
-					.tex_null(nullTexture)
-					.circle_segment_count(22)
-					.curve_segment_count(22)
-					.arc_segment_count(22)
-					.global_alpha(1.0f)
-					.shape_AA(NK_ANTI_ALIASING_ON)
-					.line_AA(NK_ANTI_ALIASING_ON);
+				// setup buffers to load vertices and elements
+				NkBuffer vbuf = NkBuffer.malloc(stack);
+				NkBuffer ebuf = NkBuffer.malloc(stack);
 
-			// setup buffers to load vertices and elements
-			NkBuffer vbuf = NkBuffer.malloc(stack);
-			NkBuffer ebuf = NkBuffer.malloc(stack);
-
-			nk_buffer_init_fixed(vbuf, vertices/*, max_vertex_buffer*/);
-			nk_buffer_init_fixed(ebuf, elements/*, max_element_buffer*/);
-			nk_convert(context, commands, vbuf, ebuf, config);
-		}
-		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-		glUnmapBuffer(GL_ARRAY_BUFFER);
-
-		// iterate over and execute each draw command
-		float fbScaleX = displayWidth / width;
-		float fbScaleY = displayHeight / height;
-
-		long offset = MemoryUtil.NULL;
-		for (NkDrawCommand cmd = nk__draw_begin(context, commands); cmd != null; cmd = nk__draw_next(cmd, commands, context)) {
-			if (cmd.elem_count() == 0) {
-				continue;
+				nk_buffer_init_fixed(vbuf, vertices/*, max_vertex_buffer*/);
+				nk_buffer_init_fixed(ebuf, elements/*, max_element_buffer*/);
+				nk_convert(context, commands, vbuf, ebuf, config);
 			}
-			glBindTexture(GL_TEXTURE_2D, cmd.texture().id());
-			glScissor(
-					(int)(cmd.clip_rect().x() * fbScaleX),
-					(int)((height - (int)(cmd.clip_rect().y() + cmd.clip_rect().h())) * fbScaleY),
-					(int)(cmd.clip_rect().w() * fbScaleX),
-					(int)(cmd.clip_rect().h() * fbScaleY)
-					);
-			glDrawElements(GL_TRIANGLES, cmd.elem_count(), GL_UNSIGNED_SHORT, offset);
-			offset += cmd.elem_count() * 2;
-		}
-		nk_clear(context);
-		nk_buffer_clear(commands);
+			glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+			glUnmapBuffer(GL_ARRAY_BUFFER);
 
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		// OpenGL law states to not unbind an EBO while a VAO is still bound, but idk what Nuklear is actually doing with this buffer mapping.
-		glBindVertexArray(0);
+			// iterate over and execute each draw command
+			float fbScaleX = displayWidth / width;
+			float fbScaleY = displayHeight / height;
+
+			long offset = MemoryUtil.NULL;
+			for (NkDrawCommand cmd = nk__draw_begin(context, commands); cmd != null; cmd = nk__draw_next(cmd, commands, context)) {
+				if (cmd.elem_count() == 0) {
+					continue;
+				}
+				glBindTexture(GL_TEXTURE_2D, cmd.texture().id());
+				glScissor(
+						(int)(cmd.clip_rect().x() * fbScaleX),
+						(int)((height - (int)(cmd.clip_rect().y() + cmd.clip_rect().h())) * fbScaleY),
+						(int)(cmd.clip_rect().w() * fbScaleX),
+						(int)(cmd.clip_rect().h() * fbScaleY)
+						);
+				glDrawElements(GL_TRIANGLES, cmd.elem_count(), GL_UNSIGNED_SHORT, offset);
+				offset += cmd.elem_count() * 2;
+			}
+			nk_clear(context);
+			nk_buffer_clear(commands);
+		});
 	}
 	
 	/**

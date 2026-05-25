@@ -6,8 +6,8 @@ const int MAX_BONES = 150;
 layout (location=0) in vec3 position;
 layout (location=1) in vec3 normal;
 layout (location=4) in vec2 textureCoordinates;
-layout (location=5) in vec4 boneWeights;
-layout (location=6) in ivec4 boneIndices;
+layout (location=5) in ivec4 boneIndices;
+layout (location=6) in vec4 boneWeights;
 
 uniform mat4 projection;
 uniform mat4 view;

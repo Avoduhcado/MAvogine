@@ -3,6 +3,8 @@ package com.avogine.render.opengl.model.material;
 import java.util.*;
 import java.util.stream.Stream;
 
+import org.joml.Vector4f;
+
 import com.avogine.render.model.mesh.Boundable;
 import com.avogine.render.opengl.model.mesh.*;
 
@@ -10,7 +12,11 @@ import com.avogine.render.opengl.model.mesh.*;
  *
  */
 public abstract sealed class Material permits SimpleMaterial, PBRMaterial, CustomMaterial {
-	
+	/**
+	 * Default color vector to use when no actual color is specified.
+	 */
+	public static final Vector4f DEFAULT_COLOR = new Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
+
 	private final List<StaticMesh> staticMeshes;
 	private final List<AnimatedMesh> animatedMeshes;
 	private final List<InstancedMesh> instancedMeshes;

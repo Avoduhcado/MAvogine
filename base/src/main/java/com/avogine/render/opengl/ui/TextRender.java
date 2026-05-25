@@ -5,10 +5,9 @@ import static org.lwjgl.opengl.GL11.*;
 import java.nio.FloatBuffer;
 
 import org.joml.Matrix4f;
-import org.lwjgl.system.*;
+import org.lwjgl.system.MemoryStack;
 
 import com.avogine.logging.AvoLog;
-import com.avogine.render.opengl.VAO;
 import com.avogine.render.opengl.font.Font;
 import com.avogine.render.opengl.font.util.FontCache;
 import com.avogine.render.opengl.shader.FontShader;
@@ -61,7 +60,7 @@ public class TextRender {
 		orthoMatrix.setOrtho2D(0, width, height, 0);
 		
 		int textBufferCapacity = TEXT_LENGTH_LIMIT * 4 * 6;
-		FloatBuffer textVertices = MemoryUtil.memCallocFloat(textBufferCapacity);
+		float[] textVertices = new float[textBufferCapacity];
 		mesh = new TextMesh(textVertices);
 		
 		defaultFont = fontCache.getFont(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
@@ -90,7 +89,7 @@ public class TextRender {
 		long totalRenderableChars = text.codePoints().filter(c -> c >= 32 && c <= 128).count();
 		if (totalRenderableChars > TEXT_LENGTH_LIMIT) {
 			AvoLog.log().warn("Woah nelly that's a big text string! Max length is: {} given text was: {}", TEXT_LENGTH_LIMIT, text.length());
-			throw new IllegalArgumentException("Text length too long for TextRender.");
+			throw new IllegalArgumentException("Text length too long for TextRender. " + text.length());
 		}
 		int vertexCount = (int) totalRenderableChars * 6;
 		
@@ -110,10 +109,10 @@ public class TextRender {
 		
 		fontShader.textColor.loadVec4(1.0f, 1.0f, 1.0f, 1.0f);
 		
-		FloatBuffer vertexData = MemoryUtil.memAllocFloat(vertexCount * 4);
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			FloatBuffer xPos = stack.floats(x);
 			FloatBuffer yPos = stack.floats(y + font.getScaledBaseline(size));
+			FloatBuffer vertexData = stack.mallocFloat(vertexCount * 4);
 			
 			text.codePoints().forEach(c -> {
 				if (c == '\n') {
@@ -126,16 +125,11 @@ public class TextRender {
 				}
 			});
 			
-			vertexData.flip();
-			
-			mesh.updateText(vertexData);
-		} finally {
-			MemoryUtil.memFree(vertexData);
+			mesh.setVertexCount(vertexCount);
+			mesh.getVAO().bindVBO(0, vbo -> vbo.bufferSubData(vertexData.flip()));
 		}
 		
 		mesh.render();
-		
-		VAO.unbind();
 		
 		fontShader.unbind();
 		

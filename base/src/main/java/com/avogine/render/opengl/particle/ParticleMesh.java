@@ -3,11 +3,11 @@ package com.avogine.render.opengl.particle;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN;
 import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
 
-import java.nio.*;
+import java.nio.Buffer;
 
-import org.lwjgl.system.MemoryUtil;
-
-import com.avogine.render.opengl.VAO;
+import com.avogine.render.opengl.VertexArrayObject;
+import com.avogine.render.opengl.model.mesh.data.VertexData.Vertex;
+import com.avogine.render.opengl.model.mesh.data.VertexData.Vertex.Vertex3D;
 import com.avogine.render.util.Instanceable;
 
 /**
@@ -15,7 +15,7 @@ import com.avogine.render.util.Instanceable;
  */
 public class ParticleMesh implements Instanceable {
 
-	private final VAO vao;
+	private final VertexArrayObject vao;
 	private final int vertexCount;
 	
 	private final int maxInstances;
@@ -25,36 +25,28 @@ public class ParticleMesh implements Instanceable {
 	 * @param positions 
 	 * @param maxInstances 
 	 */
-	public ParticleMesh(FloatBuffer positions, int maxInstances) {
+	public ParticleMesh(float[] positions, int maxInstances) {
 		long instanceBufferSize = 4L * Float.BYTES * maxInstances;
 		
-		try {
-			vao = VAO.gen(builder -> builder
-					.buffer().data(positions).bind()
-					.vertexAttribArray(0)
-						.pointer().size(3).tightlyPacked()
-						.divisor(0)
-						.enable()
-					.buffer()
-						.stream().draw()
-						.data(instanceBufferSize)
-						.bind()
-					.vertexAttribArray(1)
-						.pointer().tightlyPacked()
-						.divisor(1)
-						.enable()
-					.buffer()
-						.stream().draw()
-						.data(instanceBufferSize)
-						.bind()
-					.vertexAttribArray(2)
-						.pointer().size(4).unsignedByte().normalized().tightlyPacked()
-						.divisor(1)
-						.enable());
-		} finally {
-			MemoryUtil.memFree(positions);
+		try (Vertex3D positionsVertex = Vertex.wrap3D(positions, 0)) {
+			vao = VertexArrayObject.gen(mesh -> mesh
+					.vertex(positionsVertex)
+					.vertex(instancePositionVertex -> instancePositionVertex
+							.buffer(buffer -> buffer
+									.data(instanceBufferSize)
+									.glStream().draw())
+							.vertexAttribArray(1, attrib -> attrib
+									.pointer(_ -> {})
+									.divisor(1)))
+					.vertex(instanceColorVertex -> instanceColorVertex
+							.buffer(buffer -> buffer
+									.data(instanceBufferSize)
+									.glStream().draw())
+							.vertexAttribArray(2, attrib -> attrib
+									.pointer(pointer -> pointer.unsignedByte().normalized())
+									.divisor(1))));
 		}
-		vertexCount = positions.limit() / 3;
+		vertexCount = positions.length / 3;
 		this.maxInstances = maxInstances;
 	}
 	
@@ -79,19 +71,9 @@ public class ParticleMesh implements Instanceable {
 
 	@Override
 	public <T extends Buffer> void updateInstanceBuffer(int vboIndex, long offset, T data) {
-		vao.bindBuffer(vboIndex, instanceBuffer -> instanceBuffer.bufferSubData(offset, data));
+		vao.bindVBO(vboIndex, instanceBuffer -> instanceBuffer.bufferSubData(offset, data));
 	}
 	
-	/**
-	 * @param positions
-	 * @param colors
-	 */
-	public void update(FloatBuffer positions, ByteBuffer colors) {
-		vao.bind();
-		updateInstanceBuffer(1, positions);
-		updateInstanceBuffer(2, colors);
-	}
-
 	@Override
 	public int getMaxInstances() {
 		return maxInstances;

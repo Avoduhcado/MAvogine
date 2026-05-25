@@ -10,7 +10,6 @@ import com.avogine.ecs.components.*;
 import com.avogine.game.scene.*;
 import com.avogine.game.util.*;
 import com.avogine.io.Window;
-import com.avogine.render.opengl.VAO;
 import com.avogine.render.opengl.shader.BasicShader;
 
 /**
@@ -72,8 +71,6 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 				mesh.render();
 			});
 		});
-		
-		VAO.unbind();
 	}
 	
 	@Override

@@ -5,25 +5,23 @@ import static org.lwjgl.opengl.GL11.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-import com.avogine.render.model.mesh.data.MeshData;
-import com.avogine.render.opengl.VAO;
-import com.avogine.render.opengl.model.mesh.util.MeshBuilder;
+import org.joml.primitives.AABBf;
+
+import com.avogine.render.model.mesh.Boundable;
+import com.avogine.render.opengl.VertexArrayObject;
 
 /**
  * Parent type of a general Mesh implementation.
  */
-public abstract sealed class Mesh permits StaticMesh, InstancedMesh, AnimatedMesh {
-	private final VAO vao;
+public abstract sealed class Mesh implements Boundable permits StaticMesh, InstancedMesh, AnimatedMesh {
+	private final VertexArrayObject vao;
 	private final int vertexCount;
+	private final AABBf aabb;
 	
-	protected Mesh(VAO vao, int vertexCount) {
+	protected Mesh(VertexArrayObject vao, int vertexCount, AABBf aabb) {
 		this.vao = vao;
 		this.vertexCount = vertexCount;
-	}
-	
-	protected Mesh(MeshData meshData) {
-		vao = MeshBuilder.generateVAO(this, meshData);
-		vertexCount = meshData.vertexBuffers().indices().limit();
+		this.aabb = aabb;
 	}
 	
 	/**
@@ -60,7 +58,7 @@ public abstract sealed class Mesh permits StaticMesh, InstancedMesh, AnimatedMes
 		}
 	}
 	
-	protected VAO getVao() {
+	protected VertexArrayObject getVAO() {
 		return vao;
 	}
 	
@@ -69,5 +67,10 @@ public abstract sealed class Mesh permits StaticMesh, InstancedMesh, AnimatedMes
 	 */
 	public int getVertexCount() {
 		return vertexCount;
+	}
+
+	@Override
+	public AABBf getAABB() {
+		return aabb;
 	}
 }
