@@ -18,7 +18,6 @@ public class SimpleShader extends ShaderProgram {
 	public final UniformMat4 projection = new UniformMat4();
 	public final UniformMat4 view = new UniformMat4();
 	public final UniformMat4 model = new UniformMat4();
-	public final UniformMat4 normalMatrix = new UniformMat4();
 	
 	// Fragment uniforms
 	public final UniformVec3 lightPosition = new UniformVec3();
@@ -34,7 +33,7 @@ public class SimpleShader extends ShaderProgram {
 	public SimpleShader() {
 		super(SHADERS.with("simpleVertex.glsl"), SHADERS.with("simpleFragment.glsl"));
 		storeAllUniformLocations(
-				projection, view, model, normalMatrix, 
+				projection, view, model, 
 				lightPosition, lightColor,
 				diffuseMap, specularMap, specularFactor);
 		linkTextureUnits();

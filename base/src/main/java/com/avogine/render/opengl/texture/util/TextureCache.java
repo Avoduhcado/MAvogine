@@ -29,6 +29,14 @@ public class TextureCache {
 	}
 	
 	/**
+	 * @param textureFile
+	 * @return
+	 */
+	public Texture getTextureOrDefault(String textureFile) {
+		return textureMap.getOrDefault(textureFile, getDefaultTexture());
+	}
+	
+	/**
 	 * @param posXTexturePath 
 	 * @param negXTexturePath 
 	 * @param posYTexturePath 

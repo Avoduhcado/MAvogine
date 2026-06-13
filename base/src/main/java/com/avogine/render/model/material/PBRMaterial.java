@@ -1,11 +1,9 @@
-package com.avogine.render.opengl.model.material;
-
-import java.util.ArrayList;
+package com.avogine.render.model.material;
 
 /**
  *
  */
-public final class PBRMaterial extends Material {
+public final class PBRMaterial implements Material {
 
 	private String albedo;
 	private String normalMap;
@@ -21,7 +19,6 @@ public final class PBRMaterial extends Material {
 	 * @param ambientOcclusion
 	 */
 	public PBRMaterial(String albedo, String normalMap, String metallic, String roughness, String ambientOcclusion) {
-		super(new ArrayList<>());
 		this.setAlbedo(albedo);
 		this.setNormalMap(normalMap);
 		this.setMetallic(metallic);

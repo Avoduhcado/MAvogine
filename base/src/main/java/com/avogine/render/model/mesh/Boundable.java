@@ -10,6 +10,6 @@ public interface Boundable {
 	/**
 	 * @return The axis aligned bounding box fully containing the 3D instance.
 	 */
-	public AABBf getAABB();
+	public AABBf getBoundingBox();
 	
 }

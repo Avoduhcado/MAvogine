@@ -1,46 +1,39 @@
 package com.avogine.render.opengl.model.mesh;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11C.*;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 import org.joml.primitives.AABBf;
 
-import com.avogine.render.model.mesh.Boundable;
+import com.avogine.render.model.mesh.*;
 import com.avogine.render.opengl.VertexArrayObject;
 
 /**
- * Parent type of a general Mesh implementation.
+ *
  */
-public abstract sealed class Mesh implements Boundable permits StaticMesh, InstancedMesh, AnimatedMesh {
-	private final VertexArrayObject vao;
-	private final int vertexCount;
-	private final AABBf aabb;
+public abstract class Mesh implements Renderable, Boundable {
+
+	protected final VertexArrayObject vao;
+	protected final int vertexCount;
+	protected final AABBf boundingBox;
 	
-	protected Mesh(VertexArrayObject vao, int vertexCount, AABBf aabb) {
+	protected Mesh(VertexArrayObject vao, int vertexCount, AABBf boundingBox) {
 		this.vao = vao;
 		this.vertexCount = vertexCount;
-		this.aabb = aabb;
+		this.boundingBox = boundingBox;
 	}
 	
-	/**
-	 * Free the underlying vertex array object of this mesh.
-	 */
-	public void cleanup() {
-		vao.cleanup();
-	}
-	
-	protected void draw() {
-		glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
-	}
-	
-	/**
-	 * Bind and draw this mesh.
-	 */
+	@Override
 	public void render() {
 		vao.bind();
 		draw();
+	}
+	
+	@Override
+	public void cleanup() {
+		vao.cleanup();
 	}
 	
 	/**
@@ -58,19 +51,26 @@ public abstract sealed class Mesh implements Boundable permits StaticMesh, Insta
 		}
 	}
 	
-	protected VertexArrayObject getVAO() {
+	protected void draw() {
+		glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
+	}
+	
+	/**
+	 * @return the vao
+	 */
+	public VertexArrayObject getVao() {
 		return vao;
 	}
 	
 	/**
-	 * @return the number of vertices.
+	 * @return the vertexCount
 	 */
 	public int getVertexCount() {
 		return vertexCount;
 	}
-
+	
 	@Override
-	public AABBf getAABB() {
-		return aabb;
+	public AABBf getBoundingBox() {
+		return boundingBox;
 	}
 }

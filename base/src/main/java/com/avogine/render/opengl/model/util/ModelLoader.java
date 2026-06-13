@@ -4,6 +4,8 @@ import static org.lwjgl.assimp.Assimp.*;
 
 import java.nio.IntBuffer;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.joml.*;
 import org.joml.Math;
@@ -13,11 +15,11 @@ import org.lwjgl.assimp.*;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.model.animation.*;
+import com.avogine.render.model.material.*;
+import com.avogine.render.model.material.data.BlinnPhongData;
 import com.avogine.render.model.mesh.data.MeshData;
 import com.avogine.render.model.mesh.data.MeshData.AnimMeshData;
-import com.avogine.render.opengl.model.Model;
-import com.avogine.render.opengl.model.material.*;
-import com.avogine.render.opengl.model.material.data.BlinnPhongData;
+import com.avogine.render.opengl.model.*;
 import com.avogine.render.opengl.model.mesh.*;
 import com.avogine.render.opengl.texture.util.TextureCache;
 import com.avogine.render.util.AssimpFileUtils;
@@ -39,40 +41,79 @@ public class ModelLoader {
 	private ModelLoader() {}
 	
 	/**
+	 * @param id
+	 * @param modelPath
+	 * @param textureCache
+	 * @return a {@link StaticModel} loaded from the given path.
+	 */
+	public static StaticModel loadModel(String id, String modelPath, TextureCache textureCache) {
+		AIScene aiScene = AssimpFileUtils.readSceneFromMemory(modelPath, aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
+				aiProcess_Triangulate | aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights |
+				aiProcess_GenBoundingBoxes | aiProcess_PreTransformVertices);
+		
+		List<SimpleMaterial> materials = loadMaterials(aiScene, modelPath, textureCache);
+		
+		List<AIMesh> aiMeshes = AssimpFileUtils.readMeshes(aiScene);
+		List<Bone> bones = new ArrayList<>();
+		List<StaticMesh> noMaterialMeshes = new ArrayList<>();
+		Map<SimpleMaterial, List<StaticMesh>> materialMap = materials.stream()
+				.collect(Collectors.toMap(
+						Function.identity(), 
+						_ -> new ArrayList<>()));
+		for (AIMesh aiMesh : aiMeshes) {
+			int materialIndex = aiMesh.mMaterialIndex();
+			MeshData meshData = processMesh(aiMesh, bones);
+			var mesh = new StaticMesh(meshData);
+
+			if (materialIndex >= 0 && materialIndex < materialMap.size()) {
+				materialMap.get(materials.get(materialIndex)).add(mesh);
+			} else {
+				noMaterialMeshes.add(mesh);
+			}
+		}
+		if (!noMaterialMeshes.isEmpty()) {
+			materialMap.put(new SimpleMaterial(), noMaterialMeshes);
+		}
+
+		aiReleaseImport(aiScene);
+
+		return new StaticModel(id, materialMap);
+	}
+	
+	/**
 	 * TODO#57 convert modelPath to modelName, source modelName from a resource property that points to the file location and pass _that_ file location to the reader
 	 * @param id 
 	 * @param modelPath
 	 * @param textureCache 
-	 * @param animated 
-	 * @return a {@link Model} loaded from the given path.
+	 * @return a {@link AnimatedModel} loaded from the given path.
 	 */
-	public static Model loadModel(String id, String modelPath, TextureCache textureCache, boolean animated) {
+	public static AnimatedModel loadAnimatedModel(String id, String modelPath, TextureCache textureCache) {
 		AIScene aiScene = AssimpFileUtils.readSceneFromMemory(modelPath, aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
 				aiProcess_Triangulate | aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights |
-				aiProcess_GenBoundingBoxes | (animated ? 0 : aiProcess_PreTransformVertices));
+				aiProcess_GenBoundingBoxes);
 		
-		List<AIMaterial> aiMaterials = AssimpFileUtils.readMaterials(aiScene);
-		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
-		List<Material> materials = aiMaterials.stream()
-				.map(aiMaterial -> processSimpleMaterial(aiMaterial, modelDirectory, textureCache))
-				.toList();
+		List<SimpleMaterial> materials = loadMaterials(aiScene, modelPath, textureCache);
 
 		List<AIMesh> aiMeshes = AssimpFileUtils.readMeshes(aiScene);
 		List<Bone> bones = new ArrayList<>();
-		SimpleMaterial defaultMaterial = new SimpleMaterial();
+		List<AnimatedMesh> noMaterialMeshes = new ArrayList<>();
+		Map<SimpleMaterial, List<AnimatedMesh>> materialMap = materials.stream()
+				.collect(Collectors.toMap(
+						Function.identity(), 
+						_ -> new ArrayList<>()));
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
 			MeshData meshData = processMesh(aiMesh, bones);
-			var mesh = animated ? new AnimatedMesh(meshData) : new StaticMesh(meshData);
+			var mesh = new AnimatedMesh(meshData);
 
-			if (materialIndex >= 0 && materialIndex < materials.size()) {
-				materials.get(materialIndex).addMesh(mesh);
+			if (materialIndex >= 0 && materialIndex < materialMap.size()) {
+				materialMap.get(materials.get(materialIndex)).add(mesh);
 			} else {
-				defaultMaterial.addMesh(mesh);
+				noMaterialMeshes.add(mesh);
 			}
 		}
-		if (defaultMaterial.getAllMeshes().count() > 0) {
-			materials.add(defaultMaterial);
+		if (!noMaterialMeshes.isEmpty()) {
+			materialMap.put(new SimpleMaterial(), noMaterialMeshes);
 		}
 
 		List<AIAnimation> aiAnimations = AssimpFileUtils.readAnimations(aiScene);
@@ -85,10 +126,18 @@ public class ModelLoader {
 
 		aiReleaseImport(aiScene);
 
-		return new Model(id, materials, animations);
+		return new AnimatedModel(id, materialMap, animations);
 	}
 	
-	private static Material processSimpleMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
+	private static List<SimpleMaterial> loadMaterials(AIScene aiScene, String modelPath, TextureCache textureCache) {
+		List<AIMaterial> aiMaterials = AssimpFileUtils.readMaterials(aiScene);
+		String modelDirectory = modelPath.substring(0, modelPath.lastIndexOf('/') + 1);
+		return aiMaterials.stream()
+				.map(aiMaterial -> processSimpleMaterial(aiMaterial, modelDirectory, textureCache))
+				.toList();
+	}
+	
+	private static SimpleMaterial processSimpleMaterial(AIMaterial aiMaterial, String modelDirectory, TextureCache textureCache) {
 		float[] specularFactor = new float[] { 0.0f };
 		int[] pMax = new int[] { 1 };
 		int result = aiGetMaterialFloatArray(aiMaterial, AI_MATKEY_SHININESS, aiTextureType_NONE, 0, specularFactor, pMax);
@@ -121,7 +170,7 @@ public class ModelLoader {
 		if (result == aiReturn_SUCCESS) {
 			return new Vector4f(color.r(), color.g(), color.b(), color.a());
 		}
-		return Material.DEFAULT_COLOR;
+		return SimpleMaterial.DEFAULT_COLOR;
 	}
 	
 	private static String processMaterialTexture(AIMaterial aiMaterial, int textureType, AIString texturePath, String modelDirectory, TextureCache textureCache) {

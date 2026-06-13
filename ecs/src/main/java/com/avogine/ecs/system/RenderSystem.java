@@ -58,10 +58,10 @@ public class RenderSystem extends EntitySystem implements Renderable, Cleanupabl
 	
 	private void renderEntity(Renderable entity, ModelCache modelCache) {
 		var realModel = modelCache.getStaticModel(entity.modelComponent.model(), "");
-		realModel.getBlinnPhongMaterials().forEach(material -> {
+		realModel.getMaterialMap().forEach((material, meshList) -> {
 			modelCache.getTexture(material.getDiffuseTexturePath()).activate(0);
 			
-			material.getStaticMeshes().forEach(mesh -> {
+			meshList.forEach(mesh -> {
 				model.identity().translationRotateScale(
 						entity.transform.position().x, entity.transform.position().y, entity.transform.position().z,
 						entity.transform.orientation().x, entity.transform.orientation().y, entity.transform.orientation().z, entity.transform.orientation().w,

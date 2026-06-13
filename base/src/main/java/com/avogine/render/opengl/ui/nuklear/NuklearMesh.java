@@ -54,16 +54,15 @@ public class NuklearMesh {
 	 */
 	public NuklearMesh(int displayWidth, int displayHeight, float width, float height) {
 		vao = VertexArrayObject.gen(mesh -> mesh
-				.vertex(buffer -> buffer
-						.bufferSize(MAX_VERTEX_BUFFER)
-						.vertexAttribArray(0, attrib -> attrib
-								.pointer(pointer -> pointer.size(2).interleaved(20, 0)))
-						.vertexAttribArray(1, attrib -> attrib
-								.pointer(pointer -> pointer.size(2).interleaved(20, 8)))
-						.vertexAttribArray(2, attrib -> attrib
-								.pointer(pointer -> pointer.unsignedByte().normalized().interleaved(20, 16)))
-						)
-				.elements(buffer -> buffer.bufferSize(MAX_ELEMENT_BUFFER)));
+				.vertex(buffer -> buffer.bufferData(MAX_VERTEX_BUFFER),
+						vertex -> vertex
+						.array(0, attrib -> attrib
+								.pointer(p -> p.size(2).stride(20, 0)))
+						.array(1, attrib -> attrib
+								.pointer(p -> p.size(2).stride(20, 8)))
+						.array(2, attrib -> attrib
+								.pointer(p -> p.ub().normalized().stride(20, 16))))
+				.index(buffer -> buffer.bufferData(MAX_ELEMENT_BUFFER)));
 		
 		this.displayWidth = displayWidth;
 		this.displayHeight = displayHeight;

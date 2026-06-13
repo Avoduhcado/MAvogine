@@ -12,8 +12,6 @@ public class SimpleInstanceShader extends ShaderProgram {
 	public final UniformMat4 projection = new UniformMat4();
 	public final UniformMat4 view = new UniformMat4();
 	
-	public final UniformMat4 normalMatrix = new UniformMat4();
-
 	public final UniformVec3 lightPosition = new UniformVec3();
 	public final UniformVec3 lightColor = new UniformVec3();
 
@@ -26,7 +24,7 @@ public class SimpleInstanceShader extends ShaderProgram {
 	 */
 	public SimpleInstanceShader() {
 		super(SHADERS.with("simpleInstanceVertex.glsl"), SHADERS.with("simpleFragment.glsl"));
-		storeAllUniformLocations(projection, view, normalMatrix, lightPosition, lightColor, diffuseMap, specularMap, specularFactor);
+		storeAllUniformLocations(projection, view, lightPosition, lightColor, diffuseMap, specularMap, specularFactor);
 		linkTextureUnits();
 	}
 	

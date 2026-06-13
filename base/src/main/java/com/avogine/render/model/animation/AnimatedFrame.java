@@ -5,7 +5,7 @@ import java.util.Arrays;
 import org.joml.Matrix4f;
 
 /**
- * @param boneMatrices 
+ * @param boneMatrices The bone transform matrices for a single key frame of an animation.
  */
 public record AnimatedFrame(Matrix4f[] boneMatrices) {
 	

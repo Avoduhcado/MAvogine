@@ -7,7 +7,6 @@ layout (location=4) in vec2 textureCoordinates;
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
-uniform mat4 normalMatrix;
 
 out vec3 vertPosition;
 out vec3 vertNormal;

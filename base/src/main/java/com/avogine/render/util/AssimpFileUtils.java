@@ -28,18 +28,18 @@ public class AssimpFileUtils {
 	})
 	public static AIScene readSceneFromMemory(String modelPath, int flags) {
 		AIFileIO fileIo = AIFileIO.create()
-				.OpenProc((pFileIO, fileName, openMode) -> {
+				.OpenProc((_, fileName, _) -> {
 					String fileNameUtf8 = memUTF8(fileName);
 					ByteBuffer data = ResourceUtils.readResourceToBuffer(fileNameUtf8);
 
 					return AIFile.create()
-							.ReadProc((pFile, pBuffer, size, count) -> {
+							.ReadProc((_, pBuffer, size, count) -> {
 								long max = Math.min(data.remaining() / size, count);
 								memCopy(memAddress(data), pBuffer, max * size);
 								data.position(data.position() + (int) (max * size));
 								return max;
 							})
-							.SeekProc((pFile, offset, origin) -> {
+							.SeekProc((_, offset, origin) -> {
 								if (origin == Assimp.aiOrigin_CUR) {
 									data.position(data.position() + (int) offset);
 								} else if (origin == Assimp.aiOrigin_SET) {
@@ -49,10 +49,10 @@ public class AssimpFileUtils {
 								}
 								return 0;
 							})
-							.FileSizeProc(pFile -> data.limit())
+							.FileSizeProc(_ -> data.limit())
 							.address();
 				})
-				.CloseProc((pFileIO, pFile) -> {
+				.CloseProc((_, pFile) -> {
 					AIFile aiFile = AIFile.create(pFile);
 
 					aiFile.ReadProc().free();

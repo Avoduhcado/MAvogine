@@ -13,7 +13,6 @@ public class AnimatedShader extends ShaderProgram {
 	public final UniformMat4 view = new UniformMat4();
 	public final UniformMat4 model = new UniformMat4();
 	
-	public final UniformMat4 normalMatrix = new UniformMat4();
 	public final UniformMat4Array boneMatrices = new UniformMat4Array();
 
 	public final UniformVec3 lightPosition = new UniformVec3();
@@ -29,7 +28,7 @@ public class AnimatedShader extends ShaderProgram {
 	public AnimatedShader() {
 		super(SHADERS.with("animatedVertex.glsl"), SHADERS.with("simpleFragment.glsl"));
 		storeAllUniformLocations(projection, view, model,
-				normalMatrix, boneMatrices, 
+				boneMatrices, 
 				lightPosition, lightColor,
 				diffuseMap, specularMap, specularFactor);
 		linkTextureUnits();

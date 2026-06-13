@@ -12,7 +12,6 @@ layout (location=6) in vec4 boneWeights;
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
-uniform mat4 normalMatrix;
 
 uniform mat4 boneMatrices[MAX_BONES];
 

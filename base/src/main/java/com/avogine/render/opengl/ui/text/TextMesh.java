@@ -3,8 +3,8 @@ package com.avogine.render.opengl.ui.text;
 import static org.lwjgl.opengl.GL11.*;
 
 import com.avogine.render.opengl.VertexArrayObject;
-import com.avogine.render.opengl.model.mesh.data.VertexData.Vertex;
-import com.avogine.render.opengl.model.mesh.data.VertexData.Vertex.Vertex4D;
+import com.avogine.render.opengl.model.mesh.data.Vertex;
+import com.avogine.render.opengl.model.mesh.data.Vertex.Vertex4D;
 
 /**
  *

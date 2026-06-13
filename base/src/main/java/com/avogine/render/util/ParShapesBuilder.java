@@ -91,14 +91,14 @@ public class ParShapesBuilder {
 
 		ParShapesMesh cylinder = par_shapes_create_cylinder(20, 2);
 		par_shapes_rotate(cylinder, (float) (Math.PI * 0.5f), new float[] {1, 0, 0});
-		par_shapes_scale(cylinder, 1, 2, 1);
 		par_shapes_merge_and_free(parMesh, cylinder);
 
 		ParShapesMesh bottomHemi = par_shapes_clone(topHemi, null);
 		par_shapes_free_mesh(topHemi);
 		par_shapes_rotate(bottomHemi, (float) Math.PI, new float[] {1, 0, 0});
-		par_shapes_translate(bottomHemi, 0, -2, 0);
+		par_shapes_translate(bottomHemi, 0, -1, 0);
 		par_shapes_merge_and_free(parMesh, bottomHemi);
+		par_shapes_translate(parMesh, 0, 1, 0);
 		
 		return this;
 	}

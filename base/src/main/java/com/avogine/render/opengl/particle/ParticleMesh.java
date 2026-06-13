@@ -1,19 +1,19 @@
 package com.avogine.render.opengl.particle;
 
-import static org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN;
-import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
+import static org.lwjgl.opengl.GL11C.GL_TRIANGLE_FAN;
+import static org.lwjgl.opengl.GL31C.glDrawArraysInstanced;
 
 import java.nio.Buffer;
 
+import com.avogine.render.model.mesh.*;
 import com.avogine.render.opengl.VertexArrayObject;
-import com.avogine.render.opengl.model.mesh.data.VertexData.Vertex;
-import com.avogine.render.opengl.model.mesh.data.VertexData.Vertex.Vertex3D;
-import com.avogine.render.util.Instanceable;
+import com.avogine.render.opengl.model.mesh.data.Vertex;
+import com.avogine.render.opengl.model.mesh.data.Vertex.Vertex3D;
 
 /**
  *
  */
-public class ParticleMesh implements Instanceable {
+public class ParticleMesh implements Renderable, Instanceable {
 
 	private final VertexArrayObject vao;
 	private final int vertexCount;
@@ -31,44 +31,34 @@ public class ParticleMesh implements Instanceable {
 		try (Vertex3D positionsVertex = Vertex.wrap3D(positions, 0)) {
 			vao = VertexArrayObject.gen(mesh -> mesh
 					.vertex(positionsVertex)
-					.vertex(instancePositionVertex -> instancePositionVertex
-							.buffer(buffer -> buffer
-									.data(instanceBufferSize)
-									.glStream().draw())
-							.vertexAttribArray(1, attrib -> attrib
-									.pointer(_ -> {})
+					.vertex(iPositions -> iPositions.data(instanceBufferSize).glStream().draw(),
+							vertex -> vertex.array(1, attrib -> attrib
+									.pointer4f()
 									.divisor(1)))
-					.vertex(instanceColorVertex -> instanceColorVertex
-							.buffer(buffer -> buffer
-									.data(instanceBufferSize)
-									.glStream().draw())
-							.vertexAttribArray(2, attrib -> attrib
-									.pointer(pointer -> pointer.unsignedByte().normalized())
+					.vertex(iColors -> iColors.data(instanceBufferSize).glStream().draw(),
+							vertex -> vertex.array(2, attrib -> attrib
+									.pointer(p -> p.ub().normalized())
 									.divisor(1))));
 		}
 		vertexCount = positions.length / 3;
 		this.maxInstances = maxInstances;
 	}
 	
-	/**
-	 * 
-	 */
+	@Override
 	public void cleanup() {
 		vao.cleanup();
 	}
 	
-	protected void draw() {
-		glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, vertexCount, getCurrentInstances());
-	}
-	
-	/**
-	 * 
-	 */
+	@Override
 	public void render() {
 		vao.bind();
 		draw();
 	}
-
+	
+	private void draw() {
+		glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, vertexCount, getCurrentInstances());
+	}
+	
 	@Override
 	public <T extends Buffer> void updateInstanceBuffer(int vboIndex, long offset, T data) {
 		vao.bindVBO(vboIndex, instanceBuffer -> instanceBuffer.bufferSubData(offset, data));

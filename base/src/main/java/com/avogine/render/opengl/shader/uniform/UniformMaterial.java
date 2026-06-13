@@ -1,6 +1,6 @@
 package com.avogine.render.opengl.shader.uniform;
 
-import com.avogine.render.opengl.model.material.SimpleMaterial;
+import com.avogine.render.model.material.SimpleMaterial;
 
 /**
  *

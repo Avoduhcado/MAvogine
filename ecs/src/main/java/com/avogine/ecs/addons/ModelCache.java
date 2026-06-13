@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.avogine.ecs.*;
-import com.avogine.render.opengl.model.Model;
+import com.avogine.render.opengl.model.StaticModel;
 import com.avogine.render.opengl.model.util.ModelLoader;
 import com.avogine.render.opengl.texture.Texture;
 import com.avogine.render.opengl.texture.util.TextureCache;
@@ -14,7 +14,7 @@ import com.avogine.render.opengl.texture.util.TextureCache;
  */
 public class ModelCache implements EntitySystemAddon {
 
-	private final Map<String, Model> modelMap;
+	private final Map<String, StaticModel> modelMap;
 	private final TextureCache textureCache;
 	
 	/**
@@ -41,8 +41,8 @@ public class ModelCache implements EntitySystemAddon {
 	 * @param texturePath 
 	 * @return
 	 */
-	public Model getStaticModel(String modelFile, String texturePath) {
-		return modelMap.computeIfAbsent(modelFile, v -> ModelLoader.loadModel(modelFile, texturePath, textureCache, false));
+	public StaticModel getStaticModel(String modelFile, String texturePath) {
+		return modelMap.computeIfAbsent(modelFile, v -> ModelLoader.loadModel(modelFile, texturePath, textureCache));
 	}
 	
 	/**
@@ -50,7 +50,7 @@ public class ModelCache implements EntitySystemAddon {
 	 * @param model
 	 * @return
 	 */
-	public void putModel(String modelName, Model model) {
+	public void putModel(String modelName, StaticModel model) {
 		modelMap.put(modelName, model);
 	}
 	

@@ -1,14 +1,17 @@
-package com.avogine.render.opengl.model.material;
+package com.avogine.render.model.material;
 
-import java.util.*;
+import org.joml.Vector4f;
 
-import com.avogine.render.opengl.model.material.data.BlinnPhongData;
-import com.avogine.render.opengl.model.mesh.Mesh;
+import com.avogine.render.model.material.data.BlinnPhongData;
 
 /**
  * A {@link Material} implementation for Blinn-Phong lighting.
  */
-public final class SimpleMaterial extends Material {
+public final class SimpleMaterial implements Material {
+	/**
+	 * Default color vector to use when no actual color is specified.
+	 */
+	public static final Vector4f DEFAULT_COLOR = new Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
 	
 	private String diffuseMapPath;
 	private String specularMapPath;
@@ -18,37 +21,18 @@ public final class SimpleMaterial extends Material {
 	 * @param diffuseMapPath
 	 * @param specularMapPath
 	 * @param specularFactor
-	 * @param meshes
 	 */
-	public SimpleMaterial(String diffuseMapPath, String specularMapPath, float specularFactor, List<Mesh> meshes) {
-		super(meshes);
+	public SimpleMaterial(String diffuseMapPath, String specularMapPath, float specularFactor) {
 		this.diffuseMapPath = diffuseMapPath;
 		this.specularMapPath = specularMapPath;
 		this.specularFactor = specularFactor;
 	}
 	
 	/**
-	 * @param diffuseMapPath
-	 * @param specularMapPath
-	 * @param specularFactor
-	 */
-	public SimpleMaterial(String diffuseMapPath, String specularMapPath, float specularFactor) {
-		this(diffuseMapPath, specularMapPath, specularFactor, new ArrayList<>());
-	}
-	
-	/**
-	 * @param data
-	 * @param meshes
-	 */
-	public SimpleMaterial(BlinnPhongData data, List<Mesh> meshes) {
-		this(data.diffuseMapPath(), data.specularMapPath(), data.specularFactor(), meshes);
-	}
-	
-	/**
 	 * @param data
 	 */
 	public SimpleMaterial(BlinnPhongData data) {
-		this(data, new ArrayList<>());
+		this(data.diffuseMapPath(), data.specularMapPath(), data.specularFactor());
 	}
 	
 	/**

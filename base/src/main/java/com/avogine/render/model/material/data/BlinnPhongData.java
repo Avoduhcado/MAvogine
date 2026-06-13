@@ -1,4 +1,4 @@
-package com.avogine.render.opengl.model.material.data;
+package com.avogine.render.model.material.data;
 
 /**
  * @param diffuseMapPath 

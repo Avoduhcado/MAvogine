@@ -1,4 +1,4 @@
-package com.avogine.render.util;
+package com.avogine.render.model.mesh;
 
 import java.nio.Buffer;
 
