@@ -1,5 +1,6 @@
 package com.avogine.render.opengl.font;
 
+import static org.lwjgl.opengl.GL11C.GL_RED;
 import static org.lwjgl.stb.STBTruetype.*;
 
 import java.awt.Point;
@@ -229,10 +230,11 @@ public class Font {
 			stbtt_PackEnd(packContext);
 
 			try {
-				return Texture.gen2D(fontMapTex -> fontMapTex
-						.filter().linear()
-						.wrap2D().repeat()
-						.image2D(BITMAP_WIDTH, BITMAP_HEIGHT, bitmap));
+				return Texture.gen2D(tex -> tex
+						.minFilter().linear()
+						.magFilter().linear()
+						.wrapST().repeat()
+						.image2D(BITMAP_WIDTH, BITMAP_HEIGHT, GL_RED, bitmap));
 			} finally {
 				MemoryUtil.memFree(bitmap);
 			}

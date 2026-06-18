@@ -9,6 +9,7 @@ import org.lwjgl.system.MemoryStack;
 import com.avogine.render.image.data.ImageData;
 import com.avogine.render.image.util.ImageLoader;
 import com.avogine.render.opengl.texture.Texture;
+import com.avogine.render.opengl.texture.data.Image.*;
 
 /**
  *
@@ -38,8 +39,9 @@ public class TextureLoader {
 			pixels.flip();
 			
 			return Texture.gen2D(tex -> tex
-					.filter().linear()
-					.wrap2D().repeat()
+					.minFilter().linear()
+					.magFilter().linear()
+					.wrapST().repeat()
 					.image2D(width, height, GL_RGBA, pixels));
 		}
 	}
@@ -49,11 +51,12 @@ public class TextureLoader {
 	 * @return
 	 */
 	public static Texture loadTexture(String texturePath) {
-		try (ImageData imageData = ImageLoader.loadImage(texturePath)) {
+		try (ImageData image = ImageLoader.loadImage(texturePath)) {
 			return Texture.gen2D(tex -> tex
-					.filter().linear()
-					.wrap2D().repeat()
-					.image2D(imageData)
+					.minFilter().linear()
+					.magFilter().linear()
+					.wrapST().repeat()
+					.image2D(Image2D.of(image))
 					.generateMipmap()
 					.anisotropicFiltering());
 		}
@@ -76,14 +79,10 @@ public class TextureLoader {
 				ImageData posZImageData = ImageLoader.loadImage(posZImagePath);
 				ImageData negZImageData = ImageLoader.loadImage(negZImagePath);) {
 			return Texture.genCubeMap(tex -> tex
-					.filter().linear()
-					.wrap3D().clampToEdge()
-					.image2D().cubeMap(posXImageData,
-							negXImageData,
-							posYImageData,
-							negYImageData,
-							posZImageData,
-							negZImageData));
+					.minFilter().linear()
+					.magFilter().linear()
+					.wrapSTR().clampToEdge()
+					.cubeMap(CubeMap.of(posXImageData, negXImageData, posYImageData, negYImageData, posZImageData, negZImageData)));
 		}
 	}
 	
