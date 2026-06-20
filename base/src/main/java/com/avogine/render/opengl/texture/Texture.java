@@ -33,6 +33,7 @@ import java.util.function.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
+import com.avogine.render.Render;
 import com.avogine.render.opengl.texture.Texture.Builder.TexImage;
 import com.avogine.render.opengl.texture.Texture.Texture2DBuilder.TexImage2D;
 import com.avogine.render.opengl.texture.Texture.TextureCubeMapBuilder.TexImageCubeMap;
@@ -41,7 +42,7 @@ import com.avogine.render.opengl.texture.Texture.TextureCubeMapBuilder.TexImageC
  *
  */
 public record Texture(int id, int target) {
-
+	
 	public Texture(int target) {
 		this(glGenTextures(), target);
 	}
@@ -69,7 +70,9 @@ public record Texture(int id, int target) {
 					glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, level, internalFormat, width, height, border, format, type, pixels[i]);
 				}
 			}
-			case null -> {}
+			case null -> {
+				// No image to load
+			}
 		}
 		if (generateMipmap) {
 			glGenerateMipmap(target);
@@ -105,7 +108,7 @@ public record Texture(int id, int target) {
 		glBindTexture(target, 0);
 	}
 	
-	public static abstract class Builder<SELF extends Builder<SELF>> {
+	public abstract static class Builder<SELF extends Builder<SELF>> {
 		protected final int target;
 		private final Set<Parameter> params;
 		protected TexImage texImage;
@@ -323,8 +326,7 @@ public record Texture(int id, int target) {
 		}
 		
 		public SELF anisotropicFiltering() {
-			// TODO#40: Extract some global Anisotropic filtering value
-			return anisotropicFiltering(4f);
+			return anisotropicFiltering(Render.getAnisotropicFiltering());
 		}
 	}
 	
