@@ -106,7 +106,7 @@ public class Window {
 			throw new IllegalStateException("Failed to create window!");
 		}
 		
-		GLFW.glfwSetFramebufferSizeCallback(id, (window, w, h) -> resized(w, h));
+		GLFW.glfwSetFramebufferSizeCallback(id, (_, w, h) -> resized(w, h));
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -124,7 +124,7 @@ public class Window {
 		}
 		
 		targetFps = maxFps;
-		GLFW.glfwSetWindowFocusCallback(id, (windowC, focused) -> targetFps = focused ? maxFps : maxBackgroundFps);
+		GLFW.glfwSetWindowFocusCallback(id, (_, focused) -> targetFps = focused ? maxFps : maxBackgroundFps);
 		
 		// XXX Customize by WindowConfig?
 		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
