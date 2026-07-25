@@ -3,57 +3,77 @@ package com.avogine.render.opengl.model.mesh;
 import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL31C.glDrawElementsInstanced;
 
-import java.nio.Buffer;
-import java.util.Objects;
+import java.nio.*;
+import java.util.*;
 
 import org.joml.primitives.AABBf;
+import org.lwjgl.system.MemoryUtil;
 
 import com.avogine.render.model.mesh.Instanceable;
 import com.avogine.render.model.mesh.data.*;
-import com.avogine.render.opengl.VertexArrayObject;
+import com.avogine.render.opengl.*;
 import com.avogine.render.opengl.model.mesh.data.*;
-import com.avogine.render.opengl.model.mesh.data.Vertex.*;
+import com.avogine.render.opengl.model.mesh.data.Vertex.Attrib;
 
 /**
  *
  */
 public class StaticMesh extends Mesh {
-
-	private StaticMesh(VertexArrayObject vao, int vertexCount, AABBf boundingBox) {
-		super(vao, vertexCount, boundingBox);
+	
+	protected record StaticVertexArray(Vertex positions, Vertex attributes, Index indices) {
+		
+	}
+	
+	private StaticMesh(VAO vao, VBO[] vbos, VBO ebo, int vertexCount, AABBf boundingBox) {
+		super(vao, vbos, ebo, vertexCount, boundingBox);
 	}
 	
 	/**
-	 * @param meshData
+	 * @param positions
+	 * @param vertexData
+	 * @param indices
+	 * @param boundingBox
 	 */
-	public StaticMesh(MeshData meshData) {
-		this(VertexArrayObject.gen(builder -> staticMeshBuilder(
-				meshData.vertices(),
-				meshData.normals(),
-				meshData.tangents(),
-				meshData.bitangents(),
-				meshData.textureCoordinates(),
-				meshData.indices(),
-				builder)),
-				meshData.indices().length, meshData.aabb());
+	public StaticMesh(FloatBuffer positions, VertexData vertexData, IntBuffer indices, AABBf boundingBox) {
+		var meshData = assembleStaticVertices(positions, vertexData, indices);
+		var vao = new VAO(meshData.vertices(), meshData.index());
+		
+		this(vao, meshData.vertices().stream().map(Vertex::buffer).toArray(VBO[]::new), meshData.index().buffer(), meshData.index().vertexCount(), boundingBox);
 	}
 	
-	protected static VertexArrayObject.Builder staticMeshBuilder(float[] vertices, float[] normals, float[] tangents, float[] bitangents, float[] textureCoordinates, int[] indices, 
-			VertexArrayObject.Builder builder) {
-		try (Vertex3D positionsVertex = Vertex.wrap3D(vertices, 0);
-				Vertex3D normalsVertex = Vertex.wrap3D(normals, 1);
-				Vertex3D tangentsVertex = Vertex.wrap3D(Objects.isNull(tangents) ? normals.length : tangents, 2);
-				Vertex3D bitangentsVertex = Vertex.wrap3D(Objects.isNull(bitangents) ? normals.length : bitangents, 3);
-				Vertex2D textureCoordinatesVertex = Vertex.wrap2D(textureCoordinates, 4);
-				Index indicesIndex = Index.wrap(indices);) {
-			return builder
-					.vertex(positionsVertex)
-					.vertex(normalsVertex)
-					.vertex(tangentsVertex)
-					.vertex(bitangentsVertex)
-					.vertex(textureCoordinatesVertex)
-					.index(indicesIndex);
+	@SuppressWarnings("unused") // Experimental testing of interleaved static vertex data
+	private static Vertex interleaveVertexData(VertexData vertices, int vertexCount) {
+		int vertexSize = vertices.vertexSize();
+		FloatBuffer interleavedVertices = MemoryUtil.memAllocFloat(vertices.vertexSize() * vertexCount);
+		
+		for (int i = 0; i < vertexCount / 3; i++) {
+			interleavedVertices
+			.put(i * vertexSize, vertices.normals(), i * 3, 3)
+			.put((i * vertexSize) + 3, vertices.tangents(), i * 3, 3)
+			.put((i * vertexSize) + 3 + 3, vertices.bitangents(), i * 3, 3)
+			.put((i * vertexSize) + 3 + 3 + 3, vertices.textureCoordinates(), i * 2, 2);
 		}
+		
+		var staticVbo = VBO.arrayBuffer(interleavedVertices);
+		
+		int vertexStride = vertexSize * Float.BYTES;
+		
+		return new Vertex(staticVbo, 
+				new Attrib(1, new Attrib.Pointer(3, GL_FLOAT, false, vertexStride, 0)),
+				new Attrib(2, new Attrib.Pointer(3, GL_FLOAT, false, vertexStride, 3L * Float.BYTES)),
+				new Attrib(3, new Attrib.Pointer(3, GL_FLOAT, false, vertexStride, (3 + 3L) * Float.BYTES)),
+				new Attrib(4, new Attrib.Pointer(2, GL_FLOAT, false, vertexStride, (3 + 3 + 3L) * Float.BYTES)));
+	}
+	
+	protected static MeshData assembleStaticVertices(FloatBuffer positions, VertexData vertices, IntBuffer indices) {
+		Set<Vertex> vertexArray = Set.of(
+				Vertex.vertex3D(positions, 0),
+				Vertex.vertex3D(vertices.normals(), 1),
+				Vertex.vertex3D(vertices.tangents(), 2),
+				Vertex.vertex3D(vertices.bitangents(), 3),
+				Vertex.vertex2D(vertices.textureCoordinates(), 4));
+		var index = new Index(indices);
+		return new MeshData(vertexArray, index);
 	}
 	
 	/**
@@ -61,6 +81,7 @@ public class StaticMesh extends Mesh {
 	 */
 	public static class StaticInstancedMesh extends StaticMesh implements Instanceable {
 		
+		private final VBO instanceBuffer;
 		private final int maxInstances;
 		
 		/**
@@ -68,22 +89,45 @@ public class StaticMesh extends Mesh {
 		 * @param vertexCount
 		 * @param boundingBox
 		 */
-		private StaticInstancedMesh(VertexArrayObject vao, int vertexCount, AABBf boundingBox, int maxInstances) {
-			super(vao, vertexCount, boundingBox);
+		private StaticInstancedMesh(VAO vao, VBO[] vbos, VBO ebo, int vertexCount, AABBf boundingBox, VBO instanceBuffer, int maxInstances) {
+			super(vao, vbos, ebo, vertexCount, boundingBox);
+			this.instanceBuffer = instanceBuffer;
 			this.maxInstances = maxInstances;
 		}
-		
+
 		/**
-		 * @param instanceMeshData 
+		 * @param positions
+		 * @param vertexData 
+		 * @param indices
+		 * @param boundingBox
+		 * @param instanceData 
 		 */
-		public StaticInstancedMesh(InstanceMeshData instanceMeshData) {
-			this(VertexArrayObject.gen(builder -> instancedMeshBuilder(instanceMeshData.meshData(), instanceMeshData.instanceTransforms(), builder)),
-					instanceMeshData.meshData().indices().length, instanceMeshData.meshData().aabb(), instanceMeshData.maxInstances());
+		public StaticInstancedMesh(FloatBuffer positions, VertexData vertexData, IntBuffer indices, AABBf boundingBox, InstanceData instanceData) {
+			MeshData meshData = assembleStaticVertices(positions, vertexData, indices);
+			var instanceMatrices = Vertex.vertex4x4Instanced(instanceData.instanceMatrices(), 5);
+			Set<Vertex> vertices = new HashSet<>(meshData.vertices());
+			vertices.add(instanceMatrices);
+			var vao = new VAO(Set.copyOf(vertices), meshData.index());
+			
+			this(vao, meshData.vertices().stream().map(Vertex::buffer).toArray(VBO[]::new), meshData.index().buffer(), meshData.index().vertexCount(), boundingBox, 
+					instanceMatrices.buffer(), instanceData.instanceCount());
+		}
+		
+		@Override
+		public void cleanup() {
+			instanceBuffer.cleanup();
+			super.cleanup();
 		}
 		
 		@Override
 		public <T extends Buffer> void updateInstanceBuffer(int vboIndex, long offset, T data) {
-			vao.bindVBO(vboIndex, vbo -> vbo.bufferSubData(offset, data));
+			vao.bind();
+			
+			instanceBuffer.bind();
+			instanceBuffer.bufferSubData(offset, data);
+			instanceBuffer.unbind();
+			
+			vao.unbind();
 		}
 
 		@Override
@@ -94,13 +138,6 @@ public class StaticMesh extends Mesh {
 		@Override
 		public int getMaxInstances() {
 			return maxInstances;
-		}
-		
-		private static VertexArrayObject.Builder instancedMeshBuilder(MeshData meshData, float[] instanceTransforms, VertexArrayObject.Builder builder) {
-			try (Vertex4x4fInstanced instanceTransformsVertex = Vertex4x4fInstanced.wrap(instanceTransforms, 5)) {
-				return StaticMesh.staticMeshBuilder(meshData.vertices(), meshData.normals(), meshData.tangents(), meshData.bitangents(), meshData.textureCoordinates(), meshData.indices(), builder)
-						.vertex(instanceTransformsVertex);
-			}
 		}
 	}
 	

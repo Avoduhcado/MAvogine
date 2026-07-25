@@ -21,7 +21,7 @@ public abstract class Model<E extends Material, T extends Renderable & Boundable
 	 * @param id
 	 * @param materialMap
 	 */
-	public Model(String id, Map<E, List<T>> materialMap) {
+	protected Model(String id, Map<E, List<T>> materialMap) {
 		this.id = id;
 		this.materialMap = materialMap;
 		computeBoundingBox();

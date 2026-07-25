@@ -8,6 +8,7 @@ import java.nio.Buffer;
 public interface Instanceable {
 
 	/**
+	 * TODO Remove vboIndex, implementors should be responsible for knowing which buffer to update, or remove this method entirely
 	 * @param <T>
 	 * @param vboIndex
 	 * @param offset

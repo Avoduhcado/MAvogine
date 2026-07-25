@@ -2,35 +2,50 @@ package com.avogine.render.opengl.ui.text;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import com.avogine.render.opengl.VertexArrayObject;
+import java.nio.FloatBuffer;
+import java.util.Set;
+
+import com.avogine.render.opengl.*;
 import com.avogine.render.opengl.model.mesh.data.Vertex;
-import com.avogine.render.opengl.model.mesh.data.Vertex.Vertex4D;
 
 /**
  *
  */
 public class TextMesh {
 	
-	private final VertexArrayObject vao;
+	private final VAO vao;
+	private final VBO vbo;
 	private int vertexCount;
 	
 	/**
-	 * @param vertexData
+	 * @param bufferSize 
 	 */
-	public TextMesh(float[] vertexData) {
-		try (Vertex4D textVertex = Vertex.wrap4D(vertexData, 0)) {
-			vao = VertexArrayObject.gen(mesh -> mesh
-					.vertex(textVertex));
-		}
+	public TextMesh(long bufferSize) {
+		vbo = VBO.arrayBuffer(bufferSize);
+		vao = new VAO(Set.of(Vertex.vertex4D(vbo, 0)));
 	}
 	
 	/**
 	 * 
 	 */
 	public void cleanup() {
+		vbo.cleanup();
 		vao.cleanup();
 	}
-
+	
+	/**
+	 * @param vertexData
+	 */
+	public void update(FloatBuffer vertexData) {
+		vao.bind();
+		
+		vbo.bind();
+		vbo.bufferSubData(vertexData);
+		vbo.unbind();
+		
+		vertexCount = vertexData.limit() / 4;
+	}
+	
 	private void draw() {
 		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 	}
@@ -41,19 +56,5 @@ public class TextMesh {
 	public void render() {
 		vao.bind();
 		draw();
-	}
-	
-	/**
-	 * @return the vao
-	 */
-	public VertexArrayObject getVAO() {
-		return vao;
-	}
-	
-	/**
-	 * @param vertexCount the vertexCount to set
-	 */
-	public void setVertexCount(int vertexCount) {
-		this.vertexCount = vertexCount;
 	}
 }

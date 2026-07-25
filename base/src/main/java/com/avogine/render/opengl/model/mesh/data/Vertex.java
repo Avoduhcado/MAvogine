@@ -1,192 +1,335 @@
 package com.avogine.render.opengl.model.mesh.data;
 
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL20C.*;
+import static org.lwjgl.opengl.GL30C.glVertexAttribIPointer;
+import static org.lwjgl.opengl.GL33C.glVertexAttribDivisor;
 
 import java.nio.*;
-import java.util.function.Consumer;
 
-import com.avogine.render.opengl.VertexArrayObject;
-import com.avogine.render.opengl.VertexArrayObject.Builder;
-import com.avogine.render.opengl.VertexArrayObject.Builder.*;
-import com.avogine.render.opengl.VertexArrayObject.Builder.VertexBuilder.AttribBuilder;
-import com.avogine.render.opengl.model.mesh.data.Vertex.*;
+import com.avogine.render.opengl.VBO;
 
-public sealed interface Vertex extends Consumer<VertexArrayObject.Builder>, AutoCloseable permits Vertex2D, Vertex3D, Vertex4D, Vertex4x4fInstanced, BoneID {
+/**
+ *
+ * @param buffer the {@link VBO} to bind for this vertex.
+ * @param attribs an array of {@link VertexAttrib} to enable for this vertex.
+ */
+public record Vertex(VBO buffer, VertexAttrib...attribs) {
+	
+	/**
+	 * @param <T>
+	 * @param data
+	 * @param attribs
+	 */
+	public <T extends Buffer> Vertex(T data, VertexAttrib...attribs) {
+		this(VBO.arrayBuffer(data), attribs);
+	}
+	
+	/**
+	 * @param buffer
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 2D, unnormalized float values.
+	 */
+	public static Vertex vertex2D(VBO buffer, int location) {
+		return new Vertex(buffer, new Attrib(location, Attrib.POINTER_2F));
+	}
+	
+	/**
+	 * @param <T>
+	 * @param data
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 2D, unnormalized float values.
+	 */
+	public static <T extends Buffer> Vertex vertex2D(T data, int location) {
+		return vertex2D(VBO.arrayBuffer(data), location);
+	}
+
+	/**
+	 * @param buffer
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 3D, unnormalized float values.
+	 */
+	public static Vertex vertex3D(VBO buffer, int location) {
+		return new Vertex(buffer, new Attrib(location, Attrib.POINTER_3F));
+	}
+	
+	/**
+	 * @param <T>
+	 * @param data
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 3D, unnormalized float values.
+	 */
+	public static <T extends Buffer> Vertex vertex3D(T data, int location) {
+		return vertex3D(VBO.arrayBuffer(data), location);
+	}
+
+	/**
+	 * @param buffer
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 4D, unnormalized float values.
+	 */
+	public static Vertex vertex4D(VBO buffer, int location) {
+		return new Vertex(buffer, new Attrib(location, Attrib.POINTER_4F));
+	}
+	
+	/**
+	 * @param <T>
+	 * @param data
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 4D, unnormalized float values.
+	 */
+	public static <T extends Buffer> Vertex vertex4D(T data, int location) {
+		return vertex4D(VBO.arrayBuffer(data), location);
+	}
+
+	/**
+	 * @param buffer
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain 4 sets of interleaved, 4D, unnormalized float values.
+	 */
+	public static Vertex vertex4x4Instanced(VBO buffer, int location) {
+		return new Vertex(buffer, new AttribMat4(location, AttribMat4.POINTER_MAT4F_INTERLEAVED, 1));
+	}
+	
+	/**
+	 * @param <T>
+	 * @param data
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain 4 sets of interleaved, 4D, unnormalized float values.
+	 */
+	public static <T extends Buffer> Vertex vertex4x4Instanced(T data, int location) {
+		return vertex4x4Instanced(VBO.arrayBuffer(data), location);
+	}
+	
+	/**
+	 * @param buffer 
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 4D integer values.
+	 */
+	public static Vertex boneID(VBO buffer, int location) {
+		return new Vertex(buffer, new Attrib(location, Attrib.IPOINTER_4I));
+	}
+	
 	/**
 	 * @param data
 	 * @param location
-	 * @return a {@link Vertex2D} wrapping the given data at vertex attribute location.
+	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 4D integer values.
 	 */
-	public static Vertex2D wrap2D(Object data, int location) {
-		Buffer buffer = switch (data) {
-			case int size -> memCalloc(size);
-			case float[] floatArray -> memAllocFloat(floatArray.length).put(floatArray).flip();
-			case int[] intArray -> memAllocInt(intArray.length).put(intArray).flip();
-			default -> throw new IllegalArgumentException("Invalid data: " + data);
-		};
-		return new Vertex2D(buffer, location);
+	public static Vertex boneID(IntBuffer data, int location) {
+		return boneID(VBO.arrayBuffer(data), location);
 	}
+	
+	public sealed interface VertexAttrib {
+		/**
+		 * 
+		 */
+		public void enable();
+		
+		/**
+		 * @return {@link Pointer.Builder}
+		 */
+		public static Pointer.Builder pointer() {
+			return new Pointer.Builder();
+		}
+		
+		/**
+		 * @return {@link IPointer.Builder}
+		 */
+		public static IPointer.Builder ipointer() {
+			return new IPointer.Builder();
+		}
+		
+		public sealed interface AttribPointer {}
+		
+		/**
+		 *
+		 * @param size
+		 * @param type
+		 * @param normalized
+		 * @param stride
+		 * @param pointer
+		 */
+		public record Pointer(int size, int type, boolean normalized, int stride, long pointer) implements AttribPointer {
+			
+			/**
+			 *
+			 */
+			public static final class Builder {
+				private int size = 4;
+				private int type = GL_FLOAT;
+				private boolean normalized;
+				private int stride;
+				private long pointer;
+				
+				/**
+				 * @return a newly constructed {@link Pointer}
+				 */
+				public Pointer build() {
+					return new Pointer(size, type, normalized, stride, pointer);
+				}
+				
+				/**
+				 * @param size
+				 * @return this
+				 */
+				public Builder size(int size) {
+					this.size = size;
+					return this;
+				}
+				
+				/**
+				 * @param type
+				 * @return this
+				 */
+				public Builder type(int type) {
+					this.type = type;
+					return this;
+				}
+				
+				/**
+				 * @param normalized
+				 * @return this
+				 */
+				public Builder normalized(boolean normalized) {
+					this.normalized = normalized;
+					return this;
+				}
+				
+				/**
+				 * @param stride
+				 * @param pointer
+				 * @return this
+				 */
+				public Builder interleaved(int stride, long pointer) {
+					this.stride = stride;
+					this.pointer = pointer;
+					return this;
+				}
+			}
+		}
 
-	/**
-	 * @param data
-	 * @param location
-	 * @return a {@link Vertex3D} wrapping the given data at vertex attribute location.
-	 */
-	public static Vertex3D wrap3D(Object data, int location) {
-		Buffer buffer = switch (data) {
-			case int size -> memCalloc(size);
-			case float[] floatArray -> memAllocFloat(floatArray.length).put(floatArray).flip();
-			case int[] intArray -> memAllocInt(intArray.length).put(intArray).flip();
-			default -> throw new IllegalArgumentException("Invalid data: " + data);
-		};
-		return new Vertex3D(buffer, location);
-	}
-
-	/**
-	 * @param data
-	 * @param location
-	 * @return a {@link Vertex4D} wrapping the given data at vertex attribute location.
-	 */
-	public static Vertex4D wrap4D(Object data, int location) {
-		Buffer buffer = switch (data) {
-			case int size -> memCalloc(size);
-			case float[] floatArray -> memAllocFloat(floatArray.length).put(floatArray).flip();
-			case int[] intArray -> memAllocInt(intArray.length).put(intArray).flip();
-			default -> throw new IllegalArgumentException("Invalid data: " + data);
-		};
-		return new Vertex4D(buffer, location);
-	}
-
-	@Override
-	default void close() {
-		memFree(buffer());
-	}
-
-	/**
-	 * @return a {@link Buffer} of data to bind for this vertex.
-	 */
-	public Buffer buffer();
-
-	/**
-	 * @return the attribute location of this vertex in a {@link VertexArrayObject}.
-	 */
-	public int location();
-
-	@Override
-	public default void accept(Builder builder) {
-		builder.vertex(this::bufferData, this::attribute);
-	}
-
-	/**
-	 * @param builder
-	 * @return {@link VertexBufferBuilder}
-	 */
-	public default VertexBufferBuilder bufferData(VertexBufferBuilder builder) {
-		return builder.bufferData(buffer());
-	}
-
-	/**
-	 * @param attrib
-	 */
-	public void attribute(VertexBuilder attrib);
-
-	/**
-	 *
-	 * @param buffer
-	 * @param location 
-	 */
-	public record Vertex2D(Buffer buffer, int location) implements Vertex {
-		@Override
-		public void attribute(VertexBuilder vertex) {
-			vertex.array(location, attrib -> attrib.pointer(p -> p.size(2)));
+		/**
+		 *
+		 * @param size
+		 * @param type
+		 * @param stride
+		 * @param pointer
+		 */
+		public record IPointer(int size, int type, int stride, long pointer) implements AttribPointer {
+			
+			/**
+			 *
+			 */
+			public static final class Builder {
+				private int size = 4;
+				private int type = GL_INT;
+				private int stride;
+				private long pointer;
+				
+				/**
+				 * @return a newly constructed {@link IPointer}
+				 */
+				public IPointer build() {
+					return new IPointer(size, type, stride, pointer);
+				}
+				
+				/**
+				 * @param size
+				 * @return this
+				 */
+				public Builder size(int size) {
+					this.size = size;
+					return this;
+				}
+				
+				/**
+				 * @param type
+				 * @return this
+				 */
+				public Builder type(int type) {
+					this.type = type;
+					return this;
+				}
+				
+				/**
+				 * @param stride
+				 * @param pointer
+				 * @return this
+				 */
+				public Builder interleaved(int stride, long pointer) {
+					this.stride = stride;
+					this.pointer = pointer;
+					return this;
+				}
+			}
 		}
 	}
-
+	
 	/**
 	 *
-	 * @param buffer
-	 * @param location 
-	 */
-	public record Vertex3D(Buffer buffer, int location) implements Vertex {
-		@Override
-		public void attribute(VertexBuilder vertex) {
-			vertex.array(location, attrib -> attrib.pointer(p -> p.size(3)));
-		}
-	}
-
-	/**
-	 *
-	 * @param buffer
-	 * @param location 
-	 */
-	public record Vertex4D(Buffer buffer, int location) implements Vertex {
-		@Override
-		public void attribute(VertexBuilder vertex) {
-			vertex.array(location, AttribBuilder::pointer4f);
-		}
-	}
-
-	/**
-	 *
-	 * @param buffer
-	 * @param location
+	 * @param index
+	 * @param pointer
 	 * @param divisor
 	 */
-	public record Vertex4x4fInstanced(FloatBuffer buffer, int location, int divisor) implements Vertex {
-		private static final int VERTEX_STRIDE = Float.BYTES * 4;
-
+	public record Attrib(int index, AttribPointer pointer, int divisor) implements VertexAttrib {
+		public static final Pointer POINTER_2F = new Pointer(2, GL_FLOAT, false, 0, 0);
+		public static final Pointer POINTER_3F = new Pointer(3, GL_FLOAT, false, 0, 0);
+		public static final Pointer POINTER_4F = new Pointer(4, GL_FLOAT, false, 0, 0);
+		
+		public static final IPointer IPOINTER_4I = new IPointer(4, GL_INT, 0, 0);
+		
 		/**
-		 * @param data
-		 * @param location
-		 * @param divisor
-		 * @return a {@link Vertex4x4fInstanced} wrapping the given data at 4 sequential vertex attribute locations.
+		 * @param index
+		 * @param pointer
 		 */
-		public static Vertex4x4fInstanced wrap(float[] data, int location, int divisor) {
-			return new Vertex4x4fInstanced(memAllocFloat(data.length).put(data).flip(), location, divisor);
+		public Attrib(int index, AttribPointer pointer) {
+			this(index, pointer, 0);
 		}
-
-		/**
-		 * @param data
-		 * @param location
-		 * @return a {@link Vertex4x4fInstanced} wrapping the given data at 4 sequential vertex attribute locations.
-		 */
-		public static Vertex4x4fInstanced wrap(float[] data, int location) {
-			return wrap(data, location, 1);
-		}
-
-		/**
-		 * @param buffer 
-		 * @param location 
-		 */
-		public Vertex4x4fInstanced(FloatBuffer buffer, int location) {
-			this(buffer, location, 1);
-		}
-
+		
 		@Override
-		public void attribute(VertexBuilder vertex) {
-			vertex.arrayMat4(location, attrib -> attrib
-					.pointer(p -> p.stride(VERTEX_STRIDE * 4, VERTEX_STRIDE))
-					.divisor(1));
+		public void enable() {
+			glEnableVertexAttribArray(index);
+			switch (pointer) {
+				case Pointer(var size, var type, @SuppressWarnings("preview") var normalized, var stride, @SuppressWarnings("preview") var pointer) -> glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+				case IPointer(var size, var type, var stride, @SuppressWarnings("preview") var pointer) -> glVertexAttribIPointer(index, size, type, stride, pointer);
+				case null -> { /* No pointer to set. */ }
+			}
+			glVertexAttribDivisor(index, divisor);
 		}
 	}
-
+	
 	/**
 	 *
-	 * @param buffer
-	 * @param location 
+	 * @param index
+	 * @param pointer
+	 * @param divisor
 	 */
-	public record BoneID(IntBuffer buffer, int location) implements Vertex {
+	public record AttribMat4(int index, AttribPointer pointer, int divisor) implements VertexAttrib {
+		private static final int VERTEX_STRIDE = Float.BYTES * 4;
+		
+		public static final Pointer POINTER_MAT4F_INTERLEAVED = new Pointer(4, GL_FLOAT, false, VERTEX_STRIDE * 4, VERTEX_STRIDE);
+		
 		/**
-		 * @param data
-		 * @param location
-		 * @return a {@link BoneID} wrapping the given data at vertex attribute location.
+		 * @param index
+		 * @param pointer
 		 */
-		public static BoneID wrap(int[] data, int location) {
-			return new BoneID(memAllocInt(data.length).put(data).flip(), location);
+		public AttribMat4(int index, AttribPointer pointer) {
+			this(index, pointer, 0);
 		}
-
-		public void attribute(VertexBuilder builder) {
-			builder.array(location, attrib -> attrib.iPointer(_ -> {}));
+		
+		@Override
+		public void enable() {
+			for (int i = 0; i < 4; i++) {
+				glEnableVertexAttribArray(index + i);
+				switch (pointer) {
+					case Pointer(var size, var type, @SuppressWarnings("preview") var normalized, var stride, @SuppressWarnings("preview") var pointer) -> glVertexAttribPointer(index + i, size, type, normalized, stride, i * pointer);
+					case IPointer(var size, var type, var stride, @SuppressWarnings("preview") var pointer) -> glVertexAttribIPointer(index + i, size, type, stride, i * pointer);
+					case null -> { /* No pointer to set. */ }
+				}
+				glVertexAttribDivisor(index + i, divisor);
+			}
 		}
+		
 	}
+	
 }

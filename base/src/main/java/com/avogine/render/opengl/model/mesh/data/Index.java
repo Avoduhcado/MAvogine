@@ -1,33 +1,21 @@
 package com.avogine.render.opengl.model.mesh.data;
 
-import static org.lwjgl.system.MemoryUtil.*;
-
 import java.nio.IntBuffer;
-import java.util.function.Consumer;
 
-import com.avogine.render.opengl.VertexArrayObject.Builder.IndexBufferBuilder;
+import com.avogine.render.opengl.VBO;
 
 /**
- *
- * @param buffer
+ * 
+ * @param buffer 
+ * @param vertexCount 
  */
-public record Index(IntBuffer buffer) implements Consumer<IndexBufferBuilder>, AutoCloseable {
+public record Index(VBO buffer, int vertexCount) {
+
 	/**
 	 * @param data
-	 * @return an {@link Index} wrapping the given integer array.
 	 */
-	public static Index wrap(int[] data) {
-		IntBuffer buffer = memAllocInt(data.length);
-		return new Index(buffer.put(data).flip());
+	public Index(IntBuffer data) {
+		this(VBO.elementArrayBuffer(data), data.limit());
 	}
 	
-	@Override
-	public void close() {
-		memFree(buffer);
-	}
-	
-	@Override
-	public void accept(IndexBufferBuilder builder) {
-		builder.bufferData(buffer);
-	}
 }

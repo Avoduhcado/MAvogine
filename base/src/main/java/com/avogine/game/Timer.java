@@ -55,7 +55,7 @@ public class Timer {
 	 * Construct a new {@link Timer} with high precision sleeping disabled.
 	 */
 	public Timer() {
-		this(0);
+		this(false);
 	}
 	
 	/**

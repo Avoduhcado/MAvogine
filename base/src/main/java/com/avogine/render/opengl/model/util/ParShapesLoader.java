@@ -2,11 +2,11 @@ package com.avogine.render.opengl.model.util;
 
 import static org.lwjgl.util.par.ParShapes.*;
 
-import java.nio.FloatBuffer;
+import java.nio.*;
 import java.util.function.Function;
 
 import org.joml.primitives.AABBf;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.*;
 import org.lwjgl.util.par.ParShapesMesh;
 
 import com.avogine.render.model.mesh.data.*;
@@ -26,30 +26,34 @@ public class ParShapesLoader {
 	 */
 	public static final BuildFunction<StaticMesh> STATIC_MESH_BUILDER = parMesh -> {
 		int vertexCount = parMesh.npoints();
-
-		float[] positions = new float[vertexCount * 3];
-		parMesh.points(positions.length).get(positions);
-		float[] normals = new float[vertexCount * 3];
-		if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
-			parMesh.normals(normals.length).get(normals);
-		}
-		float[] textureCoordinates = new float[vertexCount * 2];
-		if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
-			parMesh.tcoords(vertexCount * 2).get(textureCoordinates);
-		}
-		
 		int triangleCount = parMesh.ntriangles();
-		int[] indices = new int[triangleCount * 3];
-		parMesh.triangles(indices.length).get(indices);
+
+		FloatBuffer positions = parMesh.points(vertexCount * 3);
+		FloatBuffer normals = parMesh.isNull(ParShapesMesh.NORMALS) ? MemoryUtil.memCallocFloat(vertexCount * 3) : parMesh.normals(vertexCount * 3);
+		FloatBuffer tangents = MemoryUtil.memCallocFloat(vertexCount * 3);
+		FloatBuffer bitangents = MemoryUtil.memCallocFloat(vertexCount * 3);
+		FloatBuffer textureCoordinates = parMesh.isNull(ParShapesMesh.TCOORDS) ? MemoryUtil.memCallocFloat(vertexCount * 2) : parMesh.tcoords(vertexCount * 2);
+		IntBuffer indices = parMesh.triangles(triangleCount * 3);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			FloatBuffer aabb = stack.mallocFloat(6);
 			par_shapes_compute_aabb(parMesh, aabb);
 
 			var aabbf = new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get());
-			return new StaticMesh(new MeshData(positions, normals, textureCoordinates, indices, aabbf));
+			var vertexData = new VertexData(normals, tangents, bitangents, textureCoordinates);
+//			var indexData = new IndexData(indices);
+//			var meshData = new MeshData(vertexData, indexData, aabbf);
+			return new StaticMesh(positions, vertexData, indices, aabbf);
 		} finally {
+			if (parMesh.isNull(ParShapesMesh.NORMALS)) {
+				MemoryUtil.memFree(normals);
+			}
+			if (parMesh.isNull(ParShapesMesh.TCOORDS)) {
+				MemoryUtil.memFree(textureCoordinates);
+			}
 			par_shapes_free_mesh(parMesh);
+			MemoryUtil.memFree(tangents);
+			MemoryUtil.memFree(bitangents);
 		}
 	};
 	
@@ -77,7 +81,7 @@ public class ParShapesLoader {
 	 */
 	public static StaticMesh loadPlane(float scale) {
 		return builder.createPlane(100, 100)
-				.scale(scale, 1, scale)
+				.scale(scale, scale, scale)
 				.translate(-scale / 2, 0, -scale / 2)
 				.build(STATIC_MESH_BUILDER);
 	}
@@ -132,30 +136,39 @@ public class ParShapesLoader {
 	public static StaticInstancedMesh loadInstancedBuilder(ParShapesBuilder builder, int instanceCount) {
 		return builder.build(parMesh -> {
 			int vertexCount = parMesh.npoints();
-
-			float[] positions = new float[vertexCount * 3];
-			parMesh.points(positions.length).get(positions);
-			float[] normals = new float[vertexCount * 3];
-			if (!parMesh.isNull(ParShapesMesh.NORMALS)) {
-				parMesh.normals(normals.length).get(normals);
-			}
-			float[] textureCoordinates = new float[vertexCount * 2];
-			if (!parMesh.isNull(ParShapesMesh.TCOORDS)) {
-				parMesh.tcoords(vertexCount * 2).get(textureCoordinates);
-			}
-
 			int triangleCount = parMesh.ntriangles();
-			int[] indices = new int[triangleCount * 3];
-			parMesh.triangles(indices.length).get(indices);
+
+			FloatBuffer positions = parMesh.points(vertexCount * 3);
+			FloatBuffer normals = parMesh.isNull(ParShapesMesh.NORMALS) ? MemoryUtil.memCallocFloat(vertexCount * 3) : parMesh.normals(vertexCount * 3);
+			FloatBuffer tangents = MemoryUtil.memCallocFloat(vertexCount * 3);
+			FloatBuffer bitangents = MemoryUtil.memCallocFloat(vertexCount * 3);
+			FloatBuffer textureCoordinates = parMesh.isNull(ParShapesMesh.TCOORDS) ? MemoryUtil.memCallocFloat(vertexCount * 2) : parMesh.tcoords(vertexCount * 2);
+			IntBuffer indices = parMesh.triangles(triangleCount * 3);
+			FloatBuffer instanceMatrices = MemoryUtil.memCallocFloat(16 * instanceCount);
 			
 			try (MemoryStack stack = MemoryStack.stackPush()) {
 				FloatBuffer aabb = stack.mallocFloat(6);
 				par_shapes_compute_aabb(parMesh, aabb);
 
 				var aabbf = new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get());
-				return new StaticInstancedMesh(new InstanceMeshData(new MeshData(positions, normals, textureCoordinates, indices, aabbf), new float[16 * instanceCount], instanceCount));
+				var vertexData = new VertexData(normals, tangents, bitangents, textureCoordinates);
+//				var indexData = new IndexData(indices);
+//				var meshData = new MeshData(vertexData, indexData, aabbf);
+				
+				var instanceData = new InstanceData(instanceMatrices, instanceCount);
+				
+				return new StaticInstancedMesh(positions, vertexData, indices, aabbf, instanceData);
 			} finally {
+				if (parMesh.isNull(ParShapesMesh.NORMALS)) {
+					MemoryUtil.memFree(normals);
+				}
+				if (parMesh.isNull(ParShapesMesh.TCOORDS)) {
+					MemoryUtil.memFree(textureCoordinates);
+				}
 				par_shapes_free_mesh(parMesh);
+				MemoryUtil.memFree(tangents);
+				MemoryUtil.memFree(bitangents);
+				MemoryUtil.memFree(instanceMatrices);
 			}
 		});
 	}

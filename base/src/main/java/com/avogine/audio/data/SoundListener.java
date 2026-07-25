@@ -35,7 +35,7 @@ public class SoundListener {
 	public SoundListener() {
 		this(new Vector3f(), new Vector3f(), new Quaternionf());
 	}
-
+	
 	/**
 	 * @param position
 	 */

@@ -9,4 +9,14 @@ package com.avogine.util;
  */
 public record Pair<T, K>(T first, K second) {
 
+	/**
+	 * @param <T>
+	 * @param <K>
+	 * @param first
+	 * @param second
+	 * @return
+	 */
+	public static <T, K> Pair<T, K> of(T first, K second) {
+		return new Pair<>(first, second);
+	}
 }

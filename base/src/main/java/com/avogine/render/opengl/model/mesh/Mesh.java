@@ -2,38 +2,46 @@ package com.avogine.render.opengl.model.mesh;
 
 import static org.lwjgl.opengl.GL11C.*;
 
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import org.joml.primitives.AABBf;
 
 import com.avogine.render.model.mesh.*;
-import com.avogine.render.opengl.VertexArrayObject;
+import com.avogine.render.opengl.*;
 
 /**
  *
  */
 public abstract class Mesh implements Renderable, Boundable {
 
-	protected final VertexArrayObject vao;
+	protected final VAO vao;
+
+	protected final VBO[] vbos;
+	protected final VBO ebo;
 	protected final int vertexCount;
+	
 	protected final AABBf boundingBox;
 	
-	protected Mesh(VertexArrayObject vao, int vertexCount, AABBf boundingBox) {
+	protected Mesh(VAO vao, VBO[] vbos, VBO ebo, int vertexCount, AABBf boundingBox) {
 		this.vao = vao;
+		this.vbos = vbos;
+		this.ebo = ebo;
 		this.vertexCount = vertexCount;
 		this.boundingBox = boundingBox;
+	}
+	
+	@Override
+	public void cleanup() {
+		Arrays.stream(vbos).forEach(VBO::cleanup);
+		ebo.cleanup();
+		vao.cleanup();
 	}
 	
 	@Override
 	public void render() {
 		vao.bind();
 		draw();
-	}
-	
-	@Override
-	public void cleanup() {
-		vao.cleanup();
 	}
 	
 	/**
@@ -58,7 +66,7 @@ public abstract class Mesh implements Renderable, Boundable {
 	/**
 	 * @return the vao
 	 */
-	public VertexArrayObject getVao() {
+	public VAO getVao() {
 		return vao;
 	}
 	
