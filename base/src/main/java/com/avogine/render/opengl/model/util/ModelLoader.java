@@ -39,7 +39,7 @@ public class ModelLoader {
 	private record Bone(int boneId, String boneName, Matrix4f offsetMatrix) {}
 	private record VertexWeight(int boneId, int vertexId, float weight) {}
 	
-	private record AssimpMesh(FloatBuffer positions, VertexData vertexData, SkeletonData skeletonData, IntBuffer indices, AABBf boundingBox, int materialIndex) implements AutoCloseable {
+	private record AssimpMeshData(FloatBuffer positions, VertexData vertexData, SkeletonData skeletonData, IntBuffer indices, AABBf boundingBox, int materialIndex) implements AutoCloseable {
 		@Override
 		public void close() {
 			memFree(positions);
@@ -80,7 +80,7 @@ public class ModelLoader {
 						.toMap(Function.identity(), _ -> new ArrayList<>()));
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
-			try (AssimpMesh meshData = processMesh(aiMesh, bones)) {
+			try (AssimpMeshData meshData = processMesh(aiMesh, bones)) {
 				var mesh = new StaticMesh(meshData.positions, meshData.vertexData, meshData.indices, meshData.boundingBox);
 
 				if (materialIndex >= 0 && materialIndex < materialMap.size()) {
@@ -121,7 +121,7 @@ public class ModelLoader {
 						.toMap(Function.identity(), _ -> new ArrayList<>()));
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
-			try (AssimpMesh meshData = processMesh(aiMesh, bones)) {
+			try (AssimpMeshData meshData = processMesh(aiMesh, bones)) {
 				var mesh = new AnimatedMesh(meshData.positions, meshData.vertexData, meshData.skeletonData, meshData.indices, meshData.boundingBox);
 
 				if (materialIndex >= 0 && materialIndex < materialMap.size()) {
@@ -202,7 +202,7 @@ public class ModelLoader {
 		return null;
 	}
 	
-	private static AssimpMesh processMesh(AIMesh aiMesh, List<Bone> bones) {
+	private static AssimpMeshData processMesh(AIMesh aiMesh, List<Bone> bones) {
 		FloatBuffer vertices = processVertices(aiMesh);
 		FloatBuffer normals = processNormals(aiMesh);
 		FloatBuffer tangents = processTangents(aiMesh);
@@ -216,7 +216,7 @@ public class ModelLoader {
 		AABBf aabb = processAABB(aiMesh);
 		int materialIndex = aiMesh.mMaterialIndex();
 		
-		return new AssimpMesh(vertices, vertexData, skeleton, indices, aabb, materialIndex);
+		return new AssimpMeshData(vertices, vertexData, skeleton, indices, aabb, materialIndex);
 	}
 	
 	private static FloatBuffer processVertices(AIMesh aiMesh) {

@@ -252,6 +252,7 @@ public record FBO(int id, int target) {
 				GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
 				GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z -> glFramebufferTexture2D(target, attachment, texTarget, texture, level);
 				case GL_TEXTURE_3D -> glFramebufferTexture3D(target, attachment, texTarget, texture, level, layer);
+				default -> AvoLog.log().warn("Unsupported texture target: {}", texTarget);
 			}
 		}
 	}

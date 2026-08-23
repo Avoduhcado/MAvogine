@@ -5,18 +5,21 @@ import static org.lwjgl.opengl.GL15C.GL_STREAM_DRAW;
 import static org.lwjgl.opengl.GL31C.glDrawArraysInstanced;
 
 import java.nio.*;
-import java.util.Set;
+
+import org.lwjgl.system.MemoryUtil;
 
 import com.avogine.render.model.mesh.*;
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.model.mesh.data.Vertex;
 import com.avogine.render.opengl.model.mesh.data.Vertex.*;
 
 /**
  *
  */
 public class ParticleMesh implements Renderable, Instanceable {
-
+	private static final Attrib POSITION_ATTRIB = new Attrib(0, Attrib.POINTER_3F);
+	private static final Attrib INSTANCE_POSITION_ATTRIB = new Attrib(1, Attrib.POINTER_4F, 1);
+	private static final Attrib INSTANCE_COLOR_ATTRIB = new Attrib(2, VertexAttrib.pointer().type(GL_UNSIGNED_BYTE).normalized(true).build(), 1);
+	
 	private final VAO vao;
 	
 	private final VBO vbo;
@@ -29,24 +32,46 @@ public class ParticleMesh implements Renderable, Instanceable {
 	private int currentInstances;
 
 	/**
+	 *
+	 * @param positions
+	 * @param maxInstances
+	 */
+	public record ParticleData(FloatBuffer positions, int maxInstances) implements AutoCloseable {
+		@Override
+		public void close() {
+			MemoryUtil.memFree(positions);
+		}
+	}
+	
+	/**
 	 * @param positions 
 	 * @param maxInstances 
 	 */
 	public ParticleMesh(FloatBuffer positions, int maxInstances) {
 		long instanceBufferSize = 4L * Float.BYTES * maxInstances;
 		
-		Vertex vertex = Vertex.vertex3D(positions, 0);
-		var instanceVertex = new Vertex(VBO.arrayBuffer(instanceBufferSize, GL_STREAM_DRAW), new Attrib(1, Attrib.POINTER_4F, 1));
-		var instanceColorsVertex = new Vertex(VBO.arrayBuffer(instanceBufferSize, GL_STREAM_DRAW), new Attrib(2, VertexAttrib.pointer().type(GL_UNSIGNED_BYTE).normalized(true).build(), 1));
+		vao = new VAO();
 		
-		Set<Vertex> vertices = Set.of(vertex, instanceVertex, instanceColorsVertex);
-		vao = new VAO(vertices);
-		vbo = vertex.buffer();
-		instanceVBO = instanceVertex.buffer();
-		instanceColorsVBO = instanceColorsVertex.buffer();
+		vbo = VBO.arrayBuffer(positions);
+		POSITION_ATTRIB.enable();
+		
+		instanceVBO = VBO.arrayBuffer(instanceBufferSize, GL_STREAM_DRAW);
+		INSTANCE_POSITION_ATTRIB.enable();
+		
+		instanceColorsVBO = VBO.arrayBuffer(instanceBufferSize, GL_STREAM_DRAW);
+		INSTANCE_COLOR_ATTRIB.enable();
+		
+		vao.unbind();
 		
 		vertexCount = positions.limit() / 3;
 		this.maxInstances = maxInstances;
+	}
+	
+	/**
+	 * @param particleData
+	 */
+	public ParticleMesh(ParticleData particleData) {
+		this(particleData.positions, particleData.maxInstances);
 	}
 	
 	@Override
@@ -107,17 +132,6 @@ public class ParticleMesh implements Renderable, Instanceable {
 	 */
 	public void updateColors(ByteBuffer colors) {
 		updateColors(0, colors);
-	}
-	
-	@Override
-	public <T extends Buffer> void updateInstanceBuffer(int vboIndex, long offset, T data) {
-		vao.bind();
-		
-		instanceColorsVBO.bind();
-		instanceColorsVBO.bufferSubData(offset, data);
-		instanceColorsVBO.unbind();
-		
-		vao.unbind();
 	}
 	
 	@Override

@@ -41,8 +41,7 @@ public class ParShapesLoader {
 
 			var aabbf = new AABBf(aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get(), aabb.get());
 			var vertexData = new VertexData(normals, tangents, bitangents, textureCoordinates);
-//			var indexData = new IndexData(indices);
-//			var meshData = new MeshData(vertexData, indexData, aabbf);
+			
 			return new StaticMesh(positions, vertexData, indices, aabbf);
 		} finally {
 			if (parMesh.isNull(ParShapesMesh.NORMALS)) {

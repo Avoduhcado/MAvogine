@@ -6,117 +6,66 @@ import static org.lwjgl.opengl.GL30C.glVertexAttribIPointer;
 import static org.lwjgl.opengl.GL33C.glVertexAttribDivisor;
 
 import java.nio.*;
-
-import com.avogine.render.opengl.VBO;
+import java.util.Set;
 
 /**
- *
- * @param buffer the {@link VBO} to bind for this vertex.
+ * TODO Add size parameter to allow for specifying a null buffer but allocate a given size
+ * @param data the {@link Buffer} containing this vertex's data.
  * @param attribs an array of {@link VertexAttrib} to enable for this vertex.
  */
-public record Vertex(VBO buffer, VertexAttrib...attribs) {
+public record Vertex(Buffer data, Set<VertexAttrib> attribs) {
 	
 	/**
-	 * @param <T>
 	 * @param data
 	 * @param attribs
 	 */
-	public <T extends Buffer> Vertex(T data, VertexAttrib...attribs) {
-		this(VBO.arrayBuffer(data), attribs);
-	}
-	
-	/**
-	 * @param buffer
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 2D, unnormalized float values.
-	 */
-	public static Vertex vertex2D(VBO buffer, int location) {
-		return new Vertex(buffer, new Attrib(location, Attrib.POINTER_2F));
-	}
-	
-	/**
-	 * @param <T>
-	 * @param data
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 2D, unnormalized float values.
-	 */
-	public static <T extends Buffer> Vertex vertex2D(T data, int location) {
-		return vertex2D(VBO.arrayBuffer(data), location);
-	}
-
-	/**
-	 * @param buffer
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 3D, unnormalized float values.
-	 */
-	public static Vertex vertex3D(VBO buffer, int location) {
-		return new Vertex(buffer, new Attrib(location, Attrib.POINTER_3F));
-	}
-	
-	/**
-	 * @param <T>
-	 * @param data
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 3D, unnormalized float values.
-	 */
-	public static <T extends Buffer> Vertex vertex3D(T data, int location) {
-		return vertex3D(VBO.arrayBuffer(data), location);
-	}
-
-	/**
-	 * @param buffer
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 4D, unnormalized float values.
-	 */
-	public static Vertex vertex4D(VBO buffer, int location) {
-		return new Vertex(buffer, new Attrib(location, Attrib.POINTER_4F));
-	}
-	
-	/**
-	 * @param <T>
-	 * @param data
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 4D, unnormalized float values.
-	 */
-	public static <T extends Buffer> Vertex vertex4D(T data, int location) {
-		return vertex4D(VBO.arrayBuffer(data), location);
-	}
-
-	/**
-	 * @param buffer
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain 4 sets of interleaved, 4D, unnormalized float values.
-	 */
-	public static Vertex vertex4x4Instanced(VBO buffer, int location) {
-		return new Vertex(buffer, new AttribMat4(location, AttribMat4.POINTER_MAT4F_INTERLEAVED, 1));
-	}
-	
-	/**
-	 * @param <T>
-	 * @param data
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain 4 sets of interleaved, 4D, unnormalized float values.
-	 */
-	public static <T extends Buffer> Vertex vertex4x4Instanced(T data, int location) {
-		return vertex4x4Instanced(VBO.arrayBuffer(data), location);
-	}
-	
-	/**
-	 * @param buffer 
-	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 4D integer values.
-	 */
-	public static Vertex boneID(VBO buffer, int location) {
-		return new Vertex(buffer, new Attrib(location, Attrib.IPOINTER_4I));
+	public Vertex(Buffer data, VertexAttrib...attribs) {
+		this(data, Set.of(attribs));
 	}
 	
 	/**
 	 * @param data
 	 * @param location
-	 * @return a new {@link Vertex} wrapping a {@link VBO} expected to contain tightly packed, 4D integer values.
+	 * @return a new {@link Vertex} wrapping a {@link Buffer} expected to contain tightly packed, 2D, unnormalized float values.
+	 */
+	public static Vertex vertex2D(Buffer data, int location) {
+		return new Vertex(data, new Attrib(location, Attrib.POINTER_2F));
+	}
+	
+	/**
+	 * @param data
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link Buffer} expected to contain tightly packed, 3D, unnormalized float values.
+	 */
+	public static Vertex vertex3D(Buffer data, int location) {
+		return new Vertex(data, new Attrib(location, Attrib.POINTER_3F));
+	}
+	
+	/**
+	 * @param data
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link Buffer} expected to contain tightly packed, 4D, unnormalized float values.
+	 */
+	public static Vertex vertex4D(Buffer data, int location) {
+		return new Vertex(data, new Attrib(location, Attrib.POINTER_4F));
+	}
+	
+	/**
+	 * @param data
+	 * @param location
+	 * @return a new {@link Vertex} wrapping a {@link Buffer} expected to contain 4 sets of interleaved, 4D, unnormalized float values.
+	 */
+	public static Vertex vertex4x4Instanced(Buffer data, int location) {
+		return new Vertex(data, new AttribMat4(location, AttribMat4.POINTER_MAT4F_INTERLEAVED, 1));
+	}
+	
+	/**
+	 * @param data
+	 * @param location
+	 * @return a new {@link Vertex} wrapping an {@link IntBuffer} expected to contain tightly packed, 4D integer values.
 	 */
 	public static Vertex boneID(IntBuffer data, int location) {
-		return boneID(VBO.arrayBuffer(data), location);
+		return new Vertex(data, new Attrib(location, Attrib.IPOINTER_4I));
 	}
 	
 	public sealed interface VertexAttrib {

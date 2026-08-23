@@ -11,7 +11,6 @@ import org.lwjgl.system.MemoryUtil;
 
 import com.avogine.render.model.mesh.Instanceable;
 import com.avogine.render.model.mesh.data.*;
-import com.avogine.render.opengl.*;
 import com.avogine.render.opengl.model.mesh.data.*;
 import com.avogine.render.opengl.model.mesh.data.Vertex.Attrib;
 
@@ -20,14 +19,6 @@ import com.avogine.render.opengl.model.mesh.data.Vertex.Attrib;
  */
 public class StaticMesh extends Mesh {
 	
-	protected record StaticVertexArray(Vertex positions, Vertex attributes, Index indices) {
-		
-	}
-	
-	private StaticMesh(VAO vao, VBO[] vbos, VBO ebo, int vertexCount, AABBf boundingBox) {
-		super(vao, vbos, ebo, vertexCount, boundingBox);
-	}
-	
 	/**
 	 * @param positions
 	 * @param vertexData
@@ -35,10 +26,11 @@ public class StaticMesh extends Mesh {
 	 * @param boundingBox
 	 */
 	public StaticMesh(FloatBuffer positions, VertexData vertexData, IntBuffer indices, AABBf boundingBox) {
-		var meshData = assembleStaticVertices(positions, vertexData, indices);
-		var vao = new VAO(meshData.vertices(), meshData.index());
-		
-		this(vao, meshData.vertices().stream().map(Vertex::buffer).toArray(VBO[]::new), meshData.index().buffer(), meshData.index().vertexCount(), boundingBox);
+		super(assembleVertices(positions, vertexData), new Index(indices), boundingBox);
+	}
+	
+	protected StaticMesh(List<Vertex> vertices, Index index, AABBf boundingBox) {
+		super(vertices, index, boundingBox);
 	}
 	
 	@SuppressWarnings("unused") // Experimental testing of interleaved static vertex data
@@ -54,46 +46,34 @@ public class StaticMesh extends Mesh {
 			.put((i * vertexSize) + 3 + 3 + 3, vertices.textureCoordinates(), i * 2, 2);
 		}
 		
-		var staticVbo = VBO.arrayBuffer(interleavedVertices);
+//		var staticVbo = VBO.arrayBuffer(interleavedVertices);
 		
 		int vertexStride = vertexSize * Float.BYTES;
 		
-		return new Vertex(staticVbo, 
+		return new Vertex(interleavedVertices, 
 				new Attrib(1, new Attrib.Pointer(3, GL_FLOAT, false, vertexStride, 0)),
 				new Attrib(2, new Attrib.Pointer(3, GL_FLOAT, false, vertexStride, 3L * Float.BYTES)),
 				new Attrib(3, new Attrib.Pointer(3, GL_FLOAT, false, vertexStride, (3 + 3L) * Float.BYTES)),
 				new Attrib(4, new Attrib.Pointer(2, GL_FLOAT, false, vertexStride, (3 + 3 + 3L) * Float.BYTES)));
 	}
 	
-	protected static MeshData assembleStaticVertices(FloatBuffer positions, VertexData vertices, IntBuffer indices) {
-		Set<Vertex> vertexArray = Set.of(
+	protected static List<Vertex> assembleVertices(FloatBuffer positions, VertexData vertices) {
+		return List.of(
 				Vertex.vertex3D(positions, 0),
 				Vertex.vertex3D(vertices.normals(), 1),
 				Vertex.vertex3D(vertices.tangents(), 2),
 				Vertex.vertex3D(vertices.bitangents(), 3),
 				Vertex.vertex2D(vertices.textureCoordinates(), 4));
-		var index = new Index(indices);
-		return new MeshData(vertexArray, index);
 	}
 	
 	/**
-	 *
+	 * 
 	 */
 	public static class StaticInstancedMesh extends StaticMesh implements Instanceable {
 		
-		private final VBO instanceBuffer;
-		private final int maxInstances;
+		private static final int INSTANCE_VBO_INDEX = 5;
 		
-		/**
-		 * @param vao
-		 * @param vertexCount
-		 * @param boundingBox
-		 */
-		private StaticInstancedMesh(VAO vao, VBO[] vbos, VBO ebo, int vertexCount, AABBf boundingBox, VBO instanceBuffer, int maxInstances) {
-			super(vao, vbos, ebo, vertexCount, boundingBox);
-			this.instanceBuffer = instanceBuffer;
-			this.maxInstances = maxInstances;
-		}
+		private final int maxInstances;
 
 		/**
 		 * @param positions
@@ -103,29 +83,25 @@ public class StaticMesh extends Mesh {
 		 * @param instanceData 
 		 */
 		public StaticInstancedMesh(FloatBuffer positions, VertexData vertexData, IntBuffer indices, AABBf boundingBox, InstanceData instanceData) {
-			MeshData meshData = assembleStaticVertices(positions, vertexData, indices);
-			var instanceMatrices = Vertex.vertex4x4Instanced(instanceData.instanceMatrices(), 5);
-			Set<Vertex> vertices = new HashSet<>(meshData.vertices());
+			List<Vertex> vertices = new ArrayList<>(assembleVertices(positions, vertexData));
+			var instanceMatrices = Vertex.vertex4x4Instanced(instanceData.instanceMatrices(), INSTANCE_VBO_INDEX);
 			vertices.add(instanceMatrices);
-			var vao = new VAO(Set.copyOf(vertices), meshData.index());
 			
-			this(vao, meshData.vertices().stream().map(Vertex::buffer).toArray(VBO[]::new), meshData.index().buffer(), meshData.index().vertexCount(), boundingBox, 
-					instanceMatrices.buffer(), instanceData.instanceCount());
+			super(vertices, new Index(indices), boundingBox);
+			maxInstances = instanceData.instanceCount();
 		}
 		
-		@Override
-		public void cleanup() {
-			instanceBuffer.cleanup();
-			super.cleanup();
-		}
-		
-		@Override
-		public <T extends Buffer> void updateInstanceBuffer(int vboIndex, long offset, T data) {
+		/**
+		 * @param <T>
+		 * @param offset
+		 * @param data
+		 */
+		public <T extends Buffer> void updateInstanceBuffer(long offset, T data) {
 			vao.bind();
 			
-			instanceBuffer.bind();
-			instanceBuffer.bufferSubData(offset, data);
-			instanceBuffer.unbind();
+			vbos[INSTANCE_VBO_INDEX].bind();
+			vbos[INSTANCE_VBO_INDEX].bufferSubData(offset, data);
+			vbos[INSTANCE_VBO_INDEX].unbind();
 			
 			vao.unbind();
 		}

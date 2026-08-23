@@ -27,6 +27,7 @@ public record VBO(int id, int target) {
 	}
 	
 	/**
+	 * Generate, bind, and create a data store for a new buffer object.
 	 * @param <T>
 	 * @param target
 	 * @param data

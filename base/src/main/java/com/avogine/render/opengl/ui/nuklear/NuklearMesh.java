@@ -8,13 +8,12 @@ import static org.lwjgl.opengl.GL15C.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Objects;
 
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.model.mesh.data.*;
 import com.avogine.render.opengl.model.mesh.data.Vertex.Attrib;
 import com.avogine.render.opengl.texture.Texture;
 
@@ -37,6 +36,10 @@ public class NuklearMesh {
 				.flip();
 	}
 	
+	private static final Attrib POSITION_ATTRIB = new Attrib(0, new Attrib.Pointer(2, GL_FLOAT, false, 20, 0));
+	private static final Attrib UV_ATTRIB = new Attrib(1, new Attrib.Pointer(2, GL_FLOAT, false, 20, 8));
+	private static final Attrib COLOR_ATTRIB = new Attrib(2, new Attrib.Pointer(4, GL_UNSIGNED_BYTE, true, 20, 16));
+	
 	private final VAO vao;
 	private final VBO vbo;
 	private final VBO ebo;
@@ -57,15 +60,16 @@ public class NuklearMesh {
 	 * 
 	 */
 	public NuklearMesh(int displayWidth, int displayHeight, float width, float height) {
+		vao = new VAO();
+		
 		vbo = VBO.arrayBuffer(MAX_VERTEX_BUFFER);
+		POSITION_ATTRIB.enable();
+		UV_ATTRIB.enable();
+		COLOR_ATTRIB.enable();
+		
 		ebo = VBO.elementArrayBuffer(MAX_ELEMENT_BUFFER);
 		
-		vao = new VAO(Set.of(
-				new Vertex(vbo, 
-						new Attrib(0, new Attrib.Pointer(2, GL_FLOAT, false, 20, 0)),
-						new Attrib(1, new Attrib.Pointer(2, GL_FLOAT, false, 20, 8)),
-						new Attrib(2, new Attrib.Pointer(4, GL_UNSIGNED_BYTE, true, 20, 16)))),
-				new Index(ebo, 0));
+		vao.unbind();
 		
 		this.displayWidth = displayWidth;
 		this.displayHeight = displayHeight;

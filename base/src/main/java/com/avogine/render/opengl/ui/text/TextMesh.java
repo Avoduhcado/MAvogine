@@ -3,15 +3,17 @@ package com.avogine.render.opengl.ui.text;
 import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.FloatBuffer;
-import java.util.Set;
 
+import com.avogine.render.model.mesh.Renderable;
 import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.model.mesh.data.Vertex;
+import com.avogine.render.opengl.model.mesh.data.Vertex.Attrib;
 
 /**
  *
  */
-public class TextMesh {
+public class TextMesh implements Renderable {
+	
+	private static final Attrib VERTEX_ATTRIB = new Attrib(0, Attrib.POINTER_4F);
 	
 	private final VAO vao;
 	private final VBO vbo;
@@ -21,13 +23,14 @@ public class TextMesh {
 	 * @param bufferSize 
 	 */
 	public TextMesh(long bufferSize) {
+		vao = new VAO();
 		vbo = VBO.arrayBuffer(bufferSize);
-		vao = new VAO(Set.of(Vertex.vertex4D(vbo, 0)));
+		VERTEX_ATTRIB.enable();
+		
+		vao.unbind();
 	}
 	
-	/**
-	 * 
-	 */
+	@Override
 	public void cleanup() {
 		vbo.cleanup();
 		vao.cleanup();
@@ -50,9 +53,7 @@ public class TextMesh {
 		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 	}
 	
-	/**
-	 * 
-	 */
+	@Override
 	public void render() {
 		vao.bind();
 		draw();

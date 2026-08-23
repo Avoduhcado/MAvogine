@@ -9,6 +9,7 @@ import org.joml.primitives.AABBf;
 
 import com.avogine.render.model.mesh.*;
 import com.avogine.render.opengl.*;
+import com.avogine.render.opengl.model.mesh.data.*;
 
 /**
  *
@@ -23,11 +24,21 @@ public abstract class Mesh implements Renderable, Boundable {
 	
 	protected final AABBf boundingBox;
 	
-	protected Mesh(VAO vao, VBO[] vbos, VBO ebo, int vertexCount, AABBf boundingBox) {
-		this.vao = vao;
-		this.vbos = vbos;
-		this.ebo = ebo;
-		this.vertexCount = vertexCount;
+	protected Mesh(List<Vertex> vertices, Index index, AABBf boundingBox) {
+		this.vao = new VAO();
+		
+		List<VBO> vertexBuffers = new ArrayList<>();
+		for (Vertex vertex : vertices) {
+			vertexBuffers.add(VBO.arrayBuffer(vertex.data()));
+			for (Vertex.VertexAttrib attrib : vertex.attribs()) {
+				attrib.enable();
+			}
+		}
+		vbos = vertexBuffers.toArray(VBO[]::new);
+		ebo = VBO.elementArrayBuffer(index.data());
+		vao.unbind();
+		
+		vertexCount = index.vertexCount();
 		this.boundingBox = boundingBox;
 	}
 	

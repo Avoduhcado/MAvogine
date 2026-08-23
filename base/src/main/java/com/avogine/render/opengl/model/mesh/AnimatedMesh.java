@@ -6,8 +6,7 @@ import java.util.*;
 import org.joml.primitives.AABBf;
 
 import com.avogine.render.model.mesh.data.*;
-import com.avogine.render.opengl.*;
-import com.avogine.render.opengl.model.mesh.data.Vertex;
+import com.avogine.render.opengl.model.mesh.data.*;
 
 /**
  *
@@ -18,10 +17,6 @@ public class AnimatedMesh extends Mesh {
 	 */
 	public static final int MAX_WEIGHTS = 4;
 	
-	private AnimatedMesh(VAO vao, VBO[] vbos, VBO ebo, int vertexCount, AABBf boundingBox) {
-		super(vao, vbos, ebo, vertexCount, boundingBox);
-	}
-	
 	/**
 	 * @param positions
 	 * @param vertexData
@@ -30,12 +25,10 @@ public class AnimatedMesh extends Mesh {
 	 * @param boundingBox
 	 */
 	public AnimatedMesh(FloatBuffer positions, VertexData vertexData, SkeletonData skeletonData, IntBuffer indices, AABBf boundingBox) {
-		var meshData = StaticMesh.assembleStaticVertices(positions, vertexData, indices);
-		Set<Vertex> vertices = new HashSet<>(meshData.vertices());
+		List<Vertex> vertices = new ArrayList<>(StaticMesh.assembleVertices(positions, vertexData));
 		vertices.add(Vertex.boneID(skeletonData.boneIds(), 5));
 		vertices.add(Vertex.vertex4D(skeletonData.weights(), 6));
-		var vao = new VAO(Set.copyOf(vertices), meshData.index());
 		
-		this(vao, meshData.vertices().stream().map(Vertex::buffer).toArray(VBO[]::new), meshData.index().buffer(), meshData.index().vertexCount(), boundingBox);
+		super(vertices, new Index(indices), boundingBox);
 	}
 }
