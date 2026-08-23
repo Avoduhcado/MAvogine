@@ -1,6 +1,9 @@
 package com.avogine.util;
 
+import java.nio.FloatBuffer;
+
 import org.joml.Math;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  *
@@ -16,7 +19,7 @@ public class ShapeUtils {
 	 * @param numberOfSides the total number of sides the circle should have, effectively the smoothness of the shape.
 	 * @return a {@code float[]} containing vertices for a circle.
 	 */
-	public static float[] generateCircleVertices(float radius, int numberOfSides) {
+	public static FloatBuffer generateCircleVertices(float radius, int numberOfSides) {
 		int numberOfVertices = numberOfSides + 2;
 
 		float[] vertices = new float[numberOfVertices * 3];
@@ -30,7 +33,7 @@ public class ShapeUtils {
 			vertices[pos++] = radius * Math.sin(i * Math.PI_TIMES_2_f / numberOfSides);
 			vertices[pos++] = 0.0f;
 		}
-		return vertices;
+		return MemoryUtil.memAllocFloat(vertices.length).put(0, vertices);
 	}
 
 }

@@ -19,14 +19,10 @@ import com.avogine.logging.AvoLog;
  * but it appears to be safe to just use ALC_ALL_DEVICES_SPECIFIER and ALC_DEFAULT_ALL_DEVICES_SPECIFIER either as a string list for all
  * values or as just alGetString for the first value. The _ALL_ constants appear to be from an extension, so more caution may need to be taken.
  */
-public class Audio {
+public class AudioContext {
 
 	// TODO#52 Create a real BufferCache and a SourceCache that allocates at least 32 or ALC_MONO_SOURCES sources to pull from possibly with the option to allocate "high priority" sources or BGM sources
-	private final List<SoundBuffer> soundBuffers;
-	private final Map<String, SoundSource> soundSourceCache;
-	
-	private SoundListener listener;
-	
+
 	private long device;
 	private long context;
 	
@@ -34,7 +30,7 @@ public class Audio {
 
 	private String currentDevice;
 	
-	private AudioProperties properties;
+	private AudioPreferences properties;
 	
 	private final List<SOFTEventProc> softEventCallbacks;
 	private Timer defaultDeviceReopenTimer;
@@ -42,11 +38,8 @@ public class Audio {
 	/**
 	 * Instantiate a new Audio system and initialize configuration properties from disk.
 	 */
-	public Audio() {
-		soundBuffers = new ArrayList<>();
-		soundSourceCache = new HashMap<>();
-		
-		properties = new AudioProperties();
+	public AudioContext() {
+		properties = new AudioPreferences();
 		
 		softEventCallbacks = new ArrayList<>();
 	}
@@ -96,55 +89,10 @@ public class Audio {
 			// This might cause issues?
 			alDisable(SOFTXHoldOnDisconnect.AL_STOP_SOURCES_ON_DISCONNECT_SOFT);
 		}
-	}
-	
-	/**
-	 * @param soundBuffer
-	 */
-	public void addSoundBuffer(SoundBuffer soundBuffer) {
-		soundBuffers.add(soundBuffer);
-	}
-	
-	/**
-	 * @param name
-	 * @param soundSource
-	 */
-	public void addSoundSource(String name, SoundSource soundSource) {
-		soundSourceCache.put(name, soundSource);
-	}
-	
-	/**
-	 * @param name
-	 * @return
-	 */
-	public SoundSource removeSoundSource(String name) {
-		return soundSourceCache.remove(name);
-	}
-	
-	/**
-	 * @param name
-	 */
-	public void playSoundSource(String name) {
-		SoundSource soundSource = getSoundSource(name);
-		if (soundSource != null && !soundSource.isPlaying()) {
-			soundSource.play();
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	public void clearSources() {
-		soundSourceCache.values().forEach(SoundSource::cleanup);
-		soundSourceCache.clear();
-	}
-	
-	/**
-	 * 
-	 */
-	public void clearBuffers() {
-		soundBuffers.forEach(SoundBuffer::cleanup);
-		soundBuffers.clear();
+		
+		// TODO Load from preferences/properties
+		setAttenuationModel(AL11.AL_EXPONENT_DISTANCE);
+		setListenerVolume(0.1f);
 	}
 	
 	/**
@@ -155,9 +103,6 @@ public class Audio {
 		if (defaultDeviceReopenTimer != null) {
 			defaultDeviceReopenTimer.cancel();
 		}
-		
-		clearSources();
-		clearBuffers();
 		
 		softEventCallbacks.forEach(SOFTEventProc::free);
 		
@@ -170,40 +115,10 @@ public class Audio {
 	}
 	
 	/**
-	 * @return the soundBuffers
-	 */
-	public List<SoundBuffer> getSoundBuffers() {
-		return soundBuffers;
-	}
-	
-	/**
-	 * @param name
-	 * @return a cached {@link SoundSource} with the given name.
-	 */
-	public SoundSource getSoundSource(String name) {
-		// XXX Handle missing values, should this attempt to computeIfAbsent?
-		return soundSourceCache.get(name);
-	}
-	
-	/**
 	 * @param model
 	 */
 	public void setAttenuationModel(int model) {
 		alDistanceModel(model);
-	}
-	
-	/**
-	 * @return the listener
-	 */
-	public SoundListener getListener() {
-		return listener;
-	}
-	
-	/**
-	 * @param listener the listener to set
-	 */
-	public void setListener(SoundListener listener) {
-		this.listener = listener;
 	}
 	
 	/**
@@ -226,7 +141,7 @@ public class Audio {
 	 */
 	public void setListenerVolume(float volume) {
 		alListenerf(AL_GAIN, volume);
-		properties = new AudioProperties(properties.defaultDevice, volume);
+		properties = new AudioPreferences(properties.defaultDevice, volume);
 	}
 	
 	/**
@@ -243,7 +158,7 @@ public class Audio {
 	 * @param deviceSpecifier
 	 */
 	public void changeDevice(String deviceSpecifier) {
-		properties = new AudioProperties(deviceSpecifier, properties.listenerGain);
+		properties = new AudioPreferences(deviceSpecifier, properties.listenerGain);
 		if (ALC.getCapabilities().ALC_SOFT_reopen_device) {
 			SOFTReopenDevice.alcReopenDeviceSOFT(device, deviceSpecifier, (IntBuffer) null);
 			currentDevice = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
@@ -273,7 +188,7 @@ public class Audio {
 	}
 
 	private void configureSoftEvents() {
-		SOFTEventProc callback = SOFTEventProc.create((eventType, object, param, length, message, userParam) -> {
+		SOFTEventProc callback = SOFTEventProc.create((eventType, _, _, _, _, _) -> {
 			switch (eventType) {
 				case SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT -> {
 					if (ALC.getCapabilities().ALC_SOFT_reopen_device && properties.defaultDevice == null) {
@@ -327,11 +242,11 @@ public class Audio {
 	 * Set to {@code null} to automatically open the default system device.
 	 * @param listenerGain The gain setting of the listener. Pseudo max volume.
 	 */
-	public static record AudioProperties(String defaultDevice, float listenerGain) {
+	public static record AudioPreferences(String defaultDevice, float listenerGain) {
 		/**
-		 * Initialize a default {@link AudioProperties}.
+		 * Initialize a default {@link AudioPreferences}.
 		 */
-		public AudioProperties() {
+		public AudioPreferences() {
 			this(null, 1.0f);
 		}
 	}
