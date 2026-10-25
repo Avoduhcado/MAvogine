@@ -9,6 +9,7 @@ import org.junit.jupiter.api.*;
 
 import com.avogine.TestGame;
 import com.avogine.ecs.components.*;
+import com.avogine.game.scene.ECSScene;
 
 /**
  *
@@ -16,16 +17,13 @@ import com.avogine.ecs.components.*;
 class ECSWorldTest {
 	
 	private TestGame game;
-	private TestECSScene scene;
 	private EntityManager world;
 	
 	@BeforeEach
 	void setup() {
-		var gameState = new TestECSGameState();
-		
-		game = new TestGame(gameState);
+		game = new TestGame();
 		game.init(null);
-		scene = gameState.getScene();
+		ECSScene scene = game.getScene();
 		
 		world = scene.getEntityManager();
 	}

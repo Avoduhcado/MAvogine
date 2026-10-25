@@ -1,43 +1,36 @@
 package com.avogine.render;
 
+import com.avogine.game.scene.Scene;
+import com.avogine.io.Window;
+
 /**
+ * @param <T> The {@link Scene} implementation this renderer should be capable of drawing.
  *
  */
-public abstract class Render {
-
-	private static float anisotropicFiltering = 4f;
-
-	private Render() {
-	}
+public interface Render<T extends Scene> {
 
 	/**
-	 * @return the anisotropicFiltering
+	 * Initialize render specific state.
+	 * @param window
 	 */
-	public static float getAnisotropicFiltering() {
-		return anisotropicFiltering;
-	}
-
+	public void init(Window window);
+	
 	/**
-	 * @param anisotropicFiltering the anisotropicFiltering to set
+	 * 
 	 */
-	public static void setAnisotropicFiltering(float anisotropicFiltering) {
-		Render.anisotropicFiltering = anisotropicFiltering;
-	}
-
+	public void cleanup();
+	
 	/**
-	 *
-	 * @param anisotropicFiltering
+	 * @param window
+	 * @param scene
 	 */
-	public record RenderPreferences(float anisotropicFiltering) {
-		 
-		public static RenderPreferences defaultPreferences = new RenderPreferences(4f);
-		
-		/**
-		 * TODO Attempt to load saved prefs and fallback to default if no saved prefs are found
-		 * @return the user's saved {@link RenderPreferences} or the default configuration if no saved preferences exist.
-		 */
-		public static RenderPreferences loadPrefs() {
-			return defaultPreferences;
-		}
-	}
+	public void render(Window window, T scene);
+	
+	/**
+	 * 
+	 * @param width
+	 * @param height
+	 */
+	public void resize(int width, int height);
+	
 }

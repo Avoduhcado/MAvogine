@@ -2,8 +2,7 @@ package com.avogine.io.event;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.avogine.io.Window;
-import com.avogine.io.config.InputConfig;
+import com.avogine.io.*;
 import com.avogine.io.event.MouseEvent.*;
 
 /**
@@ -33,7 +32,7 @@ public sealed interface MouseEvent extends InputEvent, ConsumableEvent permits M
 		 * <p>
 		 * <ul>
 		 * <li>1 for all {@link MousePressedEvent}s and {@link MouseReleasedEvent}s.</li> 
-		 * <li>2 for some {@link MouseClickedEvent}s where the mouse button was pressed and released in quick succession as determined by {@link InputConfig#doubleClickDelayTolerance()}.</li>
+		 * <li>2 for some {@link MouseClickedEvent}s where the mouse button was pressed and released in quick succession as determined by {@link Mouse#getDoubleClickDelayTolerance()}.</li>
 		 * </ul>
 		 * @return the number of times the button was clicked.
 		 */

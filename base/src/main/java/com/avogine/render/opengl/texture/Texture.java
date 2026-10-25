@@ -34,7 +34,6 @@ import java.util.function.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.render.Render;
 import com.avogine.render.opengl.texture.Texture.Builder.TexImage;
 
 /**
@@ -42,6 +41,11 @@ import com.avogine.render.opengl.texture.Texture.Builder.TexImage;
  * @param target the texture target.
  */
 public record Texture(int id, int target) {
+	/**
+	 * TODO#40 Load from prefs?
+	 */
+	private static float anisotropicFiltering = 4.0f;
+	
 	/**
 	 * 
 	 */
@@ -128,6 +132,20 @@ public record Texture(int id, int target) {
 		glBindTexture(target, 0);
 	}
 	
+	/**
+	 * @return the anisotropicFiltering
+	 */
+	public static float getAnisotropicFiltering() {
+		return anisotropicFiltering;
+	}
+
+	/**
+	 * @param anisotropicFiltering the anisotropicFiltering to set
+	 */
+	public static void setAnisotropicFiltering(float anisotropicFiltering) {
+		Texture.anisotropicFiltering = anisotropicFiltering;
+	}
+
 	/**
 	 * Abstract builder for building {@link Texture}s.
 	 * @param <SELF>
@@ -493,7 +511,7 @@ public record Texture(int id, int target) {
 		 * @return {@link Builder}
 		 */
 		public SELF anisotropicFiltering() {
-			return anisotropicFiltering(Render.getAnisotropicFiltering());
+			return anisotropicFiltering(getAnisotropicFiltering());
 		}
 	}
 	

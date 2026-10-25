@@ -3,12 +3,15 @@ package com.avogine.game.state;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import com.avogine.game.util.Stateful;
 import com.avogine.io.Window;
 
 /**
  * Interface for enabling {@link GameState} changes.
- * @param <T> 
+ * @param <T>
+ * @deprecated Use {@link Stateful} instead. 
  */
+@Deprecated
 public interface StateSwappable<T extends GameState<?, ?>> {
 
 	/**
@@ -31,7 +34,7 @@ public interface StateSwappable<T extends GameState<?, ?>> {
 	 * progress into a main game scene and can pull a set of assets it should begin loading in the background to speed up state swaps.
 	 * @param <T>
 	 */
-	public static class GameStateQueue<T extends GameState<?, ?>> {
+	public static class GameStateQueue<T extends GameState<?, ?> & Swappable> {
 		private T currentState;
 		private Supplier<? extends T> queuedStateSupplier;
 		

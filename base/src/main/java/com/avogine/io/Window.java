@@ -1,8 +1,10 @@
 package com.avogine.io;
 
+import static org.lwjgl.glfw.GLFW.*;
+
 import java.nio.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.*;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.*;
@@ -11,8 +13,8 @@ import org.lwjgl.system.*;
 
 import com.avogine.Avogine;
 import com.avogine.game.util.Registerable;
-import com.avogine.io.config.*;
-import com.avogine.io.listener.*;
+import com.avogine.io.config.WindowPreferences;
+import com.avogine.io.listener.InputListener;
 import com.avogine.logging.AvoLog;
 import com.avogine.util.ResourceUtils;
 import com.avogine.util.resource.ResourceConstants;
@@ -34,8 +36,6 @@ public class Window {
 	
 	private int width;
 	private int height;
-	private int fbWidth;
-	private int fbHeight;
 	
 	private boolean fullscreen;
 	private int monitorIndex;
@@ -51,7 +51,7 @@ public class Window {
 	
 	private final Input input;
 	
-	private final Set<WindowResizeListener> resizeListeners;
+	private Callable<Void> resizeFunction;
 	
 	private final Queue<Registerable> queuedRegisters;
 	
@@ -60,7 +60,7 @@ public class Window {
 	 * @param title The window title
 	 * @param preferences 
 	 */
-	public Window(String title, WindowPreferences preferences) {
+	public Window(String title, WindowPreferences preferences, Callable<Void> resizeFunction) {
 		this.title = title;
 		
 		width = preferences.width();
@@ -75,38 +75,46 @@ public class Window {
 		
 		input = new Input();
 		
-		resizeListeners = new HashSet<>();
+		this.resizeFunction = resizeFunction;
 		
 		queuedRegisters = new ConcurrentLinkedQueue<>();
 	}
 	
 	/**
-	 * @param windowConfig 
-	 * @param inputConfig 
+	 * 
 	 */
-	public void init(GLFWConfig windowConfig, InputConfig inputConfig) {
-		GLFW.glfwSetErrorCallback((int errorCode, long msgPtr) -> AvoLog.log().error("Error code [{}], msg [{}]", errorCode, MemoryUtil.memUTF8(msgPtr)));
+	public void init() {
+		glfwSetErrorCallback((int errorCode, long msgPtr) -> AvoLog.log().error("Error code [{}], msg [{}]", errorCode, MemoryUtil.memUTF8(msgPtr)));
 		
-		if (!GLFW.glfwInit()) {
+		if (!glfwInit()) {
 			throw new IllegalStateException("Could not initialize GLFW!");
 		}
 		
-		long monitor = GLFW.glfwGetPrimaryMonitor();
-		PointerBuffer monitorBuffer = GLFW.glfwGetMonitors();
+		glfwDefaultWindowHints();
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+		
+		glfwWindowHint(GLFW_SAMPLES, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
+		
+		long monitor = glfwGetPrimaryMonitor();
+		PointerBuffer monitorBuffer = glfwGetMonitors();
 		while (monitorBuffer.hasRemaining()) {
 			long monitorID = monitorBuffer.get();
 			monitorList.add(monitorID);
 		}
 		monitor = monitorList.get(monitorIndex);
 		
-		windowConfig.windowHints().forEach(GLFW::glfwWindowHint);
-		
-		id = GLFW.glfwCreateWindow(width, height, title, fullscreen ? monitor : MemoryUtil.NULL, MemoryUtil.NULL);
+		id = glfwCreateWindow(width, height, title, fullscreen ? monitor : MemoryUtil.NULL, MemoryUtil.NULL);
 		if (id == MemoryUtil.NULL) {
 			throw new IllegalStateException("Failed to create window!");
 		}
 		
-		GLFW.glfwSetFramebufferSizeCallback(id, (_, w, h) -> resized(w, h));
+		glfwMakeContextCurrent(MemoryUtil.NULL);
+		
+		glfwSetFramebufferSizeCallback(id, (_, w, h) -> resized(w, h));
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -115,67 +123,58 @@ public class Window {
 			IntBuffer pX = stack.mallocInt(1);
 			IntBuffer pY = stack.mallocInt(1);
 			
-			GLFW.glfwGetWindowSize(id, pWidth, pHeight);
-			GLFW.glfwGetMonitorPos(monitor, pX, pY);
+			glfwGetWindowSize(id, pWidth, pHeight);
+			glfwGetMonitorPos(monitor, pX, pY);
 			
-			GLFWVidMode videoMode = GLFW.glfwGetVideoMode(monitor);
+			GLFWVidMode videoMode = glfwGetVideoMode(monitor);
 			
-			GLFW.glfwSetWindowPos(id, pX.get() + (videoMode.width() - pWidth.get(0)) / 2, pY.get() + (videoMode.height() - pHeight.get(0)) / 2);
+			glfwSetWindowPos(id, pX.get() + (videoMode.width() - pWidth.get(0)) / 2, pY.get() + (videoMode.height() - pHeight.get(0)) / 2);
 		}
 		
 		targetFps = maxFps;
-		GLFW.glfwSetWindowFocusCallback(id, (_, focused) -> targetFps = focused ? maxFps : maxBackgroundFps);
+		glfwSetWindowFocusCallback(id, (_, focused) -> targetFps = focused ? maxFps : maxBackgroundFps);
 		
 		// XXX Customize by WindowConfig?
-		if (GLFW.glfwGetWindowAttrib(id, GLFW.GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW.GLFW_TRUE) {
-			GLFW.glfwSetWindowOpacity(id, 1.0f);
+		if (glfwGetWindowAttrib(id, GLFW_TRANSPARENT_FRAMEBUFFER) == GLFW_TRUE) {
+			glfwSetWindowOpacity(id, 1.0f);
 		}
 		
 		loadAndSetIcons(ResourceConstants.TEXTURES.with("icon", "AGDG Logo.png"));
 		
 		// XXX Customizable by WindowConfig?
-		if (GLFW.glfwRawMouseMotionSupported()) {
-			GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
+		if (glfwRawMouseMotionSupported()) {
+			glfwSetInputMode(id, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 		}
 		
-		GLFW.glfwShowWindow(id);
+		glfwShowWindow(id);
 		
 		int[] arrWidth = new int[1];
 		int[] arrHeight = new int[1];
-		GLFW.glfwGetFramebufferSize(id, arrWidth, arrHeight);
+		glfwGetFramebufferSize(id, arrWidth, arrHeight);
 		width = arrWidth[0];
 		height = arrHeight[0];
-		fbWidth = arrWidth[0];
-		fbHeight = arrHeight[0];
 		
-		input.init(inputConfig, this);
+		input.init(this);
 	}
 	
 	/**
 	 * 
 	 */
 	public void makeCurrent() {
-		if (GLFW.glfwGetCurrentContext() != id) { // XXX: Potentially unnecessary check, might just be a simple no-op if this context is already current to call makeContextCurrent again
-			GLFW.glfwMakeContextCurrent(id);
-		}
+		glfwMakeContextCurrent(id);
 	}
 	
 	/**
 	 * Swap the window's buffers to display the latest rendered frame and then process all pending events.
-	 * <p>
-	 * Callers should not need to handle setting the OpenGL context before rendering as this method will automatically check
-	 * and, if needed, set this window context to be current.
 	 */
 	public void swapBuffers() {
-		makeCurrent();
-		
-		GLFW.glfwSwapBuffers(id);
+		glfwSwapBuffers(id);
 	}
 	
 	/**
 	 * 
 	 */
-	public void update() {
+	public void newInputFrame() {
 		input.getMouse().newFrame();
 	}
 	
@@ -189,7 +188,7 @@ public class Window {
 		}
 		
 		// XXX Maybe use this with a timeout to target whatever the game's update loop interval is?
-		GLFW.glfwWaitEvents();
+		glfwWaitEvents();
 	}
 	
 	/**
@@ -213,25 +212,6 @@ public class Window {
 	}
 	
 	/**
-	 * 
-	 * @param listener
-	 * @return the {@link WindowResizeListener}
-	 */
-	public WindowResizeListener addResizeListener(WindowResizeListener listener) {
-		resizeListeners.add(listener);
-		return listener;
-	}
-	
-	/**
-	 * 
-	 * @param listener
-	 * @return true if the listener was removed.
-	 */
-	public boolean removeResizeListener(WindowResizeListener listener) {
-		return resizeListeners.remove(listener);
-	}
-	
-	/**
 	 * @param register
 	 * @return the register
 	 */
@@ -241,12 +221,19 @@ public class Window {
 	}
 	
 	/**
+	 * @param resizeFunction
+	 */
+	public void setResizeFunction(Callable<Void> resizeFunction) {
+		this.resizeFunction = resizeFunction;
+	}
+	
+	/**
 	 * Must only be called from the main thread.
 	 * @param inputMode
 	 */
 	public void setCursorInput(int inputMode) {
-		GLFW.glfwSetInputMode(id, GLFW.GLFW_CURSOR, inputMode);
-		input.getMouse().setCaptured(GLFW.glfwGetInputMode(id, GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_NORMAL);
+		glfwSetInputMode(id, GLFW_CURSOR, inputMode);
+		input.getMouse().setCaptured(glfwGetInputMode(id, GLFW_CURSOR) != GLFW_CURSOR_NORMAL);
 	}
 	
 	/**
@@ -254,7 +241,7 @@ public class Window {
 	 * @return true if {@code GLFW.glfwWindowShouldClose} is true
 	 */
 	public boolean shouldClose() {
-		return GLFW.glfwWindowShouldClose(id);
+		return glfwWindowShouldClose(id);
 	}
 	
 	/**
@@ -266,7 +253,7 @@ public class Window {
 	 */
 	public void close() {
 		Callbacks.glfwFreeCallbacks(id);
-		GLFW.glfwDestroyWindow(id);
+		glfwDestroyWindow(id);
 	}
 	
 	/**
@@ -275,16 +262,18 @@ public class Window {
 	 * This should only be called when exiting the entire application.
 	 */
 	public void cleanup() {
-		GLFW.glfwTerminate();
-		Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
+		glfwTerminate();
+		Objects.requireNonNull(glfwSetErrorCallback(null)).free();
 	}
 	
-	private void resized(int width, int height) {
+	protected void resized(int width, int height) {
 		this.width = width;
 		this.height = height;
-		this.fbWidth = width;
-		this.fbHeight = height;
-		resizeListeners.forEach(listener -> listener.windowFramebufferResized(width, height));
+		try {
+			resizeFunction.call();
+		} catch (Exception e) {
+			AvoLog.log().error("Error calling resize function.", e);
+		}
 	}
 	
 	/**
@@ -315,7 +304,7 @@ public class Window {
 			GLFWImage.Buffer iconBuffer = GLFWImage.malloc(iconBufferMap.size(), stack);
 			iconBufferMap.keySet().forEach(iconBuffer::put);
 			iconBuffer.flip();
-			GLFW.glfwSetWindowIcon(id, iconBuffer);
+			glfwSetWindowIcon(id, iconBuffer);
 			iconBufferMap.values().forEach(MemoryUtil::memFree);
 		}
 	}
@@ -386,20 +375,6 @@ public class Window {
 	 */
 	public int getHeight() {
 		return height;
-	}
-
-	/**
-	 * @return the width of the main framebuffer in pixels.
-	 */
-	public int getFbWidth() {
-		return fbWidth;
-	}
-	
-	/**
-	 * @return the height of the main framebuffer in pixels.
-	 */
-	public int getFbHeight() {
-		return fbHeight;
 	}
 	
 	/**

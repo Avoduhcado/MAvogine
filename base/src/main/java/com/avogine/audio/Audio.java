@@ -19,7 +19,7 @@ import com.avogine.logging.AvoLog;
  * but it appears to be safe to just use ALC_ALL_DEVICES_SPECIFIER and ALC_DEFAULT_ALL_DEVICES_SPECIFIER either as a string list for all
  * values or as just alGetString for the first value. The _ALL_ constants appear to be from an extension, so more caution may need to be taken.
  */
-public class AudioContext {
+public class Audio {
 
 	// TODO#52 Create a real BufferCache and a SourceCache that allocates at least 32 or ALC_MONO_SOURCES sources to pull from possibly with the option to allocate "high priority" sources or BGM sources
 
@@ -30,7 +30,7 @@ public class AudioContext {
 
 	private String currentDevice;
 	
-	private AudioPreferences properties;
+	private AudioPreferences preferences;
 	
 	private final List<SOFTEventProc> softEventCallbacks;
 	private Timer defaultDeviceReopenTimer;
@@ -38,8 +38,8 @@ public class AudioContext {
 	/**
 	 * Instantiate a new Audio system and initialize configuration properties from disk.
 	 */
-	public AudioContext() {
-		properties = new AudioPreferences();
+	public Audio() {
+		preferences = new AudioPreferences();
 		
 		softEventCallbacks = new ArrayList<>();
 	}
@@ -54,10 +54,10 @@ public class AudioContext {
 	 */
 	public void init() {
 		List<String> deviceList = enumerateAudioDevices();
-		if (properties.defaultDevice != null && !deviceList.contains(properties.defaultDevice)) {
+		if (preferences.defaultDevice != null && !deviceList.contains(preferences.defaultDevice)) {
 			device = alcOpenDevice((String) null);
 		} else {
-			device = alcOpenDevice(properties.defaultDevice);
+			device = alcOpenDevice(preferences.defaultDevice);
 		}
 		if (device == MemoryUtil.NULL) {
 			throw new IllegalStateException("Failed to open OpenAL device.");
@@ -78,7 +78,7 @@ public class AudioContext {
 		
 		caps = AL.createCapabilities(deviceCaps, MemoryUtil::memCallocPointer);
 
-		setListenerVolume(properties.listenerGain);
+		setListenerVolume(preferences.listenerGain);
 		
 		if (deviceCaps.ALC_SOFT_reopen_device) {
 			configureDeviceReopen();
@@ -141,14 +141,14 @@ public class AudioContext {
 	 */
 	public void setListenerVolume(float volume) {
 		alListenerf(AL_GAIN, volume);
-		properties = new AudioPreferences(properties.defaultDevice, volume);
+		preferences = new AudioPreferences(preferences.defaultDevice, volume);
 	}
 	
 	/**
 	 * @return the name of the currently opened device, or null if the properties specify to use the "System Default" device.
 	 */
 	public String getDeviceSpecifier() {
-		if (properties.defaultDevice == null) {
+		if (preferences.defaultDevice == null) {
 			return null;
 		}
 		return alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
@@ -158,7 +158,7 @@ public class AudioContext {
 	 * @param deviceSpecifier
 	 */
 	public void changeDevice(String deviceSpecifier) {
-		properties = new AudioPreferences(deviceSpecifier, properties.listenerGain);
+		preferences = new AudioPreferences(deviceSpecifier, preferences.listenerGain);
 		if (ALC.getCapabilities().ALC_SOFT_reopen_device) {
 			SOFTReopenDevice.alcReopenDeviceSOFT(device, deviceSpecifier, (IntBuffer) null);
 			currentDevice = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
@@ -178,7 +178,7 @@ public class AudioContext {
 			defaultDeviceReopenTimer.cancel();
 			AvoLog.log().info("Cancelled default audio device poller.");
 		}
-		if (properties.defaultDevice != null) {
+		if (preferences.defaultDevice != null) {
 			return;
 		}
 		AvoLog.log().info("Scheduling default audio device poller.");
@@ -191,7 +191,7 @@ public class AudioContext {
 		SOFTEventProc callback = SOFTEventProc.create((eventType, _, _, _, _, _) -> {
 			switch (eventType) {
 				case SOFTEvents.AL_EVENT_TYPE_DISCONNECTED_SOFT -> {
-					if (ALC.getCapabilities().ALC_SOFT_reopen_device && properties.defaultDevice == null) {
+					if (ALC.getCapabilities().ALC_SOFT_reopen_device && preferences.defaultDevice == null) {
 						AvoLog.log().info("Audio device disconnected, attempting to reopen default...");
 						SOFTReopenDevice.alcReopenDeviceSOFT(device, (ByteBuffer) null, (IntBuffer) null);
 					} else {

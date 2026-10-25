@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import org.lwjgl.nuklear.*;
 
-import com.avogine.audio.AudioContext;
+import com.avogine.audio.Audio;
 
 /**
  *
@@ -18,7 +18,7 @@ public class AudioConfigUI {
 	private static final String OPENAL_PREFIX = "OpenAL Soft on ";
 	
 	// TODO Remove this reference, use functions instead
-	private final AudioContext audio;
+	private final Audio audio;
 
 	private final int[] volume = new int[1];
 	private int deviceSelection;
@@ -31,7 +31,7 @@ public class AudioConfigUI {
 	 * @param audio 
 	 * 
 	 */
-	public AudioConfigUI(AudioContext audio) {
+	public AudioConfigUI(Audio audio) {
 		this.audio = audio;
 		
 		setUIVolume(audio.getListenerVolume());

@@ -2,6 +2,8 @@ package com.avogine.game.scene;
 
 import org.joml.Matrix4f;
 
+import com.avogine.io.Window;
+
 /**
  * 
  */
@@ -21,6 +23,22 @@ public abstract class Scene {
 		this.projection = projection;
 		this.camera = camera;
 	}
+	
+	/**
+	 * @param window
+	 */
+	public abstract void init(Window window);
+	
+	/**
+	 * 
+	 */
+	public abstract void cleanup();
+	
+	/**
+	 * @param width
+	 * @param height
+	 */
+	public abstract void resize(int width, int height);
 	
 	/**
 	 * @return the projection
@@ -49,5 +67,5 @@ public abstract class Scene {
 	public Matrix4f getViewMatrix() {
 		return camera.getView();
 	}
-
+	
 }

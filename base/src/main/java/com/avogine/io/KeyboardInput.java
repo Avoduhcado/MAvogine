@@ -61,7 +61,7 @@ public class KeyboardInput {
 	}
 	
 	private void configureKeyCallback(Window registeredWindow) {
-		GLFW.glfwSetKeyCallback(registeredWindow.getId(), (window, key, scancode, action, mods) -> {
+		GLFW.glfwSetKeyCallback(registeredWindow.getId(), (_, key, scancode, action, mods) -> {
 			if (action == GLFW.GLFW_REPEAT) {
 				return;
 			}
@@ -87,7 +87,7 @@ public class KeyboardInput {
 	}
 	
 	private void configureCharCallback(Window registeredWindow) {
-		GLFW.glfwSetCharCallback(registeredWindow.getId(), (window, codepoint) -> fireCharEvent(new CharEvent(registeredWindow, codepoint)));
+		GLFW.glfwSetCharCallback(registeredWindow.getId(), (_, codepoint) -> fireCharEvent(new CharEvent(registeredWindow, codepoint)));
 	}
 	
 	private void fireKeyboardEvent(KeyEvent event) {

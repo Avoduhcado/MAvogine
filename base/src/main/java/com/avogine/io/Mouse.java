@@ -7,12 +7,15 @@ import org.joml.Vector2f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 
-import com.avogine.io.config.InputConfig;
+import com.avogine.io.event.MouseEvent.MouseClickedEvent;
 
 /**
  *
  */
 public class Mouse {
+	private static final float DEFAULT_CLICK_DRIFT_TOLERANCE = 1.0f;
+	private static final float DEFAULT_DOUBLE_CLICK_DELAY_TOLERANCE = 0.5f;
+	
 	/**
 	 *
 	 * @param position
@@ -57,12 +60,11 @@ public class Mouse {
 	 * Initialize mouse.
 	 * </p>
 	 * This should only be called from the main thread.
-	 * @param inputConfig
 	 * @param windowHandle 
 	 */
-	public void init(InputConfig inputConfig, long windowHandle) {
-		setClickDriftTolerance(inputConfig.clickDriftTolerance());
-		setDoubleClickDelayTolerance(inputConfig.doubleClickDelayTolerance());
+	public void init(long windowHandle) {
+		setClickDriftTolerance(DEFAULT_CLICK_DRIFT_TOLERANCE);
+		setDoubleClickDelayTolerance(DEFAULT_DOUBLE_CLICK_DELAY_TOLERANCE);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			DoubleBuffer xPos = stack.mallocDouble(1);
@@ -134,7 +136,7 @@ public class Mouse {
 	}
 	
 	/**
-	 * @return the clickDriftTolerance
+	 * @return The distance in screen space that the mouse can move while still triggering a {@link MouseClickedEvent} event.
 	 */
 	public float getClickDriftTolerance() {
 		return clickDriftTolerance;
