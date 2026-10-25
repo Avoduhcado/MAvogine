@@ -5,7 +5,7 @@ import java.util.*;
 import com.avogine.render.model.Model;
 import com.avogine.render.model.animation.Animation;
 import com.avogine.render.model.material.SimpleMaterial;
-import com.avogine.render.opengl.model.mesh.AnimatedMesh;;
+import com.avogine.render.opengl.model.mesh.AnimatedMesh;
 
 /**
  *
