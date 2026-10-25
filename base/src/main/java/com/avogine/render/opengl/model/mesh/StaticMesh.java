@@ -46,8 +46,6 @@ public class StaticMesh extends Mesh {
 			.put((i * vertexSize) + 3 + 3 + 3, vertices.textureCoordinates(), i * 2, 2);
 		}
 		
-//		var staticVbo = VBO.arrayBuffer(interleavedVertices);
-		
 		int vertexStride = vertexSize * Float.BYTES;
 		
 		return new Vertex(interleavedVertices, 

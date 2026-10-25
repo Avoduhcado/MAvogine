@@ -90,7 +90,7 @@ public class Audio {
 			alDisable(SOFTXHoldOnDisconnect.AL_STOP_SOURCES_ON_DISCONNECT_SOFT);
 		}
 		
-		// TODO Load from preferences/properties
+		// TODO#75 Load from preferences/properties
 		setAttenuationModel(AL11.AL_EXPONENT_DISTANCE);
 		setListenerVolume(0.1f);
 	}

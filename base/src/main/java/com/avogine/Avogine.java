@@ -20,7 +20,7 @@ public class Avogine {
 	private final Window window;
 	private final Game game;
 	
-	private Object renderLock = new Object();
+	private final Object renderLock = new Object();
 	private boolean destroyed;
 	
 	/**
