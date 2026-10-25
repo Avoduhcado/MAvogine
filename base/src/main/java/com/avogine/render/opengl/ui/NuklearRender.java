@@ -72,7 +72,7 @@ public class NuklearRender {
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_SCISSOR_TEST);
-		glActiveTexture(GL13.GL_TEXTURE0);
+		glActiveTexture(GL13C.GL_TEXTURE0);
 	}
 	
 	private void teardownUIState() {

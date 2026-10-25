@@ -6,7 +6,7 @@ import com.avogine.render.SceneRender;
 /**
  *
  */
-public class TestECSRender implements SceneRender<TestECSScene> {
+public class TestECSRender extends SceneRender<TestECSScene> {
 
 	@Override
 	public void render(Window window, TestECSScene scene) {

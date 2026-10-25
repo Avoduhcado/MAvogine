@@ -1,9 +1,30 @@
 package com.avogine.render.opengl.texture;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
-import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL30.glGenerateMipmap;
+import static org.lwjgl.opengl.GL11.glDeleteTextures;
+import static org.lwjgl.opengl.GL11.glGetFloat;
+import static org.lwjgl.opengl.GL11C.GL_LINEAR;
+import static org.lwjgl.opengl.GL11C.GL_LINEAR_MIPMAP_LINEAR;
+import static org.lwjgl.opengl.GL11C.GL_LINEAR_MIPMAP_NEAREST;
+import static org.lwjgl.opengl.GL11C.GL_NEAREST;
+import static org.lwjgl.opengl.GL11C.GL_NEAREST_MIPMAP_LINEAR;
+import static org.lwjgl.opengl.GL11C.GL_NEAREST_MIPMAP_NEAREST;
+import static org.lwjgl.opengl.GL11C.GL_REPEAT;
+import static org.lwjgl.opengl.GL11C.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11C.GL_TEXTURE_MAG_FILTER;
+import static org.lwjgl.opengl.GL11C.GL_TEXTURE_MIN_FILTER;
+import static org.lwjgl.opengl.GL11C.GL_TEXTURE_WRAP_S;
+import static org.lwjgl.opengl.GL11C.GL_TEXTURE_WRAP_T;
+import static org.lwjgl.opengl.GL11C.GL_UNSIGNED_BYTE;
+import static org.lwjgl.opengl.GL11C.glBindTexture;
+import static org.lwjgl.opengl.GL11C.glGenTextures;
+import static org.lwjgl.opengl.GL11C.glTexImage2D;
+import static org.lwjgl.opengl.GL11C.glTexParameterf;
+import static org.lwjgl.opengl.GL11C.glTexParameteri;
+import static org.lwjgl.opengl.GL12C.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13C.*;
+import static org.lwjgl.opengl.GL14C.GL_MIRRORED_REPEAT;
+import static org.lwjgl.opengl.GL30C.glGenerateMipmap;
 
 import java.nio.*;
 import java.util.*;
@@ -12,72 +33,79 @@ import java.util.function.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.logging.AvoLog;
-import com.avogine.render.image.data.ImageData;
-import com.avogine.render.opengl.texture.Texture.TextureBuilder.*;
+import com.avogine.render.Render;
+import com.avogine.render.opengl.texture.Texture.Builder.TexImage;
+import com.avogine.render.opengl.texture.Texture.Texture2DBuilder.TexImage2D;
+import com.avogine.render.opengl.texture.Texture.TextureCubeMapBuilder.TexImageCubeMap;
 
 /**
- * @param id 
- * @param target 
+ * @param id the texture object name.
+ * @param target the texture target.
  */
 public record Texture(int id, int target) {
 	
-	private Texture(TextureBuilder<?> builder) {
-		this(glGenTextures(), builder.target);
-		
+	/**
+	 * @param target the texture target.
+	 */
+	public Texture(int target) {
+		this(glGenTextures(), target);
+	}
+	
+	/**
+	 * @param target the texture target.
+	 * @param params a set of texture parameters to apply.
+	 * @param image the {@link TexImage} this texture contains.
+	 * @param generateMipmap whether to generate mip-map images for this texture.
+	 */
+	public Texture(int target, Set<Builder.Parameter> params, TexImage image, boolean generateMipmap) {
+		this(target);
 		bind();
-		
-		builder.parameters.forEach(this::tex);
-		tex(builder.image2D);
-		
-		if (builder.generateMipmap) {
+		params.forEach(parameter -> {
+			switch (parameter) {
+				case Builder.Parameteri (int pname, int param) -> glTexParameteri(target, pname, param);
+				case Builder.Parameterf (int pname, float param) -> glTexParameterf(target, pname, param);
+			}
+		});
+		switch (image) {
+			case TexImage2D (int level, int internalFormat, int width, int height, int border, int format, int type, var pixels) -> {
+				switch (pixels) {
+					case ByteBuffer pixelBytes -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixelBytes);
+					case IntBuffer pixelInts -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixelInts);
+					case null -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, MemoryUtil.NULL);
+					default -> throw new IllegalArgumentException("Unsupported pixel buffer value: " + pixels);
+				}
+			}
+			case TexImageCubeMap (int level, int internalFormat, int width, int height, int border, int format, int type, ByteBuffer[] pixels) -> {
+				for (int i = 0; i < 6; i++) {
+					glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, level, internalFormat, width, height, border, format, type, pixels[i]);
+				}
+			}
+			case null -> {
+				// No image to load
+			}
+		}
+		if (generateMipmap) {
 			glGenerateMipmap(target);
 		}
-		
-		unbind(target);
+		unbind();
 	}
 	
 	/**
-	 * @param textureInit
-	 * @return a newly constructed 2D {@link Texture} with the configurations from {@code textureInit} applied.
+	 * @param builder
+	 * @return a new {@link Texture} set to the {@link GL11C#GL_TEXTURE_2D} target.
 	 */
-	public static Texture gen2D(UnaryOperator<Texture2DBuilder> textureInit) {
-		return textureInit
-				.andThen(TextureBuilder.TO_TEXTURE)
-				.apply(new Texture2DBuilder());
+	public static Texture gen2D(UnaryOperator<Texture2DBuilder> builder) {
+		return builder.andThen(Builder::build).apply(new Texture2DBuilder());
 	}
-	
+
 	/**
-	 * @param textureInit
-	 * @return a newly constructed cube map {@link Texture} with the configurations from {@code textureInit} applied.
+	 * @param builder
+	 * @return a new {@link Texture} set to the {@link GL13C#GL_TEXTURE_CUBE_MAP} target.
 	 */
-	public static Texture genCubeMap(UnaryOperator<TextureCubeMapBuilder> textureInit) {
-		return textureInit
-				.andThen(TextureBuilder.TO_TEXTURE)
-				.apply(new TextureCubeMapBuilder());
+	public static Texture genCubeMap(UnaryOperator<TextureCubeMapBuilder> builder) {
+		return builder.andThen(Builder::build).apply(new TextureCubeMapBuilder());
 	}
-	
-	/**
-	 * @param target
-	 */
-	public static void unbind(int target) {
-		glBindTexture(target, 0);
-	}
-	
-	/**
-	 * Clear the currently bound 2D texture.
-	 */
-	public static void unbind2D() {
-		unbind(GL_TEXTURE_2D);
-	}
-	
-	/**
-	 * Clear the currently bound cube map texture.
-	 */
-	public static void unbindCubeMap() {
-		unbind(GL_TEXTURE_CUBE_MAP);
-	}
-	
+
 	/**
 	 * Delete this texture object.
 	 */
@@ -86,395 +114,396 @@ public record Texture(int id, int target) {
 	}
 	
 	/**
-	 * Bind this texture to its target.
-	 */
-	protected void bind() {
-		glBindTexture(target, id);
-	}
-	
-	/**
-	 * Set the currently active texture unit to the given textureSlot and binds this texture.
-	 * @param textureSlot The offset to be applied to GL_TEXTURE0 to set as the active texture unit.
+	 * Activate the specified texture unit and bind this texture.
+	 * @param textureSlot
 	 */
 	public void activate(int textureSlot) {
 		glActiveTexture(GL_TEXTURE0 + textureSlot);
 		bind();
 	}
 	
-	private void tex(Tex function) {
-		switch (function) {
-			case null -> {
-				// Skip nulls
-			}
-			case Parameter parameter -> texParameter(parameter);
-			case Image2D image2D -> texImage2D(image2D);
-		}
-	}
-	
-	private void texParameter(TextureBuilder.Parameter parameter) {
-		switch (parameter) {
-			case Parameteri(int pname, int param) -> glTexParameteri(target, pname, param);
-			case Parameterf(int pname, float param) -> glTexParameterf(target, pname, param);
-		}
-	}
-	
-	private void texImage2D(TextureBuilder.Image2D image) {
-		switch (image) {
-			case Texture2D<?> texture2D -> specifyTextureImage2D(texture2D);
-			case TextureCubeMapBuilder.TextureCubeMap textureCubeMap -> {
-				specifyTextureImage2D(textureCubeMap.positiveX, GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-				specifyTextureImage2D(textureCubeMap.negativeX, GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
-				specifyTextureImage2D(textureCubeMap.positiveY, GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
-				specifyTextureImage2D(textureCubeMap.negativeY, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
-				specifyTextureImage2D(textureCubeMap.positiveZ, GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
-				specifyTextureImage2D(textureCubeMap.negativeZ, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
-			}
-		}
-	}
-	
-	private <T extends Buffer> void specifyTextureImage2D(Texture2D<T> image, int target) {
-		if (image instanceof Texture2D(var level, var internalFormat, var width, var height, var format, var type, var pixels)) {
-			switch (pixels) {
-				case ByteBuffer b -> glTexImage2D(target, level, internalFormat, width, height, 0, format, type, b);
-				case DoubleBuffer d -> glTexImage2D(target, level, internalFormat, width, height, 0, format, type, d);
-				case FloatBuffer f -> glTexImage2D(target, level, internalFormat, width, height, 0, format, type, f);
-				case IntBuffer i -> glTexImage2D(target, level, internalFormat, width, height, 0, format, type, i);
-				case ShortBuffer s -> glTexImage2D(target, level, internalFormat, width, height, 0, format, type, s);
-				case null -> glTexImage2D(target, level, internalFormat, width, height, 0, format, type, MemoryUtil.NULL);
-				default -> throw new IllegalArgumentException("Cannot specify 2D texture with pixel data of type " + pixels.getClass());
-			}
-		}
-	}
-	
-	private <T extends Buffer> void specifyTextureImage2D(Texture2D<T> image) {
-		specifyTextureImage2D(image, target);
+	/**
+	 * Bind this texture to its target.
+	 */
+	public void bind() {
+		glBindTexture(target, id);
 	}
 	
 	/**
-	 * 
+	 * Un-bind this texture target.
 	 */
-	public abstract static sealed class TextureBuilder<T extends TextureBuilder<T>> {
-		private static final Function<TextureBuilder<?>, Texture> TO_TEXTURE = TextureBuilder::build;
-		
-		private final int target;
-		private final Set<Parameter> parameters;
-		protected Image2D image2D;
+	public void unbind() {
+		glBindTexture(target, 0);
+	}
+	
+	/**
+	 * Abstract builder for building {@link Texture}s.
+	 * @param <SELF>
+	 */
+	@SuppressWarnings("java:S119")
+	public abstract static class Builder<SELF extends Builder<SELF>> {
+		protected final int target;
+		private final Set<Parameter> params;
+		protected TexImage texImage;
 		private boolean generateMipmap;
 		
-		/**
-		 * @param target
-		 */
-		private TextureBuilder(int target) {
+		protected Builder(int target) {
 			this.target = target;
-			parameters = new HashSet<>();
+			params = new HashSet<>();
 		}
 		
-		protected abstract T self();
+		protected abstract SELF self();
 		
-		/**
-		 * @return the constructed Texture with configurations applied
-		 */
-		public Texture build() {
-			return new Texture(this);
+		private Texture build() {
+			return new Texture(target, params, texImage, generateMipmap);
+		}
+		
+		public sealed interface TexImage {
+			/**
+			 * @return the level-of-detail number
+			 */
+			public int level();
+			
+			/**
+			 * @return the texture internal format
+			 */
+			public int internalFormat();
+			
+			/**
+			 * @return the texture width
+			 */
+			public int width();
+			
+			/**
+			 * @return the texture height
+			 */
+			public int height();
+			
+			/**
+			 * @return the texture border width
+			 */
+			public int border();
+			
+			/**
+			 * @return the texel data format
+			 */
+			public int format();
+			
+			/**
+			 * @return the texel data type
+			 */
+			public int type();
 		}
 		
 		/**
+		 * @param pname
 		 * @param param
 		 * @return this
 		 */
-		public T minFilter(int param) {
-			parameters.add(Parameteri.minFilter(param));
+		public SELF parameteri(int pname, int param) {
+			params.add(new Parameteri(pname, param));
 			return self();
 		}
 		
 		/**
+		 * @param pname
 		 * @param param
 		 * @return this
 		 */
-		public T magFilter(int param) {
-			parameters.add(Parameteri.magFilter(param));
+		public SELF parameterf(int pname, float param) {
+			params.add(new Parameterf(pname, param));
 			return self();
 		}
 		
-		/**
-		 * @return a Filter
-		 */
-		public Filter filter() {
-			return new Filter();
-		}
+		public sealed interface Parameter {}
 		
 		/**
 		 *
-		 */
-		public class Filter {
-			private T apply(int param) {
-				minFilter(param);
-				magFilter(param);
-				return self();
-			}
-			
-			/**
-			 * @return {@link TextureBuilder}
-			 */
-			public T nearest() {
-				return apply(GL_NEAREST);
-			}
-			
-			/**
-			 * @return {@link TextureBuilder}
-			 */
-			public T linear() {
-				return apply(GL_LINEAR);
-			}
-		}
-		
-		/**
+		 * @param pname
 		 * @param param
-		 * @return this
 		 */
-		public T wrapS(int param) {
-			parameters.add(Parameteri.wrapS(param));
-			return self();
-		}
-		
-		/**
-		 * @param param
-		 * @return this
-		 */
-		public T wrapT(int param) {
-			parameters.add(Parameteri.wrapT(param));
-			return self();
-		}
-		
-		/**
-		 * @param param
-		 * @return this
-		 */
-		public T wrapR(int param) {
-			parameters.add(Parameteri.wrapR(param));
-			return self();
-		}
-		
-		/**
-		 * @return this
-		 */
-		public Wrap wrap2D() {
-			return new Wrap2D();
-		}
-
-		/**
-		 * @return this
-		 */
-		public Wrap wrap3D() {
-			return new Wrap3D();
-		}
-		
-		public abstract sealed class Wrap {
-			protected abstract T apply(int param);
-			
-			/**
-			 * @return TextureBuilder
-			 */
-			public T repeat() {
-				return apply(GL_REPEAT);
-			}
-			
-			/**
-			 * @return TextureBuilder
-			 */
-			public T clampToEdge() {
-				return apply(GL_CLAMP_TO_EDGE);
-			}
-		}
-		
-		/**
-		 *
-		 */
-		public final class Wrap2D extends Wrap {
+		public record Parameteri(int pname, int param) implements Parameter {
 			@Override
-			protected T apply(int param) {
-				wrapS(param);
-				wrapT(param);
-				return self();
+			public int hashCode() {
+				return Objects.hash(pname);
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (!(obj instanceof Parameteri))
+					return false;
+				Parameteri other = (Parameteri) obj;
+				return pname == other.pname;
+			}
+		}
+		
+		/**
+		 *
+		 * @param pname
+		 * @param param
+		 */
+		public record Parameterf(int pname, float param) implements Parameter {
+			@Override
+			public int hashCode() {
+				return Objects.hash(pname);
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (!(obj instanceof Parameterf))
+					return false;
+				Parameterf other = (Parameterf) obj;
+				return pname == other.pname;
+			}
+		}
+		
+		/**
+		 * @return {@link MinFilter}
+		 */
+		public MinFilter minFilter() {
+			return new MinFilter();
+		}
+		
+		/**
+		 * @return {@link MagFilter}
+		 */
+		public MagFilter magFilter() {
+			return new MagFilter();
+		}
+		
+		public abstract sealed class FilterParam {
+			/**
+			 * @param function
+			 * @return {@link Builder}
+			 */
+			public abstract SELF function(int function);
+			
+			/**
+			 * @return {@link Builder}
+			 */
+			public SELF nearest() {
+				return function(GL_NEAREST);
 			}
 			
+			/**
+			 * @return {@link Builder}
+			 */
+			public SELF linear() {
+				return function(GL_LINEAR);
+			}
 		}
 		
 		/**
 		 *
 		 */
-		public final class Wrap3D extends Wrap {
+		public final class MinFilter extends FilterParam {
 			@Override
-			protected T apply(int param) {
-				wrapS(param);
-				wrapT(param);
-				wrapR(param);
-				return self();
+			public SELF function(int function) {
+				return Builder.this.parameteri(GL_TEXTURE_MIN_FILTER, function);
 			}
-		}
-		
-		/**
-		 * @return this
-		 */
-		public T anisotropicFiltering() {
-			if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
-				// TODO#40: Extract some global Anisotropic filtering value
-				float amount = Math.min(4f, glGetFloat(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT));
-				parameters.add(new Parameterf(EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount));
+			
+			/**
+			 * @return {@link Builder}
+			 */
+			public SELF nearestMipmapNearest() {
+				return function(GL_NEAREST_MIPMAP_NEAREST);
 			}
-			return self();
-		}
 
-		public sealed interface Tex {
-			
-		}
-		
-		public sealed interface Image2D extends Tex {}
-		
-		/**
-		 * @param <T>
-		 * @param level 
-		 * @param internalFormat 
-		 * @param width 
-		 * @param height 
-		 * @param format 
-		 * @param type 
-		 * @param pixels 
-		 */
-		public record Texture2D<T extends Buffer>(int level, int internalFormat, int width, int height, int format, int type, T pixels) implements Image2D {
 			/**
-			 * @param width
-			 * @param height
-			 * @param format
-			 * @param pixels
+			 * @return {@link Builder}
 			 */
-			public Texture2D(int width, int height, int format, T pixels) {
-				this(0, internalFormat(format), width, height, format, GL_UNSIGNED_BYTE, pixels);
+			public SELF linearMipmapNearest() {
+				return function(GL_LINEAR_MIPMAP_NEAREST);
 			}
-			
+
 			/**
-			 * @param imageData
-			 * @return a {@link Texture2D} allocated from imageData.
+			 * @return {@link Builder}
 			 */
-			public static Texture2D<ByteBuffer> fromImage(ImageData imageData) {
-				return new Texture2D<>(imageData.width(), imageData.height(), parseFormat(imageData.channels()), imageData.pixels());
+			public SELF nearestMipmapLinear() {
+				return function(GL_NEAREST_MIPMAP_LINEAR);
 			}
-			
-			private static int parseFormat(int channels) {
-				return switch (channels) {
-					case 1 -> GL_RED;
-					case 3 -> GL_RGB;
-					case 4 -> GL_RGBA;
-					default -> {
-						AvoLog.log().warn("Image was loaded with channel count: [{}] defaulting to GL_RED.", channels);
-						yield GL_RED;
-					}
-				};
-			}
-			
-			private static int internalFormat(int format) {
-				return switch (format) {
-					case GL_RGBA -> GL_RGBA8;
-					default -> format;
-				};
+
+			/**
+			 * @return {@link Builder}
+			 */
+			public SELF linearMipmapLinear() {
+				return function(GL_LINEAR_MIPMAP_LINEAR);
 			}
 		}
 		
 		/**
-		 * @return this
+		 *
 		 */
-		public T generateMipmap() {
+		public final class MagFilter extends FilterParam {
+			@Override
+			public SELF function(int function) {
+				return Builder.this.parameteri(GL_TEXTURE_MAG_FILTER, function);
+			}
+		}
+		
+		/**
+		 * @return {@link WrapS}
+		 */
+		public WrapS wrapS() {
+			return new WrapS();
+		}
+		
+		/**
+		 * @return {@link WrapT}
+		 */
+		public WrapT wrapT() {
+			return new WrapT();
+		}
+		
+		/**
+		 * @return {@link WrapR}
+		 */
+		public WrapR wrapR() {
+			return new WrapR();
+		}
+		
+		/**
+		 * @return {@link WrapST}
+		 */
+		public WrapST wrapST() {
+			return new WrapST();
+		}
+		
+		/**
+		 * @return {@link WrapSTR}
+		 */
+		public WrapSTR wrapSTR() {
+			return new WrapSTR();
+		}
+		
+		public abstract sealed class WrapParam {
+			protected abstract SELF set(int param);
+			
+			/**
+			 * @return {@link Builder}
+			 */
+			public SELF clampToEdge() {
+				return set(GL_CLAMP_TO_EDGE);
+			}
+			
+			/**
+			 * @return {@link Builder}
+			 */
+			public SELF clampToBorder() {
+				return set(GL_CLAMP_TO_BORDER);
+			}
+			
+			/**
+			 * @return {@link Builder}
+			 */
+			public SELF mirroredRepeat() {
+				return set(GL_MIRRORED_REPEAT);
+			}
+			
+			/**
+			 * @return {@link Builder}
+			 */
+			public SELF repeat() {
+				return set(GL_REPEAT);
+			}
+		}
+		
+		public sealed class WrapS extends WrapParam {
+			@Override
+			protected SELF set(int param) {
+				return Builder.this.parameteri(GL_TEXTURE_WRAP_S, param);
+			}
+		}
+		
+		/**
+		 *
+		 */
+		public final class WrapT extends WrapParam {
+			@Override
+			protected SELF set(int param) {
+				return Builder.this.parameteri(GL_TEXTURE_WRAP_T, param);
+			}
+		}
+		
+		/**
+		 *
+		 */
+		public final class WrapR extends WrapParam {
+			@Override
+			protected SELF set(int param) {
+				return Builder.this.parameteri(GL_TEXTURE_WRAP_R, param);
+			}
+		}
+		
+		public sealed class WrapST extends WrapS {
+			@Override
+			protected SELF set(int param) {
+				return super.set(param).parameteri(GL_TEXTURE_WRAP_T, param);
+			}
+		}
+		
+		/**
+		 *
+		 */
+		public final class WrapSTR extends WrapST {
+			@Override
+			protected SELF set(int param) {
+				return super.set(param).parameteri(GL_TEXTURE_WRAP_R, param);
+			}
+		}
+		
+		/**
+		 * @return {@link Builder}
+		 */
+		public SELF generateMipmap() {
 			generateMipmap = true;
 			return self();
 		}
 		
-		public sealed interface Parameter extends Tex {}
-		
 		/**
-		 * TODO#40 Validate the param value against the pname
-		 * @param pname
-		 * @param param
+		 * @param amount
+		 * @return {@link Builder}
 		 */
-		public static record Parameteri(int pname, int param) implements Parameter {
-			/**
-			 * @param param
-			 * @return a GL_TEXTURE_MIN_FILTER parameter.
-			 */
-			public static Parameteri minFilter(int param) {
-				return new Parameteri(GL_TEXTURE_MIN_FILTER, param);
+		public SELF anisotropicFiltering(float amount) {
+			if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
+				amount = Math.min(amount, glGetFloat(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT));
+				parameterf(EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
 			}
-			
-			/**
-			 * @param param
-			 * @return a GL_TEXTURE_MAG_FILTER parameter.
-			 */
-			public static Parameteri magFilter(int param) {
-				return new Parameteri(GL_TEXTURE_MAG_FILTER, param);
-			}
-			
-			/**
-			 * @param param
-			 * @return a GL_TEXTURE_WRAP_S parameter.
-			 */
-			public static Parameteri wrapS(int param) {
-				return new Parameteri(GL_TEXTURE_WRAP_S, param);
-			}
-			
-			/**
-			 * @param param
-			 * @return a GL_TEXTURE_WRAP_T parameter.
-			 */
-			public static Parameteri wrapT(int param) {
-				return new Parameteri(GL_TEXTURE_WRAP_T, param);
-			}
-			
-			/**
-			 * @param param
-			 * @return a GL_TEXTURE_WRAP_R parameter.
-			 */
-			public static Parameteri wrapR(int param) {
-				return new Parameteri(GL_TEXTURE_WRAP_R, param);
-			}
-			
-			@Override
-			public final int hashCode() {
-				return pname;
-			}
+			return self();
 		}
 		
 		/**
-		 *
-		 * @param pname
-		 * @param param
+		 * @return {@link Builder}
 		 */
-		public static record Parameterf(int pname, float param) implements Parameter {
-			@Override
-			public final int hashCode() {
-				return pname;
-			}
+		public SELF anisotropicFiltering() {
+			return anisotropicFiltering(Render.getAnisotropicFiltering());
 		}
 	}
 	
 	/**
 	 *
 	 */
-	public static final class Texture2DBuilder extends TextureBuilder<Texture2DBuilder> {
-		private Texture2DBuilder() {
+	public static final class Texture2DBuilder extends Builder<Texture2DBuilder> {
+		protected Texture2DBuilder() {
 			super(GL_TEXTURE_2D);
 		}
-		
+
 		@Override
 		protected Texture2DBuilder self() {
 			return this;
 		}
-		
+
 		/**
-		 * @param imageData 
-		 * @return this
+		 * @param builder
+		 * @return {@link Texture2DBuilder}
 		 */
-		public Texture2DBuilder image2D(ImageData imageData) {
-			this.image2D = Texture2D.fromImage(imageData);
-			return this;
+		public Texture2DBuilder image2D(Consumer<Texture2DBuilder> builder) {
+			builder.accept(this);
+			return self();
 		}
 		
 		/**
@@ -486,143 +515,173 @@ public record Texture(int id, int target) {
 		 * @param format
 		 * @param type
 		 * @param pixels
-		 * @return this
+		 * @return {@link Texture2DBuilder}
 		 */
 		public <T extends Buffer> Texture2DBuilder image2D(int level, int internalFormat, int width, int height, int format, int type, T pixels) {
-			this.image2D = new Texture2D<>(level, internalFormat, width, height, format, type, pixels);
-			return this;
+			this.texImage = new TexImage2D<>(level, internalFormat, width, height, 0, format, type, pixels);
+			return self();
 		}
-
+		
 		/**
-		 * @param <T>
+		 * @param level
 		 * @param internalFormat
 		 * @param width
 		 * @param height
 		 * @param format
-		 * @param type
 		 * @param pixels
-		 * @return this
+		 * @return {@link Texture2DBuilder}
 		 */
-		public <T extends Buffer> Texture2DBuilder image2D(int internalFormat, int width, int height, int format, int type, T pixels) {
-			return image2D(0, internalFormat, width, height, format, type, pixels);
+		public Texture2DBuilder image2D(int level, int internalFormat, int width, int height, int format, ByteBuffer pixels) {
+			this.texImage = new TexImage2D<>(level, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
+			return self();
 		}
 		
 		/**
-		 * @param <T>
 		 * @param width
 		 * @param height
 		 * @param format
 		 * @param pixels
-		 * @return this
+		 * @return {@link Texture2DBuilder}
 		 */
-		public <T extends Buffer> Texture2DBuilder image2D(int width, int height, int format, T pixels) {
-			return image2D(Texture2D.internalFormat(format), width, height, format, GL_UNSIGNED_BYTE, pixels);
+		public Texture2DBuilder image2D(int width, int height, int format, ByteBuffer pixels) {
+			return image2D(0, format, width, height, format, pixels);
 		}
 		
 		/**
-		 * @param <T>
 		 * @param width
 		 * @param height
-		 * @param pixels
-		 * @return this
+		 * @param format
+		 * @return {@link Texture2DBuilder}
 		 */
-		public <T extends Buffer> Texture2DBuilder image2D(int width, int height, T pixels) {
-			return image2D(width, height, GL_RED, pixels);
+		public Texture2DBuilder image2D(int width, int height, int format) {
+			return image2D(width, height, format, (ByteBuffer) null);
 		}
+		
+		/**
+		 *
+		 * @param <T>
+		 * @param level
+		 * @param internalFormat
+		 * @param width
+		 * @param height
+		 * @param border
+		 * @param format
+		 * @param type
+		 * @param pixels
+		 */
+		public record TexImage2D<T extends Buffer>(int level, int internalFormat, int width, int height, int border, int format, int type, T pixels) implements TexImage {}
 	}
 	
 	/**
 	 *
 	 */
-	public static final class TextureCubeMapBuilder extends TextureBuilder<TextureCubeMapBuilder> {
-		private TextureCubeMapBuilder() {
+	public static final class TextureCubeMapBuilder extends Builder<TextureCubeMapBuilder> {
+		protected TextureCubeMapBuilder() {
 			super(GL_TEXTURE_CUBE_MAP);
 		}
-		
+
 		@Override
 		protected TextureCubeMapBuilder self() {
 			return this;
 		}
 		
 		/**
-		 * @return a textureCubeMap
+		 * @param builder
+		 * @return {@link TextureCubeMapBuilder}
 		 */
-		public TextureCubeMap image2D() {
-			return new TextureCubeMap();
+		public TextureCubeMapBuilder cubeMap(Consumer<TextureCubeMapBuilder> builder) {
+			builder.accept(this);
+			return self();
+		}
+		
+		/**
+		 * 
+		 * @param width
+		 * @param height
+		 * @param format
+		 * @param positiveX
+		 * @param negativeX
+		 * @param positiveY
+		 * @param negativeY
+		 * @param positiveZ
+		 * @param negativeZ
+		 * @return {@link TextureCubeMapBuilder}
+		 */
+		@SuppressWarnings("java:S107") // Cube maps require exactly 6 faces, specifying them as individual parameters avoids missing faces.
+		public TextureCubeMapBuilder cubeMap(int width, int height, int format,
+				ByteBuffer positiveX, ByteBuffer negativeX, ByteBuffer positiveY, ByteBuffer negativeY, ByteBuffer positiveZ, ByteBuffer negativeZ) {
+			this.texImage = new TexImageCubeMap(0, format, width, height, 0, format, GL_UNSIGNED_BYTE, new ByteBuffer[] { positiveX, negativeX, positiveY, negativeY, positiveZ, negativeZ });
+			return self();
+		}
+		
+		/**
+		 * @param width
+		 * @param height
+		 * @param format
+		 * @param allFaces
+		 * @return {@link TextureCubeMapBuilder}
+		 */
+		public TextureCubeMapBuilder cubeMap(int width, int height, int format, ByteBuffer allFaces) {
+			return cubeMap(width, height, format, allFaces, allFaces, allFaces, allFaces, allFaces, allFaces);
+		}
+
+		/**
+		 * @param width
+		 * @param height
+		 * @param format
+		 * @return {@link TextureCubeMapBuilder}
+		 */
+		public TextureCubeMapBuilder cubeMap(int width, int height, int format) {
+			return cubeMap(width, height, format, (ByteBuffer) null);
 		}
 		
 		/**
 		 *
+		 * @param level
+		 * @param internalFormat
+		 * @param width
+		 * @param height
+		 * @param border
+		 * @param format
+		 * @param type
+		 * @param pixels
 		 */
-		public final class TextureCubeMap implements Image2D {
-			private Texture2D<? extends Buffer> positiveX;
-			private Texture2D<? extends Buffer> negativeX;
-			private Texture2D<? extends Buffer> positiveY;
-			private Texture2D<? extends Buffer> negativeY;
-			private Texture2D<? extends Buffer> positiveZ;
-			private Texture2D<? extends Buffer> negativeZ;
-			
+		public record TexImageCubeMap(int level, int internalFormat, int width, int height, int border, int format, int type, ByteBuffer[] pixels) implements TexImage {
 			/**
-			 * @param <T>
-			 * @param positiveX
-			 * @param negativeX
-			 * @param positiveY
-			 * @param negativeY
-			 * @param positiveZ
-			 * @param negativeZ
-			 * @return TextureCubeMapBuilder
+			 * 
 			 */
-			public <T extends Buffer> TextureCubeMapBuilder cubeMap(Texture2D<T> positiveX, Texture2D<T> negativeX, Texture2D<T> positiveY, Texture2D<T> negativeY, Texture2D<T> positiveZ, Texture2D<T> negativeZ) {
-				this.positiveX = positiveX;
-				this.negativeX = negativeX;
-				this.positiveY = positiveY;
-				this.negativeY = negativeY;
-				this.positiveZ = positiveZ;
-				this.negativeZ = negativeZ;
-				image2D = this;
-				return TextureCubeMapBuilder.this;
+			public TexImageCubeMap {
+				if (Objects.requireNonNull(pixels).length != 6) {
+					throw new IllegalArgumentException("CubeMap must specify 6 image buffers.");
+				}
 			}
-			
-			/**
-			 * @param positiveX
-			 * @param negativeX
-			 * @param positiveY
-			 * @param negativeY
-			 * @param positiveZ
-			 * @param negativeZ
-			 * @return TextureCubeMapBuilder
-			 */
-			public TextureCubeMapBuilder cubeMap(ImageData positiveX, ImageData negativeX, ImageData positiveY, ImageData negativeY, ImageData positiveZ, ImageData negativeZ) {
-				return cubeMap(Texture2D.fromImage(positiveX), Texture2D.fromImage(negativeX), Texture2D.fromImage(positiveY), Texture2D.fromImage(negativeY), Texture2D.fromImage(positiveZ), Texture2D.fromImage(negativeZ));
+
+			@Override
+			public int hashCode() {
+				final int prime = 31;
+				int result = 1;
+				result = prime * result + Arrays.hashCode(pixels);
+				result = prime * result + Objects.hash(border, format, height, internalFormat, level, type, width);
+				return result;
 			}
-			
-			/**
-			 * @param <T>
-			 * @param texture2D
-			 * @return TextureCubeMapBuilder
-			 */
-			public <T extends Buffer> TextureCubeMapBuilder cubeMap(Texture2D<T> texture2D) {
-				return cubeMap(texture2D, texture2D, texture2D, texture2D, texture2D, texture2D);
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (!(obj instanceof TexImageCubeMap))
+					return false;
+				TexImageCubeMap other = (TexImageCubeMap) obj;
+				return border == other.border && format == other.format && height == other.height
+						&& internalFormat == other.internalFormat && level == other.level
+						&& Arrays.equals(pixels, other.pixels) && type == other.type && width == other.width;
 			}
-			
-			/**
-			 * @param imageData
-			 * @return TextureCubeMapBuilder
-			 */
-			public TextureCubeMapBuilder cubeMap(ImageData imageData) {
-				return cubeMap(Texture2D.fromImage(imageData));
-			}
-			
-			/**
-			 * @param <T>
-			 * @param width
-			 * @param height
-			 * @param format
-			 * @param pixels
-			 * @return TextureCubeMapBuilder
-			 */
-			public <T extends Buffer> TextureCubeMapBuilder cubeMap(int width, int height, int format, T pixels) {
-				return cubeMap(new Texture2D<>(width, height, format, pixels));
+
+			@Override
+			public String toString() {
+				return "TexImageCubeMap [level=" + level + ", internalFormat=" + internalFormat + ", width=" + width
+						+ ", height=" + height + ", border=" + border + ", format=" + format + ", type=" + type
+						+ ", pixels=" + pixels + "]";
 			}
 		}
 	}

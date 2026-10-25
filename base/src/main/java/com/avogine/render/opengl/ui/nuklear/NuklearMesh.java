@@ -86,7 +86,8 @@ public class NuklearMesh {
 		// null texture setup
 		try (MemoryStack stack = stackPush()) {
 			int nullTexID = Texture.gen2D(nullTex -> nullTex
-					.filter().nearest()
+					.minFilter().nearest()
+					.magFilter().nearest()
 					.image2D(0, GL_RGBA8, 1, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, stack.ints(0xFFFFFFFF)))
 			.id();
 
