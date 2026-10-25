@@ -17,6 +17,7 @@ import static org.lwjgl.opengl.GL11C.GL_TEXTURE_WRAP_T;
 import static org.lwjgl.opengl.GL11C.GL_UNSIGNED_BYTE;
 import static org.lwjgl.opengl.GL11C.glBindTexture;
 import static org.lwjgl.opengl.GL11C.glGenTextures;
+import static org.lwjgl.opengl.GL11C.glIsTexture;
 import static org.lwjgl.opengl.GL11C.glTexImage2D;
 import static org.lwjgl.opengl.GL11C.glTexParameterf;
 import static org.lwjgl.opengl.GL11C.glTexParameteri;
@@ -33,22 +34,25 @@ import java.util.function.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
-import com.avogine.render.Render;
 import com.avogine.render.opengl.texture.Texture.Builder.TexImage;
-import com.avogine.render.opengl.texture.Texture.Texture2DBuilder.TexImage2D;
-import com.avogine.render.opengl.texture.Texture.TextureCubeMapBuilder.TexImageCubeMap;
 
 /**
  * @param id the texture object name.
  * @param target the texture target.
  */
 public record Texture(int id, int target) {
+	/**
+	 * TODO#40 Load from prefs?
+	 */
+	private static float anisotropicFiltering = 4.0f;
 	
 	/**
-	 * @param target the texture target.
+	 * 
 	 */
-	public Texture(int target) {
-		this(glGenTextures(), target);
+	public Texture {
+		if (!glIsTexture(id)) {
+			throw new IllegalArgumentException("Name is not a valid texture: " + id);
+		}
 	}
 	
 	/**
@@ -58,36 +62,28 @@ public record Texture(int id, int target) {
 	 * @param generateMipmap whether to generate mip-map images for this texture.
 	 */
 	public Texture(int target, Set<Builder.Parameter> params, TexImage image, boolean generateMipmap) {
-		this(target);
-		bind();
-		params.forEach(parameter -> {
-			switch (parameter) {
-				case Builder.Parameteri (int pname, int param) -> glTexParameteri(target, pname, param);
-				case Builder.Parameterf (int pname, float param) -> glTexParameterf(target, pname, param);
-			}
-		});
-		switch (image) {
-			case TexImage2D (int level, int internalFormat, int width, int height, int border, int format, int type, var pixels) -> {
-				switch (pixels) {
-					case ByteBuffer pixelBytes -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixelBytes);
-					case IntBuffer pixelInts -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixelInts);
-					case null -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, MemoryUtil.NULL);
-					default -> throw new IllegalArgumentException("Unsupported pixel buffer value: " + pixels);
-				}
-			}
-			case TexImageCubeMap (int level, int internalFormat, int width, int height, int border, int format, int type, ByteBuffer[] pixels) -> {
-				for (int i = 0; i < 6; i++) {
-					glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, level, internalFormat, width, height, border, format, type, pixels[i]);
-				}
-			}
-			case null -> {
-				// No image to load
-			}
+		int id = glGenTextures();
+		glBindTexture(target, id);
+		
+		initTexture(target, params, image, generateMipmap);
+		
+		glBindTexture(target, 0);
+		
+		this(id, target);
+	}
+	
+	private static void initTexture(int target, Set<Builder.Parameter> params, TexImage image, boolean generateMipmap) {
+		for (var parameter : params) {
+			parameter.enable(target);
 		}
+		
+		if (Objects.nonNull(image)) {
+			image.specify(target);
+		}
+		
 		if (generateMipmap) {
 			glGenerateMipmap(target);
 		}
-		unbind();
 	}
 	
 	/**
@@ -97,7 +93,7 @@ public record Texture(int id, int target) {
 	public static Texture gen2D(UnaryOperator<Texture2DBuilder> builder) {
 		return builder.andThen(Builder::build).apply(new Texture2DBuilder());
 	}
-
+	
 	/**
 	 * @param builder
 	 * @return a new {@link Texture} set to the {@link GL13C#GL_TEXTURE_CUBE_MAP} target.
@@ -105,7 +101,7 @@ public record Texture(int id, int target) {
 	public static Texture genCubeMap(UnaryOperator<TextureCubeMapBuilder> builder) {
 		return builder.andThen(Builder::build).apply(new TextureCubeMapBuilder());
 	}
-
+	
 	/**
 	 * Delete this texture object.
 	 */
@@ -137,6 +133,20 @@ public record Texture(int id, int target) {
 	}
 	
 	/**
+	 * @return the anisotropicFiltering
+	 */
+	public static float getAnisotropicFiltering() {
+		return anisotropicFiltering;
+	}
+
+	/**
+	 * @param anisotropicFiltering the anisotropicFiltering to set
+	 */
+	public static void setAnisotropicFiltering(float anisotropicFiltering) {
+		Texture.anisotropicFiltering = anisotropicFiltering;
+	}
+
+	/**
 	 * Abstract builder for building {@link Texture}s.
 	 * @param <SELF>
 	 */
@@ -159,6 +169,11 @@ public record Texture(int id, int target) {
 		}
 		
 		public sealed interface TexImage {
+			/**
+			 * @param target the texture target.
+			 */
+			public void specify(int target);
+			
 			/**
 			 * @return the level-of-detail number
 			 */
@@ -215,7 +230,13 @@ public record Texture(int id, int target) {
 			return self();
 		}
 		
-		public sealed interface Parameter {}
+		public sealed interface Parameter {
+			/**
+			 * Sets the value of a texture parameter, which controls how the texel array is treated when specified or changed, and when applied to a fragment.
+			 * @param target the texture target.
+			 */
+			public void enable(int target);
+		}
 		
 		/**
 		 *
@@ -223,6 +244,11 @@ public record Texture(int id, int target) {
 		 * @param param
 		 */
 		public record Parameteri(int pname, int param) implements Parameter {
+			@Override
+			public void enable(int target) {
+				glTexParameteri(target, pname, param);
+			}
+			
 			@Override
 			public int hashCode() {
 				return Objects.hash(pname);
@@ -245,6 +271,11 @@ public record Texture(int id, int target) {
 		 * @param param
 		 */
 		public record Parameterf(int pname, float param) implements Parameter {
+			@Override
+			public void enable(int target) {
+				glTexParameterf(target, pname, param);
+			}
+			
 			@Override
 			public int hashCode() {
 				return Objects.hash(pname);
@@ -480,7 +511,7 @@ public record Texture(int id, int target) {
 		 * @return {@link Builder}
 		 */
 		public SELF anisotropicFiltering() {
-			return anisotropicFiltering(Render.getAnisotropicFiltering());
+			return anisotropicFiltering(getAnisotropicFiltering());
 		}
 	}
 	
@@ -569,7 +600,17 @@ public record Texture(int id, int target) {
 		 * @param type
 		 * @param pixels
 		 */
-		public record TexImage2D<T extends Buffer>(int level, int internalFormat, int width, int height, int border, int format, int type, T pixels) implements TexImage {}
+		public record TexImage2D<T extends Buffer>(int level, int internalFormat, int width, int height, int border, int format, int type, T pixels) implements TexImage {
+			@Override
+			public void specify(int target) {
+				switch (pixels) {
+					case ByteBuffer pixelBytes -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixelBytes);
+					case IntBuffer pixelInts -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixelInts);
+					case null -> glTexImage2D(target, level, internalFormat, width, height, border, format, type, MemoryUtil.NULL);
+					default -> throw new IllegalArgumentException("Unsupported pixel buffer value: " + pixels);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -624,7 +665,7 @@ public record Texture(int id, int target) {
 		public TextureCubeMapBuilder cubeMap(int width, int height, int format, ByteBuffer allFaces) {
 			return cubeMap(width, height, format, allFaces, allFaces, allFaces, allFaces, allFaces, allFaces);
 		}
-
+		
 		/**
 		 * @param width
 		 * @param height
@@ -655,7 +696,14 @@ public record Texture(int id, int target) {
 					throw new IllegalArgumentException("CubeMap must specify 6 image buffers.");
 				}
 			}
-
+			
+			@Override
+			public void specify(int target) {
+				for (int i = 0; i < 6; i++) {
+					glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, level, internalFormat, width, height, border, format, type, pixels[i]);
+				}
+			}
+			
 			@Override
 			public int hashCode() {
 				final int prime = 31;

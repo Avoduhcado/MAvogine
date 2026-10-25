@@ -9,6 +9,7 @@ import org.junit.jupiter.api.*;
 
 import com.avogine.TestGame;
 import com.avogine.ecs.components.*;
+import com.avogine.game.scene.ECSScene;
 
 /**
  *
@@ -16,16 +17,13 @@ import com.avogine.ecs.components.*;
 class ECSSystemTest {
 
 	private TestGame game;
-	private TestECSScene scene;
 	private EntityManager manager;
 	
 	@BeforeEach
 	void setup() {
-		var gameState = new TestECSGameState();
-		
-		game = new TestGame(gameState);
+		game = new TestGame();
 		game.init(null);
-		scene = gameState.getScene();
+		ECSScene scene = game.getScene();
 		
 		manager = scene.getEntityManager();
 	}
@@ -61,13 +59,13 @@ class ECSSystemTest {
 		assertEquals(2, manager.getChunks().size(), "Chunk size does not match: " + manager.getChunks().size());
 		
 		AtomicInteger countRender = new AtomicInteger();
-		manager.query(TestRenderable.class).forEach(renderable -> {
+		manager.query(TestRenderable.class).forEach(_ -> {
 			countRender.incrementAndGet();
 		});
 		assertEquals(3, countRender.get(), "Failed to find all renderables: " + countRender.get());
 		
 		AtomicInteger countTransform = new AtomicInteger();
-		manager.query(TestTransformable.class).forEach(transformable -> {
+		manager.query(TestTransformable.class).forEach(_ -> {
 			countTransform.incrementAndGet();
 		});
 		assertEquals(5, countTransform.get(), "Failed to find all transformables: " + countTransform.get());

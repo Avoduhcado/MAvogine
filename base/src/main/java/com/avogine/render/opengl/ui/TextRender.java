@@ -60,8 +60,7 @@ public class TextRender {
 		orthoMatrix.setOrtho2D(0, width, height, 0);
 		
 		int textBufferCapacity = TEXT_LENGTH_LIMIT * 4 * 6;
-		float[] textVertices = new float[textBufferCapacity];
-		mesh = new TextMesh(textVertices);
+		mesh = new TextMesh(textBufferCapacity);
 		
 		defaultFont = fontCache.getFont(ResourceConstants.FONTS.with("Roboto-Regular.ttf"));
 	}
@@ -125,8 +124,8 @@ public class TextRender {
 				}
 			});
 			
-			mesh.setVertexCount(vertexCount);
-			mesh.getVAO().bindVBO(0, vbo -> vbo.bufferSubData(vertexData.flip()));
+			vertexData.flip();
+			mesh.update(vertexData);
 		}
 		
 		mesh.render();

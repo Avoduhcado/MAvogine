@@ -1,6 +1,7 @@
 package com.avogine.ecs;
 
 import com.avogine.game.scene.ECSScene;
+import com.avogine.io.Window;
 
 /**
  *
@@ -8,10 +9,22 @@ import com.avogine.game.scene.ECSScene;
 public class TestECSScene extends ECSScene {
 
 	/**
-	 * @param projection
+	 * 
 	 */
-	protected TestECSScene() {
+	public TestECSScene() {
 		super();
+	}
+
+	@Override
+	public void init(Window window) {
+	}
+
+	@Override
+	public void cleanup() {
+	}
+
+	@Override
+	public void resize(int width, int height) {
 	}
 
 }

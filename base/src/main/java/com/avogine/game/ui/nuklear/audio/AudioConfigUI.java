@@ -17,6 +17,7 @@ public class AudioConfigUI {
 	private static final String SYSTEM_DEFAULT = "System Default";
 	private static final String OPENAL_PREFIX = "OpenAL Soft on ";
 	
+	// TODO Remove this reference, use functions instead
 	private final Audio audio;
 
 	private final int[] volume = new int[1];

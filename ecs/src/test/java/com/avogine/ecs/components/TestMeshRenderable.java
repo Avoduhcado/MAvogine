@@ -5,7 +5,9 @@ import java.util.UUID;
 import com.avogine.ecs.EntityArchetype;
 
 /**
- *
+ * @param id 
+ * @param transform 
+ * @param mesh 
  */
 public record TestMeshRenderable(UUID id, TransformComponent transform, MeshComponent mesh) implements EntityArchetype {
 

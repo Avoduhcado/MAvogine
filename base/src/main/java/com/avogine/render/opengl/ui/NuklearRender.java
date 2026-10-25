@@ -1,7 +1,7 @@
 package com.avogine.render.opengl.ui;
 
 import static org.lwjgl.opengl.GL11C.*;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL13C.glActiveTexture;
 import static org.lwjgl.opengl.GL14C.glBlendEquation;
 
 import org.joml.Matrix4f;
@@ -18,9 +18,8 @@ import com.avogine.render.opengl.ui.nuklear.NuklearMesh;
 public class NuklearRender {
 
 	private final Matrix4f projectionMatrix;
-
+	
 	private NuklearShader nuklearShader;
-
 	private NuklearMesh mesh;
 	
 	private int displayWidth;
@@ -39,25 +38,32 @@ public class NuklearRender {
 	public void init(Window window) {
 		displayWidth = window.getWidth();
 		displayHeight = window.getHeight();
-
-		mesh = new NuklearMesh(displayWidth, displayHeight, displayWidth, displayHeight);
 		
 		projectionMatrix.ortho2D(0, displayWidth, displayHeight, 0);
-
+		
 		nuklearShader = new NuklearShader();
+		mesh = new NuklearMesh(displayWidth, displayHeight, displayWidth, displayHeight);
 	}
-
+	
 	/**
-	 * @param nuklearContext 
+	 * 
 	 */
-	public void render(NuklearGUI nuklearContext) {
+	public void cleanup() {
+		nuklearShader.cleanup();
+		mesh.cleanup();
+	}
+	
+	/**
+	 * @param gui 
+	 */
+	public void render(NuklearGUI gui) {
 		setupUIState();
 		glViewport(0, 0, displayWidth, displayHeight);
 		
 		nuklearShader.bind();
 		nuklearShader.projectionMatrix.loadMatrix(projectionMatrix);
 		
-		mesh.prepareCommandQueue(nuklearContext.getContext(), nuklearContext.getCommands());
+		mesh.prepareCommandQueue(gui.getContext(), gui.getCommands());
 		
 		nuklearShader.unbind();
 		
@@ -67,7 +73,7 @@ public class NuklearRender {
 	private void setupUIState() {
 		// setup global state
 		glEnable(GL_BLEND);
-		glBlendEquation(GL14.GL_FUNC_ADD);
+		glBlendEquation(GL14C.GL_FUNC_ADD);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_DEPTH_TEST);
@@ -81,14 +87,6 @@ public class NuklearRender {
 		// XXX Re-enable these based on some global render settings or cache the values beforehand?
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
-	}
-	
-	/**
-	 * 
-	 */
-	public void cleanup() {
-		nuklearShader.cleanup();
-		mesh.cleanup();
 	}
 	
 	/**

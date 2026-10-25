@@ -2,49 +2,38 @@ package com.avogine.game.state;
 
 import com.avogine.game.scene.Scene;
 import com.avogine.io.Window;
-import com.avogine.io.listener.InputListener;
-import com.avogine.render.SceneRender;
+import com.avogine.render.Render;
 
 /**
- * @param <T> 
- * @param <U> 
+ * @param <S> 
+ * @param <R> 
  */
-public abstract class GameState<T extends Scene, U extends SceneRender<T>> {
-
-	protected T scene;
-	protected U render;
-
-	/**
-	 * @param window
-	 */
-	public abstract void init(Window window);
+public interface GameState<S extends Scene, R extends Render<S>> {
 	
 	/**
-	 * Optional method for any actions that need to be performed by this {@link GameState} prior to
-	 * swapping to another state like removing any {@link InputListener}s from {@code window}.
 	 * @param window
 	 */
-	public void prepareForSwap(Window window) {
-		
+	public default void init(Window window) {
+		scene().init(window);
+		render().init(window);
 	}
 	
 	/**
 	 * 
 	 */
-	public abstract void cleanup();
+	public default void cleanup() {
+		scene().cleanup();
+		render().cleanup();
+	}
 	
 	/**
 	 * @return the scene
 	 */
-	public T getScene() {
-		return scene;
-	}
+	public S scene();
 	
 	/**
 	 * @return the render
 	 */
-	public U getRender() {
-		return render;
-	}
+	public R render();
 	
 }

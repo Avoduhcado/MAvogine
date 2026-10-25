@@ -80,31 +80,31 @@ public enum FrameProfiler implements Profilable {
 		}
 		
 		private double getFrameAverage() {
-			double avg = frameNanos.stream().mapToLong(Long::valueOf).average().orElseThrow();
+			double avg = frameNanos.stream().mapToLong(Long::valueOf).average().orElse(0);
 			frameNanos.clear();
 			return avg;
 		}
 		
 		private double getInputAverage() {
-			double avg = inputNanos.stream().mapToLong(Long::valueOf).average().orElseThrow();
+			double avg = inputNanos.stream().mapToLong(Long::valueOf).average().orElse(0);
 			inputNanos.clear();
 			return avg;
 		}
 		
 		private double getUpdateAverage() {
-			double avg = updateNanos.stream().mapToLong(Long::valueOf).average().orElseThrow();
+			double avg = updateNanos.stream().mapToLong(Long::valueOf).average().orElse(0);
 			updateNanos.clear();
 			return avg;
 		}
 		
 		private double getRenderAverage() {
-			double avg = renderNanos.stream().mapToLong(Long::valueOf).average().orElseThrow();
+			double avg = renderNanos.stream().mapToLong(Long::valueOf).average().orElse(0);
 			renderNanos.clear();
 			return avg;
 		}
 		
 		private double getBudgetAverage() {
-			double avg = budgetNanos.stream().mapToLong(Long::valueOf).average().orElseThrow();
+			double avg = budgetNanos.stream().mapToLong(Long::valueOf).average().orElse(0);
 			budgetNanos.clear();
 			return avg;
 		}

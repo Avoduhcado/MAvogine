@@ -1,8 +1,9 @@
 package com.avogine.render.opengl.model.util;
 
 import static org.lwjgl.assimp.Assimp.*;
+import static org.lwjgl.system.MemoryUtil.memFree;
 
-import java.nio.IntBuffer;
+import java.nio.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -12,13 +13,13 @@ import org.joml.Math;
 import org.joml.primitives.AABBf;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
+import org.lwjgl.system.MemoryUtil;
 
 import com.avogine.logging.AvoLog;
 import com.avogine.render.model.animation.*;
 import com.avogine.render.model.material.*;
 import com.avogine.render.model.material.data.BlinnPhongData;
-import com.avogine.render.model.mesh.data.MeshData;
-import com.avogine.render.model.mesh.data.MeshData.AnimMeshData;
+import com.avogine.render.model.mesh.data.*;
 import com.avogine.render.opengl.model.*;
 import com.avogine.render.opengl.model.mesh.*;
 import com.avogine.render.opengl.texture.util.TextureCache;
@@ -37,6 +38,24 @@ public class ModelLoader {
 	
 	private record Bone(int boneId, String boneName, Matrix4f offsetMatrix) {}
 	private record VertexWeight(int boneId, int vertexId, float weight) {}
+	
+	private record AssimpMeshData(FloatBuffer positions, VertexData vertexData, SkeletonData skeletonData, IntBuffer indices, AABBf boundingBox, int materialIndex) implements AutoCloseable {
+		@Override
+		public void close() {
+			memFree(positions);
+			if (vertexData instanceof VertexData (var normals, var tangents, var bitangents, var textureCoordinates)) {
+				memFree(normals);
+				memFree(tangents);
+				memFree(bitangents);
+				memFree(textureCoordinates);
+			}
+			if (skeletonData instanceof SkeletonData (var weights, var boneIDs)) {
+				memFree(weights);
+				memFree(boneIDs);
+			}
+			memFree(indices);
+		}
+	}
 	
 	private ModelLoader() {}
 	
@@ -57,18 +76,18 @@ public class ModelLoader {
 		List<Bone> bones = new ArrayList<>();
 		List<StaticMesh> noMaterialMeshes = new ArrayList<>();
 		Map<SimpleMaterial, List<StaticMesh>> materialMap = materials.stream()
-				.collect(Collectors.toMap(
-						Function.identity(), 
-						_ -> new ArrayList<>()));
+				.collect(Collectors
+						.toMap(Function.identity(), _ -> new ArrayList<>()));
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
-			MeshData meshData = processMesh(aiMesh, bones);
-			var mesh = new StaticMesh(meshData);
+			try (AssimpMeshData meshData = processMesh(aiMesh, bones)) {
+				var mesh = new StaticMesh(meshData.positions, meshData.vertexData, meshData.indices, meshData.boundingBox);
 
-			if (materialIndex >= 0 && materialIndex < materialMap.size()) {
-				materialMap.get(materials.get(materialIndex)).add(mesh);
-			} else {
-				noMaterialMeshes.add(mesh);
+				if (materialIndex >= 0 && materialIndex < materialMap.size()) {
+					materialMap.get(materials.get(materialIndex)).add(mesh);
+				} else {
+					noMaterialMeshes.add(mesh);
+				}
 			}
 		}
 		if (!noMaterialMeshes.isEmpty()) {
@@ -98,18 +117,18 @@ public class ModelLoader {
 		List<Bone> bones = new ArrayList<>();
 		List<AnimatedMesh> noMaterialMeshes = new ArrayList<>();
 		Map<SimpleMaterial, List<AnimatedMesh>> materialMap = materials.stream()
-				.collect(Collectors.toMap(
-						Function.identity(), 
-						_ -> new ArrayList<>()));
+				.collect(Collectors
+						.toMap(Function.identity(), _ -> new ArrayList<>()));
 		for (AIMesh aiMesh : aiMeshes) {
 			int materialIndex = aiMesh.mMaterialIndex();
-			MeshData meshData = processMesh(aiMesh, bones);
-			var mesh = new AnimatedMesh(meshData);
+			try (AssimpMeshData meshData = processMesh(aiMesh, bones)) {
+				var mesh = new AnimatedMesh(meshData.positions, meshData.vertexData, meshData.skeletonData, meshData.indices, meshData.boundingBox);
 
-			if (materialIndex >= 0 && materialIndex < materialMap.size()) {
-				materialMap.get(materials.get(materialIndex)).add(mesh);
-			} else {
-				noMaterialMeshes.add(mesh);
+				if (materialIndex >= 0 && materialIndex < materialMap.size()) {
+					materialMap.get(materials.get(materialIndex)).add(mesh);
+				} else {
+					noMaterialMeshes.add(mesh);
+				}
 			}
 		}
 		if (!noMaterialMeshes.isEmpty()) {
@@ -183,113 +202,86 @@ public class ModelLoader {
 		return null;
 	}
 	
-	private static MeshData processMesh(AIMesh aiMesh, List<Bone> bones) {
-		float[] positions = processVertices(aiMesh);
-		float[] normals = processNormals(aiMesh);
-		float[] tangents = processTangents(aiMesh);
-		float[] bitangents = processBitangents(aiMesh);
-		float[] textureCoordinates = processTextureCoordinates(aiMesh);
-		int[] indices = processIndices(aiMesh);
+	private static AssimpMeshData processMesh(AIMesh aiMesh, List<Bone> bones) {
+		FloatBuffer vertices = processVertices(aiMesh);
+		FloatBuffer normals = processNormals(aiMesh);
+		FloatBuffer tangents = processTangents(aiMesh);
+		FloatBuffer bitangents = processBitangents(aiMesh);
+		FloatBuffer textureCoordinates = processTextureCoordinates(aiMesh);
 		
-		AnimMeshData boneWeights = processBones(aiMesh, bones);
+		var vertexData = new VertexData(normals, tangents, bitangents, textureCoordinates);
+		SkeletonData skeleton = processBones(aiMesh, bones);
+		IntBuffer indices = processIndices(aiMesh);
 		
 		AABBf aabb = processAABB(aiMesh);
 		int materialIndex = aiMesh.mMaterialIndex();
 		
-		return new MeshData(positions, normals, tangents, bitangents, textureCoordinates, boneWeights, indices, aabb, materialIndex);
+		return new AssimpMeshData(vertices, vertexData, skeleton, indices, aabb, materialIndex);
 	}
 	
-	private static float[] processVertices(AIMesh aiMesh) {
+	private static FloatBuffer processVertices(AIMesh aiMesh) {
 		AIVector3D.Buffer buffer = aiMesh.mVertices();
-		var data = new float[buffer.remaining() * 3];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D vertex = buffer.get();
-			data[pos++] = vertex.x();
-			data[pos++] = vertex.y();
-			data[pos++] = vertex.z();
-		}
-		return data;
+		FloatBuffer data = MemoryUtil.memAllocFloat(buffer.remaining() * 3);
+		buffer.forEach(vertex -> data.put(vertex.x()).put(vertex.y()).put(vertex.z()));
+		
+		return data.flip();
 	}
 	
-	private static float[] processNormals(AIMesh aiMesh) {
+	private static FloatBuffer processNormals(AIMesh aiMesh) {
 		// Normals should always be present, either provided by the mesh itself, or generated as a post-processing step on import.
 		AIVector3D.Buffer buffer = aiMesh.mNormals();
-		var data = new float[buffer.remaining() * 3];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D normal = buffer.get();
-			data[pos++] = normal.x();
-			data[pos++] = normal.y();
-			data[pos++] = normal.z();
-		}
-		return data;
+		FloatBuffer data = MemoryUtil.memAllocFloat(buffer.remaining() * 3);
+		buffer.forEach(normal -> data.put(normal.x()).put(normal.y()).put(normal.z()));
+		
+		return data.flip();
 	}
 	
-	private static float[] processTangents(AIMesh aiMesh) {
+	private static FloatBuffer processTangents(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MTANGENTS)) {
-			return new float[aiMesh.mNumVertices() * 3];
+			return MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * 3);
 		}
 		AIVector3D.Buffer buffer = aiMesh.mTangents();
-		var data = new float[buffer.remaining() * 3];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D tangent = buffer.get();
-			data[pos++] = tangent.x();
-			data[pos++] = tangent.y();
-			data[pos++] = tangent.z();
-		}
-		return data;
+		FloatBuffer data = MemoryUtil.memAllocFloat(buffer.remaining() * 3);
+		buffer.forEach(tangent -> data.put(tangent.x()).put(tangent.y()).put(tangent.z()));
+		
+		return data.flip();
 	}
 	
-	private static float[] processBitangents(AIMesh aiMesh) {
+	private static FloatBuffer processBitangents(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MBITANGENTS)) {
-			return new float[aiMesh.mNumVertices() * 3];
+			return MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * 3);
 		}
 		AIVector3D.Buffer buffer = aiMesh.mBitangents();
-		var data = new float[buffer.remaining() * 3];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D bitangent = buffer.get();
-			data[pos++] = bitangent.x();
-			data[pos++] = bitangent.y();
-			data[pos++] = bitangent.z();
-		}
-		return data;
+		FloatBuffer data = MemoryUtil.memAllocFloat(buffer.remaining() * 3);
+		buffer.forEach(bitangent -> data.put(bitangent.x()).put(bitangent.y()).put(bitangent.z()));
+		
+		return data.flip();
 	}
 	
-	private static float[] processTextureCoordinates(AIMesh aiMesh) {
+	private static FloatBuffer processTextureCoordinates(AIMesh aiMesh) {
 		if (aiMesh.isNull(AIMesh.MTEXTURECOORDS)) {
-			return new float[aiMesh.mNumVertices() * 2];
+			return MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * 2);
 		}
 		AIVector3D.Buffer buffer = aiMesh.mTextureCoords(0);
-		var data = new float[buffer.remaining() * 2];
-		int pos = 0;
-		while (buffer.hasRemaining()) {
-			AIVector3D textureCoordinate = buffer.get();
-			data[pos++] = textureCoordinate.x();
-			data[pos++] = textureCoordinate.y();
-		}
-		return data;
+		FloatBuffer data = MemoryUtil.memAllocFloat(buffer.remaining() * 2);
+		buffer.forEach(textureCoordinate -> data.put(textureCoordinate.x()).put(textureCoordinate.y()));
+		
+		return data.flip();
 	}
 	
-	private static int[] processIndices(AIMesh aiMesh) {
-		List<Integer> indices = new ArrayList<>();
-		int numFaces = aiMesh.mNumFaces();
+	private static IntBuffer processIndices(AIMesh aiMesh) {
+		IntBuffer data = MemoryUtil.memAllocInt(aiMesh.mNumFaces() * 3);
 		AIFace.Buffer aiFaces = aiMesh.mFaces();
-		for (int i = 0; i < numFaces; i++) {
-			AIFace aiFace = aiFaces.get(i);
-			IntBuffer buffer = aiFace.mIndices();
-			while (buffer.hasRemaining()) {
-				indices.add(buffer.get());
-			}
+		while (aiFaces.hasRemaining()) {
+			AIFace aiFace = aiFaces.get();
+			data.put(aiFace.mIndices());
 		}
-		return indices.stream().mapToInt(Integer::intValue).toArray();
+		return data.flip();
 	}
 	
-	private static AnimMeshData processBones(AIMesh aiMesh, List<Bone> bones) {
+	private static SkeletonData processBones(AIMesh aiMesh, List<Bone> bones) {
 		if (aiMesh.isNull(AIMesh.MBONES)) {
-			return new AnimMeshData(new int[aiMesh.mNumVertices() * AnimatedMesh.MAX_WEIGHTS], new float[aiMesh.mNumVertices() * AnimatedMesh.MAX_WEIGHTS]);
+			return new SkeletonData(MemoryUtil.memCallocInt(aiMesh.mNumVertices() * AnimatedMesh.MAX_WEIGHTS), MemoryUtil.memCallocFloat(aiMesh.mNumVertices() * AnimatedMesh.MAX_WEIGHTS));
 		}
 		
 		Map<Integer, List<VertexWeight>> weightMap = new HashMap<>();
@@ -307,8 +299,8 @@ public class ModelLoader {
 			});
 		}
 		
-		List<Integer> boneIDs = new ArrayList<>();
-		List<Float> weights = new ArrayList<>();
+		FloatBuffer weights = MemoryUtil.memAllocFloat(aiMesh.mNumVertices() * AnimatedMesh.MAX_WEIGHTS);
+		IntBuffer boneIds = MemoryUtil.memAllocInt(aiMesh.mNumVertices() * AnimatedMesh.MAX_WEIGHTS);
 		
 		int numVertices = aiMesh.mNumVertices();
 		for (int i = 0; i < numVertices; i++) {
@@ -317,25 +309,16 @@ public class ModelLoader {
 			for (int j = 0; j < AnimatedMesh.MAX_WEIGHTS; j++) {
 				if (j < size) {
 					VertexWeight vertexWeight = vertexWeights.get(j);
-					weights.add(vertexWeight.weight());
-					boneIDs.add(vertexWeight.boneId());
+					weights.put(vertexWeight.weight());
+					boneIds.put(vertexWeight.boneId());
 				} else {
-					weights.add(0.0f);
-					boneIDs.add(0);
+					weights.put(0.0f);
+					boneIds.put(0);
 				}
 			}
 		}
 		
-		return new AnimMeshData(boneIDs.stream().mapToInt(Integer::intValue).toArray(), mapToFloatArray(weights));
-	}
-	
-	private static float[] mapToFloatArray(List<Float> list) {
-		int size = list != null ? list.size() : 0;
-		float[] floatArray = new float[size];
-		for (int i = 0; i < size; i++) {
-			floatArray[i] = list.get(i);
-		}
-		return floatArray;
+		return new SkeletonData(boneIds.flip(), weights.flip());
 	}
 	
 	private static AABBf processAABB(AIMesh aiMesh) {
@@ -429,14 +412,14 @@ public class ModelLoader {
 			nodeTransformation = buildNodeTransformationMatrix(aiNodeAnim, frame);
 		}
 		Matrix4f nodeGlobalTransformation = new Matrix4f(parentTransformation).mul(nodeTransformation);
-		
+
 		bones.stream()
 		.filter(bone -> bone.boneName().equals(nodeName))
 		.forEach(bone -> {
 			Matrix4f boneTransformation = new Matrix4f(globalInverseTransformation).mul(nodeGlobalTransformation).mul(bone.offsetMatrix());
 			animatedFrame.boneMatrices()[bone.boneId()] = boneTransformation;
 		});
-		
+
 		for (Node childNode : node.getChildren()) {
 			buildFrameMatrices(aiAnimation, bones, animatedFrame, frame, childNode, nodeGlobalTransformation, globalInverseTransformation);
 		}

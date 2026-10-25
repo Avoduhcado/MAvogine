@@ -4,7 +4,6 @@ import java.util.*;
 
 import org.lwjgl.glfw.GLFW;
 
-import com.avogine.io.config.InputConfig;
 import com.avogine.io.event.MouseEvent.*;
 import com.avogine.io.listener.*;
 
@@ -27,11 +26,10 @@ public class MouseInput {
 	}
 	
 	/**
-	 * @param inputConfig 
 	 * @param window
 	 */
-	public void init(InputConfig inputConfig, Window window) {
-		mouse.init(inputConfig, window.getId());
+	public void init(Window window) {
+		mouse.init(window.getId());
 		
 		configureMouseButtonCallback(window);
 		configureCursorPosCallback(window);
@@ -65,7 +63,7 @@ public class MouseInput {
 	}
 	
 	private void configureMouseButtonCallback(Window registeredWindow) {
-		GLFW.glfwSetMouseButtonCallback(registeredWindow.getId(), (window, button, action, mods) -> {
+		GLFW.glfwSetMouseButtonCallback(registeredWindow.getId(), (_, button, action, _) -> {
 			mouse.setButton(button, action == GLFW.GLFW_PRESS);
 			int clickCount = mouse.getButtonClickCount(button);
 			
@@ -84,7 +82,7 @@ public class MouseInput {
 	}
 	
 	private void configureCursorPosCallback(Window registeredWindow) {
-		GLFW.glfwSetCursorPosCallback(registeredWindow.getId(), (window, xPos, yPos) -> {
+		GLFW.glfwSetCursorPosCallback(registeredWindow.getId(), (_, xPos, yPos) -> {
 			mouse.setPosition(xPos, yPos);
 			
 			for (int i = GLFW.GLFW_MOUSE_BUTTON_1; i < GLFW.GLFW_MOUSE_BUTTON_LAST; i++) {
@@ -97,7 +95,7 @@ public class MouseInput {
 	}
 	
 	private void configureScrollCallback(Window registeredWindow) {
-		GLFW.glfwSetScrollCallback(registeredWindow.getId(), (window, xOffset, yOffset) -> {
+		GLFW.glfwSetScrollCallback(registeredWindow.getId(), (_, xOffset, yOffset) -> {
 			mouse.setScroll(xOffset, yOffset);
 			
 			fireMouseScrollEvent(new MouseWheelEvent(registeredWindow, mouse.getPosition().x(), mouse.getPosition().y(), xOffset, yOffset));
@@ -111,7 +109,7 @@ public class MouseInput {
 					case MousePressedEvent e -> mbl.mousePressed(e);
 					case MouseReleasedEvent e -> mbl.mouseReleased(e);
 					case MouseClickedEvent e -> mbl.mouseClicked(e);
-					case MouseDraggedEvent e -> {
+					case MouseDraggedEvent _ -> {
 						// Drag events should be handled by MouseMotionListeners
 					}
 				}

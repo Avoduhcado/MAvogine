@@ -1,6 +1,5 @@
 package com.avogine.io;
 
-import com.avogine.io.config.InputConfig;
 import com.avogine.io.event.AvoEvent;
 import com.avogine.io.listener.*;
 
@@ -28,12 +27,11 @@ public class Input {
 	
 	/**
 	 * 
-	 * @param config
 	 * @param window 
 	 */
-	public void init(InputConfig config, Window window) {
+	public void init(Window window) {
 		keyboard.init(window);
-		mouse.init(config, window);
+		mouse.init(window);
 	}
 	
 	/**

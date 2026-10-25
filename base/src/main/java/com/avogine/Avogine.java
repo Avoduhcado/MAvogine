@@ -2,6 +2,7 @@ package com.avogine;
 
 import com.avogine.game.*;
 import com.avogine.io.Window;
+import com.avogine.io.config.WindowPreferences;
 import com.avogine.logging.AvoLog;
 import com.avogine.util.FrameProfiler;
 
@@ -19,17 +20,21 @@ public class Avogine {
 	private final Window window;
 	private final Game game;
 	
-	private Object lock = new Object();
+	private final Object renderLock = new Object();
 	private boolean destroyed;
 	
 	/**
-	 * @param window The primary game {@link Window} to display to
+	 * @param windowTitle 
+	 * @param windowPrefs 
 	 * @param game An implementation of {@link Game} that contains the main game logic
 	 */
-	public Avogine(Window window, Game game) {
+	public Avogine(String windowTitle, WindowPreferences windowPrefs, Game game) {
 		profiler = FrameProfiler.NO_OP;
 		
-		this.window = window;
+		window = new Window(windowTitle, windowPrefs, () -> {
+			resize();
+			return null;
+		});
 		this.game = game;
 	}
 	
@@ -45,7 +50,7 @@ public class Avogine {
 			init();
 			loop();
 			
-			synchronized (lock) {
+			synchronized (renderLock) {
 				destroyed = true;
 				window.close();
 			}
@@ -58,15 +63,12 @@ public class Avogine {
 	}
 	
 	private void init() {
-		window.init(game.getGLFWConfig(), game.getInputConfig());
+		window.init();
 	}
 	
 	private void loop() {
-		/*
-		 * Start new thread to have the OpenGL context current in and which does
-		 * the rendering.
-		 */
-		new Thread(this::renderLoop, "GAME_LOOP").start();
+		/* Start new thread to have the OpenGL context current in and which does the updating and rendering. */
+		new Thread(this::gameLoop, "GAME_LOOP").start();
 		
 		while (!window.shouldClose()) {
 			window.waitEvents();
@@ -77,7 +79,7 @@ public class Avogine {
 		profiler.inputStart();
 		
 		game.input(window);
-		window.update();
+		window.newInputFrame();
 		
 		profiler.inputEnd();
 	}
@@ -102,22 +104,17 @@ public class Avogine {
 		double targetFrameTime = 1.0 / window.getTargetFps();
 		double endTime = timer.getPreviousTime() + targetFrameTime;
 		
-		try {
-			timer.syncThreadUntil(endTime);
-		} catch (InterruptedException e) {
-			AvoLog.log().warn("Render loop sync operation was interrupted.", e);
-			Thread.currentThread().interrupt();
-		}
+		timer.syncThreadUntil(endTime);
 	}
 	
-	private void renderLoop() {
+	private void gameLoop() {
 		window.makeCurrent();
-		game.baseInit(window);
+		game.init(window);
 		
 		float updateInterval = 1.0f / game.getTargetUps();
 		float updateAccumulator = 0.0f;
 		
-		var renderTimer = new Timer(true);
+		var renderTimer = new Timer();
 		renderTimer.init();
 		
 		while (!destroyed) {
@@ -136,7 +133,7 @@ public class Avogine {
 			render();
 			
 			profiler.endFrame();
-			synchronized (lock) {
+			synchronized (renderLock) {
 				if (!destroyed) {
 					if (!window.isVsync()) {
 						// Timer.syncThreadUntil requires GLFW to not be terminated or else the thread will hang, so only sync inside the synchronized block
@@ -149,6 +146,12 @@ public class Avogine {
 		}
 		
 		game.cleanup();
+	}
+	
+	private void resize() {
+		int width = window.getWidth();
+		int height = window.getHeight();
+		game.resize(width, height);
 	}
 	
 	private void cleanup() {
